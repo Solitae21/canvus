@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
-const Icon = ({ path, size = 18 }) => (
+const Icon = ({ path, size = 18 }: { path: string; size?: number }) => (
   <svg
     width={size}
     height={size}
@@ -46,18 +46,18 @@ const icons = {
 type ToolbarItems = {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  icon: keyof typeof icons;
 };
 
 const TOOLS: ToolbarItems[] = [
-  { id: "cursor", label: "Select", icon: icons.cursor },
-  { id: "rect", label: "Process", icon: icons.rect },
-  { id: "diamond", label: "Decision", icon: icons.diamond },
-  { id: "oval", label: "Terminal", icon: icons.circle },
-  { id: "sticky", label: "Note", icon: icons.sticky },
-  { id: "pen", label: "Draw", icon: icons.pen },
-  { id: "text", label: "Text", icon: icons.text },
-  { id: "arrow", label: "Connect", icon: icons.arrow },
+  { id: "cursor", label: "Select", icon: "cursor" },
+  { id: "rect", label: "Process", icon: "rect" },
+  { id: "diamond", label: "Decision", icon: "diamond" },
+  { id: "oval", label: "Terminal", icon: "circle" },
+  { id: "sticky", label: "Note", icon: "sticky" },
+  { id: "pen", label: "Draw", icon: "pen" },
+  { id: "text", label: "Text", icon: "text" },
+  { id: "arrow", label: "Connect", icon: "arrow" },
 ];
 
 const Toolbar = () => {
@@ -66,7 +66,7 @@ const Toolbar = () => {
       <div className="flex flex-col gap-4 border border-gray-400 p-2 w-20 rounded-2xl">
         {TOOLS.map((tool) => (
           <div className="flex flex-col items-center cursor-pointer transition-all hover:bg-gray-200 ">
-           <Icon path={tool.icon} />
+           <Icon path={icons[tool.icon]} />
            {tool.label}
           </div>
         ))}
