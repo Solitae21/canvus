@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { setTool, ToolType } from "@/redux/slice/canvas/canvas-slice";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Stitch-style floating toolbar – horizontal pill, bottom-center
@@ -395,7 +397,8 @@ const QUICK_SHAPES: Tool[] = [
 
 /* ── Main toolbar ─────────────────────────────────────────────────────────── */
 const Toolbar = () => {
-  const [activeTool, setActiveTool] = useState("select");
+  const dispatch = useAppDispatch();
+  const activeTool = useAppSelector((s) => s.canvas.tool);
 
   const renderGroup = (tools: Tool[]) =>
     tools.map((tool) => (
@@ -403,7 +406,7 @@ const Toolbar = () => {
         key={tool.id}
         tool={tool}
         active={activeTool === tool.id}
-        onClick={() => setActiveTool(tool.id)}
+        onClick={() => dispatch(setTool(tool.id as ToolType))}
       />
     ));
 
@@ -422,7 +425,7 @@ const Toolbar = () => {
         {renderGroup(QUICK_SHAPES)}
         <ShapeSelector
           activeTool={activeTool}
-          onSelect={(id) => setActiveTool(id)}
+          onSelect={(id) => dispatch(setTool(id as ToolType))}
         />
         <Sep />
         {renderGroup(DRAW_TOOLS)}
