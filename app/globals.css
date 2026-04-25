@@ -5,10 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* ── Semantic shadcn tokens ── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plus-jakarta-sans);
+  --font-mono: var(--font-jetbrains-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -38,82 +39,196 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-sm: var(--radius-token-sm);
+  --radius-md: var(--radius-token-md);
+  --radius-lg: var(--radius-token-lg);
+  --radius-xl: var(--radius-token-xl);
+  --radius-full: var(--radius-token-full);
+
+  /* ── Surface palette ── */
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-tint: var(--surface-tint);
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+
+  /* ── Primary extended ── */
+  --color-primary-container: var(--primary-container);
+  --color-on-primary: var(--on-primary);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-primary-fixed-dim: var(--primary-fixed-dim);
+  --color-on-primary-fixed: var(--on-primary-fixed);
+  --color-on-primary-fixed-variant: var(--on-primary-fixed-variant);
+
+  /* ── Secondary extended ── */
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary: var(--on-secondary);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-secondary-fixed: var(--secondary-fixed);
+  --color-secondary-fixed-dim: var(--secondary-fixed-dim);
+  --color-on-secondary-fixed: var(--on-secondary-fixed);
+  --color-on-secondary-fixed-variant: var(--on-secondary-fixed-variant);
+
+  /* ── Tertiary ── */
+  --color-tertiary: var(--tertiary);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-tertiary-fixed: var(--tertiary-fixed);
+  --color-tertiary-fixed-dim: var(--tertiary-fixed-dim);
+  --color-on-tertiary-fixed: var(--on-tertiary-fixed);
+  --color-on-tertiary-fixed-variant: var(--on-tertiary-fixed-variant);
+
+  /* ── Error extended ── */
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+
+  /* ── Background extended ── */
+  --color-on-background: var(--on-background);
 }
 
+/* ─────────────────────────────────────────────
+   Stitch-Inspired Tech  (dark-first, OLED)
+───────────────────────────────────────────── */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* ── Border radius tokens ── */
+  --radius-token-sm:   0.25rem;
+  --radius-token-md:   0.75rem;
+  --radius-token-lg:   1rem;
+  --radius-token-xl:   1.5rem;
+  --radius-token-full: 9999px;
+
+  /* ── shadcn semantic tokens → Stitch palette ── */
+  --background: #0c1324;
+  --foreground: #dce1fb;
+  --card: #191f31;
+  --card-foreground: #dce1fb;
+  --popover: #151b2d;
+  --popover-foreground: #dce1fb;
+  --primary: #b0c6ff;
+  --primary-foreground: #002d6f;
+  --secondary: #bec6e0;
+  --secondary-foreground: #283044;
+  --muted: #23293c;
+  --muted-foreground: #c2c6d8;
+  --accent: #3f465c;
+  --accent-foreground: #adb4ce;
+  --destructive: #93000a;
+  --border: rgba(255, 255, 255, 0.10);
+  --input: #151b2d;
+  --ring: #b0c6ff;
+  --chart-1: #b0c6ff;
+  --chart-2: #bec6e0;
+  --chart-3: #bcc7de;
+  --chart-4: #568dff;
+  --chart-5: #ffb4ab;
+  --sidebar: #151b2d;
+  --sidebar-foreground: #dce1fb;
+  --sidebar-primary: #b0c6ff;
+  --sidebar-primary-foreground: #002d6f;
+  --sidebar-accent: #23293c;
+  --sidebar-accent-foreground: #c2c6d8;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: #b0c6ff;
+
+  /* ── Full Material Design token set ── */
+  --surface:                   #0c1324;
+  --surface-dim:               #0c1324;
+  --surface-bright:            #33394c;
+  --surface-container-lowest:  #070d1f;
+  --surface-container-low:     #151b2d;
+  --surface-container:         #191f31;
+  --surface-container-high:    #23293c;
+  --surface-container-highest: #2e3447;
+  --on-surface:                #dce1fb;
+  --on-surface-variant:        #c2c6d8;
+  --inverse-surface:           #dce1fb;
+  --inverse-on-surface:        #2a3043;
+  --outline:                   #8c90a1;
+  --outline-variant:           #424655;
+  --surface-tint:              #b0c6ff;
+  --surface-variant:           #2e3447;
+
+  --primary-container:         #568dff;
+  --on-primary:                #002d6f;
+  --on-primary-container:      #002661;
+  --inverse-primary:           #0058cb;
+  --primary-fixed:             #d9e2ff;
+  --primary-fixed-dim:         #b0c6ff;
+  --on-primary-fixed:          #001945;
+  --on-primary-fixed-variant:  #00429c;
+
+  --secondary-container:       #3f465c;
+  --on-secondary:              #283044;
+  --on-secondary-container:    #adb4ce;
+  --secondary-fixed:           #dae2fd;
+  --secondary-fixed-dim:       #bec6e0;
+  --on-secondary-fixed:        #131b2e;
+  --on-secondary-fixed-variant:#3f465c;
+
+  --tertiary:                  #bcc7de;
+  --on-tertiary:               #263143;
+  --tertiary-container:        #8691a7;
+  --on-tertiary-container:     #1f2a3c;
+  --tertiary-fixed:            #d8e3fb;
+  --tertiary-fixed-dim:        #bcc7de;
+  --on-tertiary-fixed:         #111c2d;
+  --on-tertiary-fixed-variant: #3c475a;
+
+  --on-error:                  #690005;
+  --error-container:           #93000a;
+  --on-error-container:        #ffdad6;
+
+  --on-background:             #dce1fb;
 }
 
+/* .dark mirrors :root — this palette is dark-first */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0c1324;
+  --foreground: #dce1fb;
+  --card: #191f31;
+  --card-foreground: #dce1fb;
+  --popover: #151b2d;
+  --popover-foreground: #dce1fb;
+  --primary: #b0c6ff;
+  --primary-foreground: #002d6f;
+  --secondary: #bec6e0;
+  --secondary-foreground: #283044;
+  --muted: #23293c;
+  --muted-foreground: #c2c6d8;
+  --accent: #3f465c;
+  --accent-foreground: #adb4ce;
+  --destructive: #93000a;
+  --border: rgba(255, 255, 255, 0.10);
+  --input: #151b2d;
+  --ring: #b0c6ff;
+  --chart-1: #b0c6ff;
+  --chart-2: #bec6e0;
+  --chart-3: #bcc7de;
+  --chart-4: #568dff;
+  --chart-5: #ffb4ab;
+  --sidebar: #151b2d;
+  --sidebar-foreground: #dce1fb;
+  --sidebar-primary: #b0c6ff;
+  --sidebar-primary-foreground: #002d6f;
+  --sidebar-accent: #23293c;
+  --sidebar-accent-foreground: #c2c6d8;
+  --sidebar-border: rgba(255, 255, 255, 0.10);
+  --sidebar-ring: #b0c6ff;
 }
 
 @layer base {
