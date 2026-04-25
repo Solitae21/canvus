@@ -1,9 +1,21 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+export type ShapeType =
+  | 'rect' | 'rounded-rect' | 'diamond' | 'oval'
+  | 'parallelogram' | 'trapezoid' | 'hexagon' | 'cylinder'
+  | 'document' | 'predefined-process' | 'manual-input' | 'stored-data'
+  | 'internal-storage' | 'circle' | 'off-page' | 'delay'
+  | 'sticky'
+
+export type ToolType =
+  | 'select' | 'hand'
+  | ShapeType
+  | 'pen' | 'arrow' | 'text' | 'image'
+
 interface Shape {
   id: string
-  type: 'rect' | 'diamond' | 'oval' | 'sticky'
+  type: ShapeType
   x: number; y: number; w: number; h: number
   label: string
   fill: string
@@ -13,7 +25,7 @@ interface Shape {
 interface CanvasState {
   shapes: Shape[]
   selectedId: string | null
-  tool: 'select' | 'rect' | 'diamond' | 'oval' | 'arrow' | 'sticky'
+  tool: ToolType
 }
 
 const initialState: CanvasState = {

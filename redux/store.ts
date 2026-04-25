@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
+import canvasReducer from '@/redux/slice/canvas/canvas-slice';
+import uiReducer from '@/redux/slice/ui/ui-slice';
 
 export const store = configureStore({
     reducer: {
-        // Add your slices here
-        // example: counter: counterReducer,
+        canvas: canvasReducer,
+        ui: uiReducer,
     },
 });
 
