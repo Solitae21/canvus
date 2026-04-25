@@ -1,6 +1,7 @@
 import KonvaSample from "@/client/konva-sample";
 import Toolbar from "@/components/toolbar";
 import CanvasHeader from "@/client/canvas/canvas-header";
+import CanvasRightPanel from "@/client/canvas/canvas-right-panel";
 
 export default function Page() {
   return (
@@ -14,6 +15,9 @@ export default function Page() {
       <div className="absolute inset-0">
         <KonvaSample />
       </div>
+
+      {/* Properties panel — auto-opens when a shape is selected */}
+      <CanvasRightPanel />
 
       {/* Floating toolbar at bottom-center */}
       <Toolbar />
