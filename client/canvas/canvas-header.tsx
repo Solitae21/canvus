@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { zoomIn, zoomOut } from "@/redux/slice/ui/ui-slice";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Canvas-mode header — minimal overlay that sits on top of the canvas.
@@ -44,7 +45,8 @@ const IconBtn = ({
 
 /* ── Zoom controls ── */
 const ZoomControls = () => {
-  const [zoom, setZoom] = useState(100);
+  const dispatch = useAppDispatch();
+  const scale = useAppSelector((s) => s.ui.viewport.scale);
 
   return (
     <div
@@ -53,7 +55,8 @@ const ZoomControls = () => {
                   border border-white/[0.06] rounded-xl"
     >
       <button
-        onClick={() => setZoom((z) => Math.max(10, z - 10))}
+        onClick={() => dispatch(zoomOut())}
+        title="Zoom out"
         className="flex items-center justify-center w-7 h-7 rounded-lg
                    text-on-surface-variant hover:text-on-surface hover:bg-white/[0.06]
                    transition-all duration-150 text-sm"
@@ -61,10 +64,11 @@ const ZoomControls = () => {
         −
       </button>
       <span className="w-12 text-center text-[12px] font-medium tracking-wide text-on-surface-variant tabular-nums">
-        {zoom}%
+        {Math.round(scale * 100)}%
       </span>
       <button
-        onClick={() => setZoom((z) => Math.min(400, z + 10))}
+        onClick={() => dispatch(zoomIn())}
+        title="Zoom in"
         className="flex items-center justify-center w-7 h-7 rounded-lg
                    text-on-surface-variant hover:text-on-surface hover:bg-white/[0.06]
                    transition-all duration-150 text-sm"

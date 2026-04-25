@@ -7,6 +7,7 @@ export interface CanvasLabelEditorProps {
   shape: Shape;
   offsetX: number;
   offsetY: number;
+  scale: number;
   onCommit: (value: string) => void;
   onCancel: () => void;
 }
@@ -15,6 +16,7 @@ const CanvasLabelEditor = ({
   shape,
   offsetX,
   offsetY,
+  scale,
   onCommit,
   onCancel,
 }: CanvasLabelEditorProps) => {
@@ -30,10 +32,11 @@ const CanvasLabelEditor = ({
   }, []);
 
   const baseStyle: React.CSSProperties = {
-    left: shape.x + offsetX,
-    top: shape.y + offsetY,
-    width: shape.w,
-    height: shape.h,
+    left: shape.x * scale + offsetX,
+    top: shape.y * scale + offsetY,
+    width: shape.w * scale,
+    height: shape.h * scale,
+    fontSize: 14 * scale,
   };
 
   if (shape.type === "sticky") {
@@ -48,9 +51,10 @@ const CanvasLabelEditor = ({
             onCancel();
           }
         }}
-        className="absolute resize-none rounded p-3 text-sm leading-snug outline-none ring-2 ring-blue-400"
+        className="absolute resize-none rounded leading-snug outline-none ring-2 ring-blue-400"
         style={{
           ...baseStyle,
+          padding: 12 * scale,
           background: shape.fill,
           color: "#1f2937",
         }}
@@ -72,7 +76,7 @@ const CanvasLabelEditor = ({
           onCancel();
         }
       }}
-      className="absolute text-center text-sm outline-none ring-2 ring-blue-400 rounded bg-transparent"
+      className="absolute text-center outline-none ring-2 ring-blue-400 rounded bg-transparent"
       style={{
         ...baseStyle,
         color: "#ffffff",

@@ -50,6 +50,9 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shapeRefs = useRef<Map<string, Konva.Shape>>(new Map());
   const transformerRef = useRef<Konva.Transformer>(null);
+  const prevScaleRef = useRef(viewport.scale);
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
 
   // Size the Stage to its container — works in fullscreen pages, sidebars, modals, etc.
   useEffect(() => {
@@ -62,6 +65,31 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // When scale changes (via header zoom buttons), keep the screen-center stable
+  // by adjusting viewport translation around the previous scale.
+  useEffect(() => {
+    const prev = prevScaleRef.current;
+    const next = viewport.scale;
+    if (prev === next) return;
+    if (stageSize.width === 0 || stageSize.height === 0) {
+      prevScaleRef.current = next;
+      return;
+    }
+    const { x: px, y: py } = viewportRef.current;
+    const cx = stageSize.width / 2;
+    const cy = stageSize.height / 2;
+    const worldX = (cx - px) / prev;
+    const worldY = (cy - py) / prev;
+    prevScaleRef.current = next;
+    dispatch(
+      setViewport({
+        x: cx - worldX * next,
+        y: cy - worldY * next,
+        scale: next,
+      }),
+    );
+  }, [viewport.scale, stageSize.width, stageSize.height, dispatch]);
 
   useEffect(() => {
     const tr = transformerRef.current;
@@ -175,7 +203,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     const stage = e.target.getStage();
     if (!stage || e.target !== stage) return;
     if (wrapperRef.current) {
-      wrapperRef.current.style.backgroundPosition = `${stage.x() + GRID_OFFSET}px ${stage.y() + GRID_OFFSET}px`;
+      const off = GRID_OFFSET * viewport.scale;
+      wrapperRef.current.style.backgroundPosition = `${stage.x() + off}px ${stage.y() + off}px`;
     }
   };
 
@@ -208,8 +237,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
       style={{
         backgroundImage:
           "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-        backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-        backgroundPosition: `${viewport.x + GRID_OFFSET}px ${viewport.y + GRID_OFFSET}px`,
+        backgroundSize: `${GRID_SIZE * viewport.scale}px ${GRID_SIZE * viewport.scale}px`,
+        backgroundPosition: `${viewport.x + GRID_OFFSET * viewport.scale}px ${viewport.y + GRID_OFFSET * viewport.scale}px`,
         cursor: tool === "hand" ? "grab" : "default",
       }}
     >
@@ -219,6 +248,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           height={stageSize.height}
           x={viewport.x}
           y={viewport.y}
+          scaleX={viewport.scale}
+          scaleY={viewport.scale}
           draggable={tool === "hand"}
           onClick={handleStageClick}
           onDragMove={handleStageDragMove}
@@ -267,6 +298,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           shape={editingShape}
           offsetX={viewport.x}
           offsetY={viewport.y}
+          scale={viewport.scale}
           onCommit={commitLabel}
           onCancel={() => setEditingId(null)}
         />
