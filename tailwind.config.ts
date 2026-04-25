@@ -5,6 +5,7 @@ const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
+    './client/**/*.{ts,tsx}',
   ],
   darkMode: 'class',   // enables dark mode via a CSS class
   theme: {
