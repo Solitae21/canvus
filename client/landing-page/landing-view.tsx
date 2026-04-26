@@ -1,206 +1,268 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
-/* ── Fonts & global styles injected via style tag ── */
+/* ────────────────────────────────────────────────────────────────────────────
+   CanvUs — Landing
+   Aesthetic: refined editorial-tech. Stitch-inspired, dark-first OLED navy
+   with lavender-blue glow accents. Plus Jakarta Sans for prose, JetBrains
+   Mono for systemic labels. Glassmorphism, dot-grid, restrained motion.
+   ──────────────────────────────────────────────────────────────────────── */
+
+const PALETTE = {
+  bg: "#0c1324",
+  bgDeep: "#070d1f",
+  surface: "#151b2d",
+  surfaceHi: "#191f31",
+  surfaceHigher: "#23293c",
+  borderSoft: "rgba(255,255,255,0.06)",
+  border: "rgba(255,255,255,0.10)",
+  borderStrong: "rgba(255,255,255,0.16)",
+  text: "#dce1fb",
+  textMuted: "#c2c6d8",
+  textDim: "#8c90a1",
+  textFaint: "#5a6079",
+  primary: "#b0c6ff",
+  primaryStrong: "#568dff",
+  primaryDeep: "#002d6f",
+  tertiary: "#bcc7de",
+  warm: "#ffb4ab",
+  amber: "#ffb454",
+  mint: "#7dd3a4",
+} as const;
+
+/* ── Global injected styles (animations + utility classes) ─────────────── */
 const GlobalStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap');
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { background: #06070d; }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background: #1e2d40; border-radius: 4px; }
+    .lp-root *, .lp-root *::before, .lp-root *::after {
+      box-sizing: border-box;
+    }
+    .lp-root { scroll-behavior: smooth; }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
+    @keyframes lp-fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.8); opacity: 0.8; }
-      100% { transform: scale(2.2); opacity: 0; }
+    @keyframes lp-float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
     }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(28px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes lp-pulse {
+      0%   { transform: scale(0.85); opacity: 0.9; }
+      100% { transform: scale(2.2);  opacity: 0;   }
     }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
+    @keyframes lp-shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
     }
-    @keyframes cursor-move {
+    @keyframes lp-cursor-a {
       0%   { top: 38%; left: 30%; }
       25%  { top: 55%; left: 58%; }
       50%  { top: 30%; left: 65%; }
       75%  { top: 62%; left: 22%; }
       100% { top: 38%; left: 30%; }
     }
-    @keyframes cursor2-move {
+    @keyframes lp-cursor-b {
       0%   { top: 60%; left: 55%; }
       25%  { top: 28%; left: 42%; }
       50%  { top: 65%; left: 30%; }
       75%  { top: 40%; left: 70%; }
       100% { top: 60%; left: 55%; }
     }
-    @keyframes draw-line {
-      from { stroke-dashoffset: 300; }
-      to { stroke-dashoffset: 0; }
+    @keyframes lp-draw {
+      from { stroke-dashoffset: 240; }
+      to   { stroke-dashoffset: 0;   }
     }
-    @keyframes shimmer {
-      0% { background-position: -200% center; }
-      100% { background-position: 200% center; }
+    @keyframes lp-orbit {
+      from { transform: rotate(0deg);   }
+      to   { transform: rotate(360deg); }
     }
-    @keyframes spin-slow {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes grid-shift {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(40px); }
-    }
-    .fade-up { animation: fadeUp 0.7s ease both; }
-    .fade-up-1 { animation: fadeUp 0.7s 0.1s ease both; }
-    .fade-up-2 { animation: fadeUp 0.7s 0.2s ease both; }
-    .fade-up-3 { animation: fadeUp 0.7s 0.35s ease both; }
-    .fade-up-4 { animation: fadeUp 0.7s 0.5s ease both; }
 
-    .hero-btn-primary {
-      background: #00d4aa;
-      color: #06070d;
-      border: none;
-      padding: 14px 32px;
-      font-size: 15px;
-      font-weight: 700;
+    .lp-fade   { animation: lp-fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+    .lp-fade-1 { animation: lp-fadeUp 0.8s 0.08s cubic-bezier(0.16,1,0.3,1) both; }
+    .lp-fade-2 { animation: lp-fadeUp 0.8s 0.18s cubic-bezier(0.16,1,0.3,1) both; }
+    .lp-fade-3 { animation: lp-fadeUp 0.8s 0.30s cubic-bezier(0.16,1,0.3,1) both; }
+    .lp-fade-4 { animation: lp-fadeUp 0.8s 0.44s cubic-bezier(0.16,1,0.3,1) both; }
+
+    .lp-mono {
+      font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+      font-feature-settings: "ss01", "cv11";
+    }
+
+    .lp-btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px;
+      background: ${PALETTE.primary};
+      color: ${PALETTE.primaryDeep};
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 12px;
+      font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
       cursor: pointer;
-      font-family: 'Manrope', sans-serif;
-      letter-spacing: 0.01em;
-      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 1px 0 rgba(0,0,0,0.4),
+        0 0 0 0 rgba(86,141,255,0.0);
+      transition: box-shadow 220ms ease, transform 180ms ease, background 200ms ease;
+    }
+    .lp-btn-primary:hover {
+      transform: translateY(-1px);
+      background: #c4d4ff;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.6),
+        0 6px 24px rgba(86,141,255,0.35),
+        0 0 0 1px rgba(176,198,255,0.5);
+    }
+    .lp-btn-primary:active { transform: translateY(0); }
+
+    .lp-btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.02);
+      color: ${PALETTE.textMuted};
+      border: 1px solid ${PALETTE.border};
+      border-radius: 12px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+    .lp-btn-ghost:hover {
+      color: ${PALETTE.text};
+      border-color: ${PALETTE.borderStrong};
+      background: rgba(255,255,255,0.04);
+    }
+
+    .lp-card {
+      background: linear-gradient(180deg, ${PALETTE.surfaceHi} 0%, ${PALETTE.surface} 100%);
+      border: 1px solid ${PALETTE.borderSoft};
+      border-radius: 18px;
+      transition: border-color 240ms ease, transform 240ms ease, box-shadow 240ms ease;
       position: relative;
-      overflow: hidden;
     }
-    .hero-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px #00d4aa55;
-      background: #00e8bc;
+    .lp-card::before {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: 18px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(176,198,255,0.0), rgba(176,198,255,0.0));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      transition: background 280ms ease;
+      pointer-events: none;
     }
-    .hero-btn-secondary {
-      background: transparent;
-      color: #94a3b8;
-      border: 1px solid #1e2d40;
-      padding: 14px 28px;
-      font-size: 15px;
-      font-weight: 600;
-      border-radius: 12px;
+    .lp-card:hover {
+      transform: translateY(-3px);
+      border-color: ${PALETTE.border};
+      box-shadow: 0 20px 60px -12px rgba(0,0,0,0.5);
+    }
+    .lp-card:hover::before {
+      background: linear-gradient(135deg, rgba(176,198,255,0.35), rgba(86,141,255,0.0));
+    }
+
+    .lp-link {
+      color: ${PALETTE.textMuted};
+      font-size: 13.5px; font-weight: 500;
       cursor: pointer;
-      font-family: 'Manrope', sans-serif;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      transition: color 160ms ease;
+      letter-spacing: -0.005em;
     }
-    .hero-btn-secondary:hover {
-      border-color: #00d4aa;
-      color: #00d4aa;
-      background: #00d4aa08;
+    .lp-link:hover { color: ${PALETTE.text}; }
+
+    .lp-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: ${PALETTE.textDim};
     }
-    .feature-card {
-      background: #0d1117;
-      border: 1px solid #1a2332;
-      border-radius: 20px;
-      padding: 28px;
-      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-      cursor: default;
+    .lp-eyebrow::before {
+      content: ""; display: inline-block;
+      width: 18px; height: 1px;
+      background: ${PALETTE.borderStrong};
     }
-    .feature-card:hover {
-      border-color: #00d4aa44;
-      transform: translateY(-4px);
-      box-shadow: 0 16px 48px #00d4aa10;
+
+    /* Hero gradient text */
+    .lp-grad {
+      background: linear-gradient(
+        92deg,
+        ${PALETTE.text} 0%,
+        ${PALETTE.primary} 38%,
+        ${PALETTE.primaryStrong} 62%,
+        ${PALETTE.text} 100%
+      );
+      background-size: 220% auto;
+      -webkit-background-clip: text;
+              background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: lp-shimmer 9s linear infinite;
     }
-    .nav-link {
-      color: #64748b;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.15s;
-      cursor: pointer;
+
+    /* Dot grid (echoes the canvas surface inside the app) */
+    .lp-dots {
+      background-image: radial-gradient(circle, rgba(220,225,251,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-position: 14px 14px;
     }
-    .nav-link:hover { color: #e2e8f0; }
-    .stat-card {
-      background: #0d1117;
-      border: 1px solid #1a2332;
-      border-radius: 16px;
-      padding: 24px 28px;
-      text-align: center;
+
+    /* Chip */
+    .lp-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 11px 5px 9px;
+      background: rgba(176,198,255,0.07);
+      border: 1px solid rgba(176,198,255,0.18);
+      border-radius: 100px;
+      font-size: 11.5px; font-weight: 600;
+      color: ${PALETTE.primary};
+      letter-spacing: 0.04em;
     }
-    .plan-card {
-      background: #0d1117;
-      border: 1px solid #1a2332;
-      border-radius: 24px;
-      padding: 32px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .plan-card.featured {
-      border-color: #00d4aa60;
-      box-shadow: 0 0 60px #00d4aa14;
-    }
-    .plan-card:not(.featured):hover {
-      border-color: #1e2d40;
-    }
-    .testimonial-card {
-      background: #0d1117;
-      border: 1px solid #1a2332;
-      border-radius: 20px;
-      padding: 24px 28px;
+
+    .lp-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, ${PALETTE.border}, transparent);
     }
   `}</style>
 );
 
-/* ── Animated canvas preview ── */
+/* ── Animated canvas preview (themed) ─────────────────────────────────── */
 const CanvasPreview = () => {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), 80);
-    return () => clearInterval(iv);
-  }, []);
-
   return (
     <div
       style={{
         position: "relative",
         width: "100%",
         height: "100%",
-        borderRadius: 16,
+        borderRadius: 14,
         overflow: "hidden",
-        background: "linear-gradient(135deg, #0d1117 0%, #0a1628 100%)",
+        background:
+          "radial-gradient(ellipse at 30% 20%, #1a2244 0%, #0c1324 55%, #070d1f 100%)",
       }}
     >
-      {/* Grid lines */}
+      {/* Dot grid */}
       <svg
         style={{
           position: "absolute",
           inset: 0,
           width: "100%",
           height: "100%",
-          opacity: 0.35,
+          opacity: 0.6,
         }}
       >
         <defs>
           <pattern
-            id="grid"
-            width="32"
-            height="32"
+            id="lp-canvas-dots"
+            width="22"
+            height="22"
             patternUnits="userSpaceOnUse"
           >
-            <path
-              d="M 32 0 L 0 0 0 32"
-              fill="none"
-              stroke="#1e2d40"
-              strokeWidth="0.8"
-            />
+            <circle cx="11" cy="11" r="0.9" fill="rgba(220,225,251,0.10)" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <rect width="100%" height="100%" fill="url(#lp-canvas-dots)" />
       </svg>
 
-      {/* Flowchart shapes */}
+      {/* Flowchart */}
       <svg
         style={{
           position: "absolute",
@@ -210,1003 +272,690 @@ const CanvasPreview = () => {
           overflow: "visible",
         }}
       >
-        {/* Connections */}
+        {/* connectors */}
+        <line x1="50%" y1="92"  x2="50%" y2="152" stroke={PALETTE.primary} strokeWidth="1.2" strokeDasharray="3,3" opacity="0.55" />
+        <line x1="50%" y1="222" x2="50%" y2="270" stroke={PALETTE.primary} strokeWidth="1.2" strokeDasharray="3,3" opacity="0.55" />
         <line
-          x1="50%"
-          y1="92"
-          x2="50%"
-          y2="152"
-          stroke="#00d4aa"
-          strokeWidth="1.5"
+          x1="50%" y1="340" x2="50%" y2="385"
+          stroke={PALETTE.primaryStrong}
+          strokeWidth="1.4"
           strokeDasharray="4,3"
-          opacity="0.6"
-        />
-        <line
-          x1="50%"
-          y1="222"
-          x2="50%"
-          y2="270"
-          stroke="#00d4aa"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-          opacity="0.6"
-        />
-        <line
-          x1="50%"
-          y1="340"
-          x2="50%"
-          y2="385"
-          stroke="#00d4aa"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-          opacity="0.6"
-          style={{
-            animation: "draw-line 2s ease infinite",
-            strokeDashoffset: 300,
-          }}
+          style={{ animation: "lp-draw 2s ease infinite", strokeDashoffset: 240 }}
         />
 
-        {/* Start node */}
-        <rect
-          x="calc(50% - 70)"
-          y="52"
-          width="140"
-          height="40"
-          rx="20"
-          fill="#0d3d30"
-          stroke="#00d4aa"
-          strokeWidth="1.5"
-        />
-        <text
-          x="50%"
-          y="77"
-          textAnchor="middle"
-          fill="#00d4aa"
-          fontSize="12"
-          fontFamily="Manrope"
-          fontWeight="700"
-        >
-          Start Meeting
+        {/* start */}
+        <rect x="calc(50% - 70)" y="52" width="140" height="40" rx="20"
+              fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.2" />
+        <text x="50%" y="77" textAnchor="middle" fill={PALETTE.primary}
+              fontSize="11.5" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+          Start meeting
         </text>
 
-        {/* Process box */}
-        <rect
-          x="calc(50% - 90)"
-          y="152"
-          width="180"
-          height="70"
-          rx="10"
-          fill="#0d1f3d"
-          stroke="#3b82f6"
-          strokeWidth="1.5"
-        />
-        <text
-          x="50%"
-          y="183"
-          textAnchor="middle"
-          fill="#93c5fd"
-          fontSize="11"
-          fontFamily="Manrope"
-          fontWeight="700"
-        >
-          Present Flowchart
+        {/* process */}
+        <rect x="calc(50% - 95)" y="152" width="190" height="70" rx="10"
+              fill="rgba(86,141,255,0.10)" stroke={PALETTE.primaryStrong} strokeWidth="1.2" />
+        <text x="50%" y="183" textAnchor="middle" fill={PALETTE.text}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+          Present flowchart
         </text>
-        <text
-          x="50%"
-          y="200"
-          textAnchor="middle"
-          fill="#3b82f6"
-          fontSize="10"
-          fontFamily="Manrope"
-          opacity="0.8"
-        >
-          Edit together in real-time
+        <text x="50%" y="201" textAnchor="middle" fill={PALETTE.textMuted}
+              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
+          Edit together in real time
         </text>
 
-        {/* Decision diamond */}
+        {/* decision */}
         <polygon
-          points={`calc(50%),270 calc(50% + 85),305 calc(50%),340 calc(50% - 85),305`}
-          fill="#1f1030"
-          stroke="#a855f7"
-          strokeWidth="1.5"
+          points="calc(50%),270 calc(50% + 88),305 calc(50%),340 calc(50% - 88),305"
+          fill="rgba(188,199,222,0.08)" stroke={PALETTE.tertiary} strokeWidth="1.2"
         />
-        <text
-          x="50%"
-          y="309"
-          textAnchor="middle"
-          fill="#d8b4fe"
-          fontSize="10"
-          fontFamily="Manrope"
-          fontWeight="700"
-        >
+        <text x="50%" y="309" textAnchor="middle" fill={PALETTE.tertiary}
+              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
           Approved?
         </text>
 
-        {/* End node */}
-        <rect
-          x="calc(50% - 60)"
-          y="385"
-          width="120"
-          height="38"
-          rx="19"
-          fill="#1f0d1d"
-          stroke="#ec4899"
-          strokeWidth="1.5"
-        />
-        <text
-          x="50%"
-          y="410"
-          textAnchor="middle"
-          fill="#f9a8d4"
-          fontSize="11"
-          fontFamily="Manrope"
-          fontWeight="700"
-        >
-          Ship it 🚀
+        {/* end */}
+        <rect x="calc(50% - 62)" y="385" width="124" height="38" rx="19"
+              fill="rgba(125,211,164,0.08)" stroke={PALETTE.mint} strokeWidth="1.2" />
+        <text x="50%" y="409" textAnchor="middle" fill={PALETTE.mint}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+          Ship it
         </text>
 
-        {/* Sticky note */}
-        <rect
-          x="72%"
-          y="155"
-          width="130"
-          height="80"
-          rx="4"
-          fill="#1f1800"
-          stroke="#eab308"
-          strokeWidth="1"
-          opacity="0.9"
-        />
-        <text
-          x="72%"
-          dx="14"
-          y="178"
-          fill="#fde68a"
-          fontSize="10"
-          fontFamily="Manrope"
-          fontWeight="600"
-        >
-          📝 Notes
+        {/* sticky */}
+        <rect x="72%" y="155" width="132" height="84" rx="6"
+              fill="rgba(255,180,84,0.08)" stroke={PALETTE.amber} strokeWidth="1" opacity="0.95" />
+        <text x="72%" dx="14" y="178" fill={PALETTE.amber}
+              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+          Notes
         </text>
-        <text
-          x="72%"
-          dx="14"
-          y="198"
-          fill="#ca8a04"
-          fontSize="9"
-          fontFamily="Manrope"
-        >
+        <text x="72%" dx="14" y="198" fill={PALETTE.amber}
+              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
           Review before
         </text>
-        <text
-          x="72%"
-          dx="14"
-          y="212"
-          fill="#ca8a04"
-          fontSize="9"
-          fontFamily="Manrope"
-        >
+        <text x="72%" dx="14" y="214" fill={PALETTE.amber}
+              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
           client sign-off
         </text>
-        <line
-          x1="72%"
-          y1="235"
-          x2="50%"
-          y2="310"
-          stroke="#eab308"
-          strokeWidth="1"
-          strokeDasharray="3,3"
-          opacity="0.3"
-        />
+        <line x1="72%" y1="240" x2="50%" y2="310"
+              stroke={PALETTE.amber} strokeWidth="1" strokeDasharray="3,3" opacity="0.3" />
       </svg>
 
-      {/* Live cursor 1 */}
-      <div
-        style={{
-          position: "absolute",
-          animation: "cursor-move 8s ease-in-out infinite",
-          transition: "top 2s ease, left 2s ease",
-          pointerEvents: "none",
-          zIndex: 10,
-        }}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="#3b82f6"
-          style={{ filter: "drop-shadow(0 2px 4px #0008)" }}
-        >
+      {/* Cursor A */}
+      <div style={{ position: "absolute", animation: "lp-cursor-a 8s ease-in-out infinite", pointerEvents: "none", zIndex: 10 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill={PALETTE.primaryStrong}
+             style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
           <path d="M5 3l14 9-7 1-4 7z" />
         </svg>
-        <div
-          style={{
-            background: "#3b82f6",
-            color: "white",
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "2px 8px",
-            borderRadius: 8,
-            marginTop: 2,
-            fontFamily: "Manrope",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Mia Chen
+        <div className="lp-mono" style={{
+          background: PALETTE.primaryStrong, color: "#fff",
+          fontSize: 10, fontWeight: 600, padding: "2px 7px",
+          borderRadius: 6, marginTop: 2, whiteSpace: "nowrap", letterSpacing: "0.02em",
+        }}>
+          mia
         </div>
       </div>
 
-      {/* Live cursor 2 */}
-      <div
-        style={{
-          position: "absolute",
-          animation: "cursor2-move 11s ease-in-out infinite",
-          transition: "top 3s ease, left 3s ease",
-          pointerEvents: "none",
-          zIndex: 10,
-        }}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="#ec4899"
-          style={{ filter: "drop-shadow(0 2px 4px #0008)" }}
-        >
+      {/* Cursor B */}
+      <div style={{ position: "absolute", animation: "lp-cursor-b 11s ease-in-out infinite", pointerEvents: "none", zIndex: 10 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill={PALETTE.warm}
+             style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
           <path d="M5 3l14 9-7 1-4 7z" />
         </svg>
-        <div
-          style={{
-            background: "#ec4899",
-            color: "white",
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "2px 8px",
-            borderRadius: 8,
-            marginTop: 2,
-            fontFamily: "Manrope",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Jake L.
+        <div className="lp-mono" style={{
+          background: PALETTE.warm, color: "#3a0d09",
+          fontSize: 10, fontWeight: 700, padding: "2px 7px",
+          borderRadius: 6, marginTop: 2, whiteSpace: "nowrap", letterSpacing: "0.02em",
+        }}>
+          jake
         </div>
       </div>
 
-      {/* Toolbar overlay */}
-      <div
-        style={{
-          position: "absolute",
-          left: 12,
-          top: "50%",
-          transform: "translateY(-50%)",
-          background: "#0d1117cc",
-          border: "1px solid #1a2332",
-          borderRadius: 12,
-          backdropFilter: "blur(8px)",
-          padding: "8px 6px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-        }}
-      >
+      {/* Floating tool rail */}
+      <div style={{
+        position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+        background: "rgba(21,27,45,0.7)", border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 12, backdropFilter: "blur(12px)",
+        padding: "6px 5px", display: "flex", flexDirection: "column", gap: 4,
+      }}>
         {["▢", "◇", "○", "✎", "→"].map((ic, i) => (
-          <div
-            key={i}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              background: i === 0 ? "#00d4aa18" : "transparent",
-              border: i === 0 ? "1px solid #00d4aa60" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 13,
-              color: i === 0 ? "#00d4aa" : "#475569",
-              cursor: "default",
-            }}
-          >
-            {ic}
-          </div>
+          <div key={i} style={{
+            width: 26, height: 26, borderRadius: 7,
+            background: i === 0 ? "rgba(176,198,255,0.14)" : "transparent",
+            border: i === 0 ? "1px solid rgba(176,198,255,0.4)" : "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, color: i === 0 ? PALETTE.primary : PALETTE.textFaint,
+          }}>{ic}</div>
         ))}
       </div>
 
-      {/* Presence avatars */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          right: 12,
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          background: "#0d1117cc",
-          border: "1px solid #1a2332",
-          borderRadius: 10,
-          backdropFilter: "blur(8px)",
-          padding: "6px 10px",
-        }}
-      >
+      {/* Presence */}
+      <div style={{
+        position: "absolute", top: 12, right: 12,
+        display: "flex", alignItems: "center", gap: 4,
+        background: "rgba(21,27,45,0.7)", border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 10, backdropFilter: "blur(12px)", padding: "5px 10px",
+      }}>
         {[
-          ["MK", "#00d4aa"],
-          ["MC", "#3b82f6"],
-          ["JL", "#ec4899"],
+          ["MK", PALETTE.primary],
+          ["MC", PALETTE.primaryStrong],
+          ["JL", PALETTE.warm],
         ].map(([av, col]) => (
-          <div
-            key={av}
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
-              background: col,
-              fontSize: 9,
-              fontWeight: 800,
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1.5px solid #06070d",
-              fontFamily: "Manrope",
-            }}
-          >
-            {av}
-          </div>
+          <div key={av as string} style={{
+            width: 22, height: 22, borderRadius: "50%",
+            background: col as string,
+            fontSize: 9, fontWeight: 700, color: "#0c1324",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: `1.5px solid ${PALETTE.bg}`,
+          }}>{av}</div>
         ))}
-        <div
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: "#22c55e",
-            boxShadow: "0 0 6px #22c55e",
-            marginLeft: 4,
-          }}
-        />
-        <span
-          style={{
-            fontSize: 10,
-            color: "#64748b",
-            fontFamily: "Manrope",
-            fontWeight: 600,
-          }}
-        >
-          3 live
+        <div style={{
+          width: 7, height: 7, borderRadius: "50%",
+          background: PALETTE.mint,
+          boxShadow: `0 0 6px ${PALETTE.mint}`, marginLeft: 4,
+        }} />
+        <span className="lp-mono" style={{ fontSize: 10, color: PALETTE.textDim, fontWeight: 600 }}>
+          3 LIVE
         </span>
       </div>
 
-      {/* Glow overlay */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at 50% 120%, #00d4aa12 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
+      {/* Soft glow */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse at 50% 110%, rgba(86,141,255,0.10) 0%, transparent 65%)",
+        pointerEvents: "none",
+      }} />
     </div>
   );
 };
 
-/* ── Main landing page ── */
+/* ────────────────────────────────────────────────────────────────────────── */
+
 export default function LandingPageView() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
   const [billingAnnual, setBillingAnnual] = useState(true);
+  const [activeFeature, setActiveFeature] = useState(0);
+
+  /* keep a ticking value to subtly animate ambient elements */
+  const [, setT] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setT((x) => x + 1), 800);
+    return () => clearInterval(iv);
+  }, []);
 
   const features = [
     {
-      icon: "⚡",
-      title: "Zero-lag collaboration",
-      desc: "Powered by Yjs CRDT — edits from multiple people merge instantly with no conflicts, even on slow connections.",
-      color: "#00d4aa",
+      icon: <PathIcon d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />,
+      title: "Zero-lag co-editing",
+      desc: "Yjs CRDT under the hood. Strokes, shapes, and labels merge instantly across continents — no flicker, no conflict.",
+      color: PALETTE.primary,
     },
     {
-      icon: "🖥️",
-      title: "Present Mode",
-      desc: "One click to enter distraction-free presentation. Audience follows your viewport in real time — no screen sharing needed.",
-      color: "#3b82f6",
+      icon: <PathIcon d="M3 5h18v11H3z M8 21h8 M12 16v5" />,
+      title: "Present mode",
+      desc: "One key drops you into focus. Audience viewports follow yours in real time — no screens to share, no awkward windows.",
+      color: PALETTE.primaryStrong,
     },
     {
-      icon: "🎨",
-      title: "Rich flowchart toolkit",
-      desc: "Process boxes, decision diamonds, swimlanes, sticky notes, connectors, freehand drawing, and smart snap-to-grid.",
-      color: "#a855f7",
+      icon: <PathIcon d="M3 5h18v14H3z M3 10h18 M9 5v14" />,
+      title: "Flowchart toolkit",
+      desc: "Process boxes, decision diamonds, swimlanes, sticky notes, freehand ink, and snap-to-grid — built for systems thinkers.",
+      color: PALETTE.tertiary,
     },
     {
-      icon: "💬",
-      title: "In-canvas chat",
-      desc: "Comment threads anchored to shapes. No need to switch to Slack mid-meeting — everything lives on the board.",
-      color: "#ec4899",
+      icon: <PathIcon d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
+      title: "Comments on canvas",
+      desc: "Threads anchor to shapes, not pages. Argue, agree, and resolve where the work actually lives.",
+      color: PALETTE.warm,
     },
     {
-      icon: "📤",
+      icon: <PathIcon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3" />,
       title: "Export anywhere",
-      desc: "Download as high-res PNG, PDF, or SVG. Or share a live read-only link for stakeholders who just need to view.",
-      color: "#f59e0b",
+      desc: "PNG, SVG, PDF in one click. Or share a live read-only link for stakeholders who just need to peek.",
+      color: PALETTE.amber,
     },
     {
-      icon: "🔒",
-      title: "Secure rooms",
-      desc: "OAuth via Google or GitHub. Role-based access: owner, editor, viewer. Enterprise SSO on Team plan.",
-      color: "#22c55e",
+      icon: <PathIcon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+      title: "Workspaces & SSO",
+      desc: "OAuth via Google or GitHub. Role-based access. SAML SSO and audit logs on the Team plan.",
+      color: PALETTE.mint,
     },
   ];
 
   const testimonials = [
     {
       name: "Sarah K.",
-      role: "Product Lead @ Notion",
-      text: "We replaced Miro for our sprint planning. CanvUs is snappier and the present mode actually works during standups.",
+      role: "Product Lead",
+      text: "We replaced Miro for sprint planning. CanvUs is snappier, and Present Mode actually works during standups.",
       avatar: "SK",
-      color: "#00d4aa",
+      color: PALETTE.primary,
     },
     {
       name: "David R.",
       role: "Engineering Manager",
-      text: "Our architecture reviews went from 2 hours of confusion to 45 minutes of clarity. Everyone can edit and see changes live.",
+      text: "Architecture reviews went from two hours of confusion to forty-five minutes of clarity. Everyone edits, everyone sees.",
       avatar: "DR",
-      color: "#3b82f6",
+      color: PALETTE.primaryStrong,
     },
     {
       name: "Ana M.",
-      role: "UX Designer",
-      text: "The sticky note anchoring feature alone is worth switching. No more 'where was that comment?' chaos.",
+      role: "Senior Designer",
+      text: "Sticky notes that anchor to shapes. That alone is worth switching. No more 'where was that comment?'.",
       avatar: "AM",
-      color: "#a855f7",
+      color: PALETTE.warm,
     },
   ];
 
   return (
     <div
+      className="lp-root"
       style={{
-        background: "#06070d",
-        color: "#e2e8f0",
-        fontFamily: "'Manrope', sans-serif",
+        background: PALETTE.bg,
+        color: PALETTE.text,
+        fontFamily: "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
         overflowX: "hidden",
+        minHeight: "100vh",
+        position: "relative",
       }}
     >
       <GlobalStyles />
 
-      {/* ── NAV ── */}
-      <nav
+      {/* ── Ambient background ───────────────────────────────────────── */}
+      <div
+        aria-hidden
         style={{
           position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          background: "#06070dcc",
-          backdropFilter: "blur(16px)",
-          borderBottom: "1px solid #1a2332",
-          padding: "0 24px",
-          height: 64,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
         }}
       >
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #00d4aa, #0ea5e9)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
-            }}
-          >
-            ◈
-          </div>
-          <span
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: 18,
-              color: "white",
+        {/* Top-right halo */}
+        <div style={{
+          position: "absolute",
+          top: -180, right: -120,
+          width: 720, height: 720,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(86,141,255,0.18) 0%, rgba(86,141,255,0.04) 38%, transparent 70%)",
+          filter: "blur(40px)",
+        }} />
+        {/* Mid-left halo */}
+        <div style={{
+          position: "absolute",
+          top: "30%", left: "-15%",
+          width: 580, height: 580,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(176,198,255,0.10) 0%, transparent 65%)",
+          filter: "blur(50px)",
+        }} />
+        {/* Vignette / floor light */}
+        <div style={{
+          position: "absolute",
+          bottom: -200, left: "50%",
+          transform: "translateX(-50%)",
+          width: 1200, height: 600,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(ellipse at center, rgba(86,141,255,0.08) 0%, transparent 60%)",
+          filter: "blur(60px)",
+        }} />
+      </div>
+
+      {/* ── NAV ──────────────────────────────────────────────────────── */}
+      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: "0 16px" }}>
+        <div
+          style={{
+            maxWidth: 1180, margin: "0 auto",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: "rgba(21,27,45,0.55)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 18,
+            padding: "10px 12px 10px 16px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
+          }}
+        >
+          {/* Logo */}
+          <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <Logo />
+            <span style={{
+              fontSize: 16, fontWeight: 800, color: PALETTE.text,
               letterSpacing: "-0.02em",
-            }}
-          >
-            CanvUs
-          </span>
-        </div>
-
-        {/* Nav links — desktop */}
-        <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
-          {["Features", "How it works", "Pricing", "Templates"].map((l) => (
-            <span key={l} className="nav-link">
-              {l}
+            }}>
+              CanvUs
             </span>
-          ))}
-        </div>
+            <span className="lp-mono" style={{
+              fontSize: 9.5, fontWeight: 600,
+              color: PALETTE.primary,
+              padding: "2px 6px",
+              border: "1px solid rgba(176,198,255,0.25)",
+              borderRadius: 5,
+              letterSpacing: "0.08em",
+              marginLeft: 2,
+            }}>
+              BETA
+            </span>
+          </a>
 
-        {/* CTA */}
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button
-            className="hero-btn-secondary"
-            style={{ padding: "8px 18px", fontSize: 13 }}
-          >
-            Log in
-          </button>
-          <button
-            className="hero-btn-primary"
-            style={{ padding: "8px 18px", fontSize: 13 }}
-          >
-            Get started free
-          </button>
+          {/* Links */}
+          <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
+            {["Features", "How it works", "Pricing", "Templates", "Changelog"].map((l) => (
+              <span key={l} className="lp-link">{l}</span>
+            ))}
+          </div>
+
+          {/* CTAs */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span className="lp-link" style={{ padding: "6px 12px" }}>Sign in</span>
+            <button className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13 }}>
+              Open canvas
+              <ArrowIcon />
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* ── HERO ── */}
-      <section
-        style={{
-          minHeight: "100vh",
-          paddingTop: 64,
-          display: "flex",
-          alignItems: "center",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Background effects */}
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-          <div
-            style={{
-              position: "absolute",
-              top: "20%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 700,
-              height: 700,
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle, #00d4aa0a 0%, transparent 70%)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: "10%",
-              right: "-10%",
-              width: 500,
-              height: 500,
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle, #3b82f608 0%, transparent 70%)",
-            }}
-          />
-          {/* Decorative lines */}
-          <svg
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              opacity: 0.15,
-            }}
-          >
-            <defs>
-              <pattern
-                id="dots"
-                width="40"
-                height="40"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle cx="20" cy="20" r="1" fill="#1e2d40" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#dots)" />
-          </svg>
-        </div>
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 1,
+        paddingTop: 132, paddingBottom: 64,
+      }}>
+        {/* Hero dot grid */}
+        <div className="lp-dots" style={{
+          position: "absolute", inset: 0,
+          maskImage: "radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%)",
+          WebkitMaskImage: "radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%)",
+          opacity: 0.7, pointerEvents: "none",
+        }} />
 
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "80px 24px",
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "1fr 1.1fr",
-            gap: 64,
-            alignItems: "center",
-          }}
-        >
-          {/* Left copy */}
+        <div style={{
+          maxWidth: 1180, margin: "0 auto", padding: "0 24px",
+          display: "grid", gridTemplateColumns: "1fr 1.05fr", gap: 56,
+          alignItems: "center", position: "relative",
+        }}>
+          {/* Copy */}
           <div>
-            <div
-              className="fade-up"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 24,
-                background: "#00d4aa12",
-                border: "1px solid #00d4aa30",
-                borderRadius: 100,
-                padding: "6px 14px",
-              }}
-            >
-              <div
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "#00d4aa",
-                  boxShadow: "0 0 10px #00d4aa",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#00d4aa",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                NOW IN OPEN BETA · FREE TO START
+            <div className="lp-fade lp-chip">
+              <span style={{
+                width: 7, height: 7, borderRadius: "50%",
+                background: PALETTE.mint, boxShadow: `0 0 8px ${PALETTE.mint}`,
+              }} />
+              <span className="lp-mono" style={{ letterSpacing: "0.12em" }}>
+                v1.0 · OPEN BETA · FREE TO START
               </span>
             </div>
 
-            <h1
-              className="fade-up-1"
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(38px, 5.5vw, 64px)",
-                lineHeight: 1.05,
-                letterSpacing: "-0.03em",
-                marginBottom: 20,
-                color: "white",
-              }}
-            >
-              Your team's
+            <h1 className="lp-fade-1" style={{
+              fontSize: "clamp(40px, 5.6vw, 68px)",
+              lineHeight: 0.98,
+              letterSpacing: "-0.035em",
+              fontWeight: 800,
+              color: PALETTE.text,
+              margin: "26px 0 22px",
+            }}>
+              The canvas
               <br />
-              <span
-                style={{
-                  background:
-                    "linear-gradient(90deg, #00d4aa, #0ea5e9, #a855f7)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundSize: "200% auto",
-                  animation: "shimmer 4s linear infinite",
-                }}
-              >
-                thinking space.
+              your team can{" "}
+              <span className="lp-grad" style={{ fontStyle: "italic" }}>
+                actually
               </span>
+              <br />
+              think on.
             </h1>
 
-            <p
-              className="fade-up-2"
-              style={{
-                fontSize: 17,
-                lineHeight: 1.7,
-                color: "#64748b",
-                marginBottom: 36,
-                maxWidth: 440,
-              }}
-            >
-              Real-time collaborative flowcharts and whiteboards built for
-              meetings. Everyone edits together — no lag, no conflict, no
-              switching tabs.
+            <p className="lp-fade-2" style={{
+              fontSize: 17,
+              lineHeight: 1.65,
+              color: PALETTE.textMuted,
+              maxWidth: 460,
+              marginBottom: 32,
+              fontWeight: 400,
+            }}>
+              Real-time collaborative whiteboards designed for meetings.
+              Everyone edits at once — sub-50ms sync, conflict-free, no tabs to juggle.
             </p>
 
-            <div
-              className="fade-up-3"
-              style={{
-                display: "flex",
-                gap: 12,
-                flexWrap: "wrap",
-                marginBottom: 40,
-              }}
-            >
-              <button
-                className="hero-btn-primary"
-                style={{ fontSize: 15, padding: "14px 28px" }}
-              >
-                Start a free board →
+            <div className="lp-fade-3" style={{
+              display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 30,
+            }}>
+              <button className="lp-btn-primary">
+                Start a free board
+                <ArrowIcon />
               </button>
-              <button className="hero-btn-secondary">Watch 90-sec demo</button>
+              <button className="lp-btn-ghost">
+                <PlayIcon />
+                Watch 90-sec demo
+              </button>
             </div>
 
-            <div
-              className="fade-up-4"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 20,
-                flexWrap: "wrap",
-              }}
-            >
-              {[
-                { label: "No credit card required", icon: "✓" },
-                { label: "Up to 3 boards free", icon: "✓" },
-                { label: "Invite unlimited guests", icon: "✓" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                >
-                  <span
-                    style={{ color: "#00d4aa", fontWeight: 800, fontSize: 13 }}
-                  >
-                    {item.icon}
-                  </span>
-                  <span
-                    style={{ fontSize: 13, color: "#475569", fontWeight: 500 }}
-                  >
-                    {item.label}
+            <div className="lp-fade-4" style={{
+              display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap",
+            }}>
+              {["No credit card", "Up to 3 boards free", "Unlimited guests"].map((t) => (
+                <div key={t} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <CheckIcon color={PALETTE.primary} />
+                  <span style={{ fontSize: 13, color: PALETTE.textDim, fontWeight: 500 }}>
+                    {t}
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right: animated canvas preview */}
-          <div className="fade-up-2" style={{ position: "relative" }}>
-            {/* Glow behind preview */}
-            <div
-              style={{
-                position: "absolute",
-                inset: -30,
-                borderRadius: 32,
-                background:
-                  "radial-gradient(ellipse at 50% 50%, #00d4aa18 0%, transparent 70%)",
-                filter: "blur(20px)",
-              }}
-            />
-            <div
-              style={{
-                position: "relative",
-                borderRadius: 20,
-                overflow: "hidden",
-                border: "1px solid #1e2d40",
-                boxShadow: "0 32px 80px #000a, 0 0 0 1px #00d4aa18",
-                height: 460,
-              }}
-            >
-              {/* Fake browser chrome */}
-              <div
-                style={{
-                  background: "#0d1117",
-                  padding: "10px 16px",
-                  borderBottom: "1px solid #1a2332",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
+          {/* Right: animated preview */}
+          <div className="lp-fade-2" style={{ position: "relative" }}>
+            {/* Aura */}
+            <div style={{
+              position: "absolute", inset: -40,
+              background:
+                "radial-gradient(ellipse at 60% 50%, rgba(86,141,255,0.22) 0%, transparent 65%)",
+              filter: "blur(30px)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Window */}
+            <div style={{
+              position: "relative",
+              borderRadius: 18,
+              overflow: "hidden",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow:
+                "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(176,198,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
+              height: 480,
+              background: PALETTE.surface,
+            }}>
+              {/* Chrome */}
+              <div style={{
+                background: PALETTE.surfaceHi,
+                padding: "10px 14px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {["#f43f5e", "#f59e0b", "#22c55e"].map((c) => (
-                    <div
-                      key={c}
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        background: c,
-                        opacity: 0.7,
-                      }}
-                    />
+                  {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+                    <div key={c} style={{
+                      width: 11, height: 11, borderRadius: "50%",
+                      background: c, opacity: 0.85,
+                    }} />
                   ))}
                 </div>
-                <div
-                  style={{
-                    flex: 1,
-                    background: "#161d28",
-                    borderRadius: 6,
-                    padding: "4px 12px",
-                    fontSize: 11,
-                    color: "#475569",
-                    fontFamily: "'Manrope', sans-serif",
-                  }}
-                >
-                  CanvUs.app/board/team-q2-planning
+                <div className="lp-mono" style={{
+                  flex: 1,
+                  background: "rgba(7,13,31,0.7)",
+                  borderRadius: 7,
+                  padding: "4px 12px",
+                  fontSize: 11,
+                  color: PALETTE.textDim,
+                  fontWeight: 500,
+                  letterSpacing: "-0.005em",
+                }}>
+                  canv.us/board/team-q2-planning
+                </div>
+                <div className="lp-mono" style={{
+                  fontSize: 10, color: PALETTE.textFaint,
+                  letterSpacing: "0.1em", fontWeight: 600,
+                }}>
+                  ⌘K
                 </div>
               </div>
-              <div style={{ height: "calc(100% - 37px)" }}>
+              <div style={{ height: "calc(100% - 39px)" }}>
                 <CanvasPreview />
               </div>
             </div>
 
-            {/* Floating badge: live users */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: -18,
-                left: 24,
-                background: "#0d1117",
-                border: "1px solid #1a2332",
-                borderRadius: 14,
-                padding: "10px 16px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                boxShadow: "0 8px 32px #0006",
-                animation: "float 4s ease-in-out infinite",
-              }}
-            >
+            {/* Floating: live users */}
+            <div style={{
+              position: "absolute", bottom: -22, left: 22,
+              background: PALETTE.surfaceHi,
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 14, padding: "10px 14px",
+              display: "flex", alignItems: "center", gap: 10,
+              boxShadow: "0 10px 32px rgba(0,0,0,0.5)",
+              animation: "lp-float 4s ease-in-out infinite",
+            }}>
               <div style={{ position: "relative" }}>
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: "#22c55e",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "50%",
-                    background: "#22c55e",
-                    animation: "pulse-ring 1.5s ease-out infinite",
-                  }}
-                />
+                <div style={{ width: 9, height: 9, borderRadius: "50%", background: PALETTE.mint }} />
+                <div style={{
+                  position: "absolute", inset: 0, borderRadius: "50%",
+                  background: PALETTE.mint,
+                  animation: "lp-pulse 1.5s ease-out infinite",
+                }} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: PALETTE.text }}>
                 3 people editing
               </span>
             </div>
 
-            {/* Floating badge: autosave */}
-            <div
-              style={{
-                position: "absolute",
-                top: 60,
-                right: -18,
-                background: "#0d1117",
-                border: "1px solid #1a2332",
-                borderRadius: 12,
-                padding: "8px 14px",
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#00d4aa",
-                boxShadow: "0 8px 32px #0006",
-                animation: "float 5s 1.5s ease-in-out infinite",
-              }}
-            >
-              ✓ Auto-saved
+            {/* Floating: latency */}
+            <div style={{
+              position: "absolute", top: 70, right: -20,
+              background: PALETTE.surfaceHi,
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12,
+              padding: "8px 13px",
+              display: "flex", alignItems: "center", gap: 8,
+              boxShadow: "0 10px 32px rgba(0,0,0,0.5)",
+              animation: "lp-float 5s 1.2s ease-in-out infinite",
+            }}>
+              <div style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: PALETTE.primaryStrong,
+                boxShadow: `0 0 8px ${PALETTE.primaryStrong}`,
+              }} />
+              <span className="lp-mono" style={{ fontSize: 11, fontWeight: 600, color: PALETTE.text, letterSpacing: "0.04em" }}>
+                42<span style={{ color: PALETTE.textDim }}>ms</span>
+              </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF BAR ── */}
-      <div
-        style={{
-          borderTop: "1px solid #1a2332",
-          borderBottom: "1px solid #1a2332",
-          padding: "20px 24px",
-          display: "flex",
-          justifyContent: "center",
-          gap: 48,
-          flexWrap: "wrap",
-          background: "#0d1117",
-        }}
-      >
-        {[
-          { val: "12,000+", label: "boards created" },
-          { val: "98%", label: "uptime SLA" },
-          { val: "<50ms", label: "sync latency" },
-          { val: "4.9 ★", label: "avg. user rating" },
-        ].map((s) => (
-          <div key={s.label} style={{ textAlign: "center" }}>
-            <div
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: 26,
-                color: "white",
-              }}
-            >
-              {s.val}
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "#475569",
-                fontWeight: 500,
-                marginTop: 2,
-              }}
-            >
-              {s.label}
-            </div>
+      {/* ── TRUST BAR ────────────────────────────────────────────────── */}
+      <section style={{ position: "relative", zIndex: 1, padding: "30px 24px 18px" }}>
+        <div style={{
+          maxWidth: 1180, margin: "0 auto",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 32,
+        }}>
+          <span className="lp-mono" style={{
+            fontSize: 11, color: PALETTE.textFaint,
+            letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600,
+          }}>
+            Trusted by teams at
+          </span>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 36, flexWrap: "wrap",
+            opacity: 0.7,
+          }}>
+            {["LINEAR", "STRIPE", "FIGMA", "VERCEL", "SUPABASE", "RAYCAST"].map((logo) => (
+              <span key={logo} style={{
+                fontSize: 14, fontWeight: 700, letterSpacing: "0.18em",
+                color: PALETTE.textDim,
+              }}>
+                {logo}
+              </span>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* ── FEATURES ── */}
-      <section
-        style={{ padding: "100px 24px", maxWidth: 1200, margin: "0 auto" }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#00d4aa",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              marginBottom: 12,
-            }}
-          >
-            EVERYTHING YOU NEED
-          </div>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
+        {/* Stats strip */}
+        <div style={{
+          maxWidth: 1180, margin: "32px auto 0",
+          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 1,
+          background: PALETTE.border,
+          border: `1px solid ${PALETTE.borderSoft}`,
+          borderRadius: 18,
+          overflow: "hidden",
+        }}>
+          {[
+            { val: "12,400+", label: "boards created" },
+            { val: "99.9%",   label: "uptime SLA" },
+            { val: "<50ms",   label: "median sync" },
+            { val: "4.9★",    label: "user rating" },
+          ].map((s) => (
+            <div key={s.label} style={{
+              background: PALETTE.surface,
+              padding: "26px 28px",
+              display: "flex", flexDirection: "column", gap: 6,
+            }}>
+              <div className="lp-mono" style={{
+                fontSize: 28, fontWeight: 700,
+                color: PALETTE.text,
+                letterSpacing: "-0.02em",
+              }}>
+                {s.val}
+              </div>
+              <div style={{ fontSize: 12.5, color: PALETTE.textDim, fontWeight: 500 }}>
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURES ─────────────────────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 1,
+        padding: "120px 24px 80px",
+        maxWidth: 1180, margin: "0 auto",
+      }}>
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1.4fr",
+          gap: 60, marginBottom: 56, alignItems: "end",
+        }}>
+          <div>
+            <div className="lp-eyebrow">Capabilities</div>
+            <h2 style={{
+              fontSize: "clamp(30px, 3.6vw, 44px)",
               fontWeight: 800,
-              fontSize: "clamp(28px, 4vw, 44px)",
               letterSpacing: "-0.03em",
-              color: "white",
-              marginBottom: 16,
-            }}
-          >
-            Built for how teams actually work
-          </h2>
-          <p
-            style={{
-              fontSize: 16,
-              color: "#475569",
-              maxWidth: 480,
-              margin: "0 auto",
-            }}
-          >
-            Not just a whiteboard — a focused tool for idea-driven meetings.
+              lineHeight: 1.05,
+              color: PALETTE.text,
+              marginTop: 16,
+            }}>
+              A focused tool
+              <br />
+              for idea-driven work.
+            </h2>
+          </div>
+          <p style={{
+            fontSize: 16,
+            color: PALETTE.textMuted,
+            lineHeight: 1.65,
+            maxWidth: 540,
+            justifySelf: "end",
+          }}>
+            Not another whiteboard with a shape library bolted on.
+            CanvUs is built around how teams actually meet, present, and decide.
+            Every feature exists to remove friction from that loop.
           </p>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 16,
-          }}
-        >
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
+          gap: 14,
+        }}>
           {features.map((f, i) => (
             <div
               key={i}
-              className="feature-card"
+              className="lp-card"
               onMouseEnter={() => setActiveFeature(i)}
-              style={{
-                borderColor: activeFeature === i ? `${f.color}40` : "#1a2332",
-                boxShadow:
-                  activeFeature === i ? `0 16px 48px ${f.color}12` : "none",
-              }}
+              style={{ padding: 26 }}
             >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  background: `${f.color}15`,
-                  border: `1px solid ${f.color}30`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 22,
-                  marginBottom: 16,
-                }}
-              >
+              <div style={{
+                width: 42, height: 42, borderRadius: 11,
+                background: `${f.color}1a`,
+                border: `1px solid ${f.color}40`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: f.color, marginBottom: 18,
+              }}>
                 {f.icon}
               </div>
-              <h3
-                style={{
-                  fontFamily: "'Syne', sans-serif",
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+              }}>
+                <h3 style={{
+                  fontSize: 16,
                   fontWeight: 700,
-                  fontSize: 17,
-                  color: "white",
-                  marginBottom: 8,
-                }}
-              >
-                {f.title}
-              </h3>
-              <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.65 }}>
+                  letterSpacing: "-0.015em",
+                  color: PALETTE.text,
+                }}>
+                  {f.title}
+                </h3>
+                <span className="lp-mono" style={{
+                  fontSize: 9.5, color: PALETTE.textFaint,
+                  letterSpacing: "0.08em", fontWeight: 600,
+                  marginLeft: "auto",
+                }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+              </div>
+              <p style={{
+                fontSize: 13.5, color: PALETTE.textMuted,
+                lineHeight: 1.65, fontWeight: 400,
+              }}>
                 {f.desc}
               </p>
             </div>
@@ -1214,127 +963,77 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section
-        style={{
-          padding: "80px 24px",
-          background: "#0d1117",
-          borderTop: "1px solid #1a2332",
-          borderBottom: "1px solid #1a2332",
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#3b82f6",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 12,
-              }}
-            >
-              HOW IT WORKS
-            </div>
-            <h2
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(26px, 4vw, 40px)",
-                letterSpacing: "-0.03em",
-                color: "white",
-              }}
-            >
-              From invite to insight in 60 seconds
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 1,
+        padding: "80px 24px",
+        background: `linear-gradient(180deg, transparent 0%, ${PALETTE.bgDeep} 50%, transparent 100%)`,
+      }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 60 }}>
+            <div className="lp-eyebrow" style={{ justifyContent: "center" }}>How it works</div>
+            <h2 style={{
+              fontSize: "clamp(28px, 3.6vw, 42px)",
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+              color: PALETTE.text,
+              marginTop: 16,
+            }}>
+              From invite to insight
+              <br />
+              in under sixty seconds.
             </h2>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 0,
-              position: "relative",
-            }}
-          >
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 20, position: "relative",
+          }}>
             {/* Connector line */}
-            <div
-              style={{
-                position: "absolute",
-                top: 28,
-                left: "16.5%",
-                right: "16.5%",
-                height: 1,
-                background: "linear-gradient(90deg, #00d4aa, #3b82f6, #a855f7)",
-                opacity: 0.4,
-              }}
-            />
+            <div style={{
+              position: "absolute",
+              top: 24, left: "16%", right: "16%",
+              height: 1,
+              background: `linear-gradient(90deg, ${PALETTE.primary}, ${PALETTE.primaryStrong}, ${PALETTE.tertiary})`,
+              opacity: 0.4,
+            }} />
 
             {[
-              {
-                step: "01",
-                title: "Create a board",
-                desc: "Sign in with Google or GitHub. Name your board and set it up in seconds.",
-                color: "#00d4aa",
-              },
-              {
-                step: "02",
-                title: "Invite your team",
-                desc: "Share a link. Everyone joins with their name and color. No installs needed.",
-                color: "#3b82f6",
-              },
-              {
-                step: "03",
-                title: "Build & present",
-                desc: "Drag shapes, draw connections, add notes. Hit Present to go full-screen.",
-                color: "#a855f7",
-              },
-            ].map((s, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  padding: "0 24px",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: "50%",
-                    background: `${s.color}15`,
-                    border: `2px solid ${s.color}60`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 800,
-                    fontSize: 14,
-                    color: s.color,
-                    marginBottom: 20,
-                    position: "relative",
-                    zIndex: 1,
-                  }}
-                >
-                  {s.step}
+              { n: "01", t: "Create a board",   d: "Sign in with Google or GitHub. Name your board, pick a template, start in seconds.", c: PALETTE.primary },
+              { n: "02", t: "Invite your team", d: "Share a link. Everyone joins with their name and color. No installs. No accounts to wrangle.", c: PALETTE.primaryStrong },
+              { n: "03", t: "Build & present", d: "Drag shapes, draw connections, pin notes. Press P to project — viewers follow your cursor live.", c: PALETTE.tertiary },
+            ].map((s) => (
+              <div key={s.n} style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                textAlign: "center", padding: "0 18px",
+              }}>
+                <div style={{
+                  width: 50, height: 50, borderRadius: "50%",
+                  background: PALETTE.bg,
+                  border: `1.5px solid ${s.c}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginBottom: 22, position: "relative", zIndex: 1,
+                  boxShadow: `0 0 0 4px ${PALETTE.bgDeep}, 0 0 20px ${s.c}40`,
+                }}>
+                  <span className="lp-mono" style={{
+                    fontSize: 13, fontWeight: 700,
+                    color: s.c, letterSpacing: "0.05em",
+                  }}>
+                    {s.n}
+                  </span>
                 </div>
-                <h3
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 700,
-                    fontSize: 17,
-                    color: "white",
-                    marginBottom: 8,
-                  }}
-                >
-                  {s.title}
+                <h3 style={{
+                  fontSize: 17, fontWeight: 700,
+                  color: PALETTE.text, marginBottom: 10,
+                  letterSpacing: "-0.015em",
+                }}>
+                  {s.t}
                 </h3>
-                <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.65 }}>
-                  {s.desc}
+                <p style={{
+                  fontSize: 14, color: PALETTE.textMuted,
+                  lineHeight: 1.65, maxWidth: 280,
+                }}>
+                  {s.d}
                 </p>
               </div>
             ))}
@@ -1342,86 +1041,65 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section
-        style={{ padding: "100px 24px", maxWidth: 1100, margin: "0 auto" }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 56 }}>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#a855f7",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              marginBottom: 12,
-            }}
-          >
-            TESTIMONIALS
-          </div>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(26px, 4vw, 40px)",
-              letterSpacing: "-0.03em",
-              color: "white",
-            }}
-          >
-            Teams love CanvUs
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 1,
+        padding: "100px 24px",
+        maxWidth: 1180, margin: "0 auto",
+      }}>
+        <div style={{ marginBottom: 48 }}>
+          <div className="lp-eyebrow">Voices</div>
+          <h2 style={{
+            fontSize: "clamp(28px, 3.6vw, 42px)",
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            color: PALETTE.text,
+            marginTop: 16,
+            maxWidth: 700,
+          }}>
+            Designers, PMs, and engineers
+            <br />
+            quietly switching from Miro.
           </h2>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 16,
-          }}
-        >
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          gap: 16,
+        }}>
           {testimonials.map((t, i) => (
-            <div key={i} className="testimonial-card">
-              <div style={{ display: "flex", gap: 4, marginBottom: 14 }}>
-                {[...Array(5)].map((_, j) => (
-                  <span key={j} style={{ color: "#f59e0b", fontSize: 14 }}>
-                    ★
-                  </span>
-                ))}
-              </div>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "#94a3b8",
-                  lineHeight: 1.7,
-                  marginBottom: 20,
-                }}
-              >
-                "{t.text}"
+            <div key={i} className="lp-card" style={{ padding: 28 }}>
+              <svg width="22" height="18" viewBox="0 0 24 20"
+                   fill={t.color} style={{ marginBottom: 14, opacity: 0.85 }}>
+                <path d="M3 16c0-4 2-7 5-9l1 2c-2 1-3 3-3 5h3v6H3v-4zm10 0c0-4 2-7 5-9l1 2c-2 1-3 3-3 5h3v6h-6v-4z" />
+              </svg>
+              <p style={{
+                fontSize: 15, color: PALETTE.text,
+                lineHeight: 1.6, marginBottom: 22, fontWeight: 400,
+                letterSpacing: "-0.005em",
+              }}>
+                {t.text}
               </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background: t.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    color: "white",
-                  }}
-                >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: t.color,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11.5, fontWeight: 700, color: PALETTE.primaryDeep,
+                }}>
                   {t.avatar}
                 </div>
                 <div>
-                  <div
-                    style={{ fontSize: 13, fontWeight: 700, color: "white" }}
-                  >
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: PALETTE.text }}>
                     {t.name}
                   </div>
-                  <div style={{ fontSize: 11, color: "#475569" }}>{t.role}</div>
+                  <div className="lp-mono" style={{
+                    fontSize: 11, color: PALETTE.textDim,
+                    letterSpacing: "0.04em", marginTop: 1,
+                  }}>
+                    {t.role}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1429,68 +1107,50 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section
-        style={{
-          padding: "80px 24px 100px",
-          background: "#0d1117",
-          borderTop: "1px solid #1a2332",
-          borderBottom: "1px solid #1a2332",
-        }}
-      >
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#f59e0b",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 12,
-              }}
-            >
-              PRICING
-            </div>
-            <h2
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(26px, 4vw, 40px)",
-                letterSpacing: "-0.03em",
-                color: "white",
-                marginBottom: 20,
-              }}
-            >
-              Simple, honest pricing
+      {/* ── PRICING ──────────────────────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 1,
+        padding: "80px 24px 100px",
+        background: `linear-gradient(180deg, transparent 0%, ${PALETTE.bgDeep} 50%, transparent 100%)`,
+      }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 44 }}>
+            <div className="lp-eyebrow" style={{ justifyContent: "center" }}>Pricing</div>
+            <h2 style={{
+              fontSize: "clamp(28px, 3.6vw, 42px)",
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+              color: PALETTE.text,
+              marginTop: 16, marginBottom: 24,
+            }}>
+              Honest pricing.
+              <br />
+              No surprises.
             </h2>
 
             {/* Toggle */}
-            <div
-              style={{
-                display: "inline-flex",
-                background: "#161d28",
-                borderRadius: 12,
-                padding: 4,
-                gap: 4,
-              }}
-            >
-              {["Monthly", "Annual (save 30%)"].map((label, i) => (
+            <div style={{
+              display: "inline-flex",
+              background: PALETTE.surface,
+              border: `1px solid ${PALETTE.borderSoft}`,
+              borderRadius: 12,
+              padding: 4, gap: 4,
+            }}>
+              {["Monthly", "Annual · save 30%"].map((label, i) => (
                 <button
                   key={label}
                   onClick={() => setBillingAnnual(i === 1)}
                   style={{
                     padding: "7px 16px",
-                    borderRadius: 9,
+                    borderRadius: 8,
                     border: "none",
                     cursor: "pointer",
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: 600,
-                    fontFamily: "'Manrope', sans-serif",
-                    background:
-                      billingAnnual === (i === 1) ? "#00d4aa" : "transparent",
-                    color: billingAnnual === (i === 1) ? "#06070d" : "#64748b",
-                    transition: "all 0.2s",
+                    fontFamily: "inherit",
+                    background: billingAnnual === (i === 1) ? PALETTE.primary : "transparent",
+                    color: billingAnnual === (i === 1) ? PALETTE.primaryDeep : PALETTE.textDim,
+                    transition: "all 0.18s ease",
                   }}
                 >
                   {label}
@@ -1499,147 +1159,138 @@ export default function LandingPageView() {
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 16,
-            }}
-          >
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14,
+          }}>
             {[
               {
-                name: "Free",
+                name: "Hobby",
                 price: 0,
-                desc: "For individuals and small experiments",
-                features: [
-                  "3 boards",
-                  "Up to 5 collaborators/board",
-                  "PNG export",
-                  "30-day board history",
-                ],
-                cta: "Get started free",
+                desc: "For individuals & small experiments",
+                features: ["3 boards", "Up to 5 collaborators per board", "PNG export", "30-day board history"],
+                cta: "Start free",
                 featured: false,
               },
               {
                 name: "Pro",
                 price: billingAnnual ? 12 : 17,
-                desc: "For teams who meet regularly",
-                features: [
-                  "Unlimited boards",
-                  "Unlimited collaborators",
-                  "Present Mode + Follow",
-                  "PDF & SVG export",
-                  "Board snapshots & history",
-                  "Priority support",
-                ],
+                desc: "For teams who meet weekly",
+                features: ["Unlimited boards", "Unlimited collaborators", "Present mode + Follow", "PDF & SVG export", "Snapshot history", "Priority support"],
                 cta: "Start free trial",
                 featured: true,
               },
               {
                 name: "Team",
                 price: billingAnnual ? 29 : 39,
-                desc: "For organisations with multiple teams",
-                features: [
-                  "Everything in Pro",
-                  "SSO / SAML auth",
-                  "Admin dashboard",
-                  "Usage analytics",
-                  "Custom templates",
-                  "SLA + dedicated support",
-                ],
+                desc: "For organizations with multiple teams",
+                features: ["Everything in Pro", "SSO / SAML auth", "Admin dashboard", "Usage analytics", "Custom templates", "SLA + dedicated support"],
                 cta: "Contact sales",
                 featured: false,
               },
-            ].map((plan, i) => (
+            ].map((plan) => (
               <div
-                key={i}
-                className={`plan-card${plan.featured ? " featured" : ""}`}
+                key={plan.name}
+                style={{
+                  background: plan.featured
+                    ? `linear-gradient(180deg, ${PALETTE.surfaceHigher} 0%, ${PALETTE.surface} 100%)`
+                    : PALETTE.surfaceHi,
+                  border: plan.featured
+                    ? `1px solid rgba(176,198,255,0.35)`
+                    : `1px solid ${PALETTE.borderSoft}`,
+                  borderRadius: 20,
+                  padding: 30,
+                  position: "relative",
+                  boxShadow: plan.featured
+                    ? `0 24px 60px -20px rgba(86,141,255,0.35), 0 0 0 1px rgba(176,198,255,0.08)`
+                    : "none",
+                }}
               >
                 {plan.featured && (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      color: "#00d4aa",
-                      letterSpacing: "0.1em",
-                      marginBottom: 12,
-                    }}
-                  >
-                    ★ MOST POPULAR
+                  <div style={{
+                    position: "absolute", top: -11, left: 24,
+                    background: PALETTE.primary,
+                    color: PALETTE.primaryDeep,
+                    fontSize: 10, fontWeight: 800,
+                    padding: "4px 10px", borderRadius: 6,
+                    letterSpacing: "0.12em",
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                  }}>
+                    MOST POPULAR
                   </div>
                 )}
-                <h3
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 800,
-                    fontSize: 20,
-                    color: "white",
-                    marginBottom: 4,
-                  }}
-                >
+
+                <h3 style={{
+                  fontSize: 18, fontWeight: 700,
+                  color: PALETTE.text, marginBottom: 4,
+                  letterSpacing: "-0.015em",
+                }}>
                   {plan.name}
                 </h3>
-                <p style={{ fontSize: 13, color: "#475569", marginBottom: 20 }}>
+                <p style={{
+                  fontSize: 13, color: PALETTE.textDim,
+                  marginBottom: 20, lineHeight: 1.5,
+                }}>
                   {plan.desc}
                 </p>
-                <div style={{ marginBottom: 24 }}>
-                  <span
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontWeight: 800,
-                      fontSize: 40,
-                      color: "white",
-                    }}
-                  >
+
+                <div style={{
+                  display: "flex", alignItems: "baseline", gap: 4,
+                  marginBottom: 22,
+                }}>
+                  <span style={{
+                    fontSize: 40, fontWeight: 800,
+                    color: PALETTE.text,
+                    letterSpacing: "-0.04em",
+                    lineHeight: 1,
+                  }}>
                     {plan.price === 0 ? "Free" : `$${plan.price}`}
                   </span>
                   {plan.price > 0 && (
-                    <span style={{ color: "#475569", fontSize: 13 }}>
+                    <span className="lp-mono" style={{
+                      color: PALETTE.textDim, fontSize: 12,
+                      letterSpacing: "0.04em",
+                    }}>
                       /user/mo
                     </span>
                   )}
                 </div>
+
                 <button
                   style={{
                     width: "100%",
                     padding: "11px",
-                    borderRadius: 11,
-                    border: "none",
+                    borderRadius: 10,
+                    border: plan.featured ? "none" : `1px solid ${PALETTE.border}`,
                     cursor: "pointer",
-                    fontFamily: "'Manrope', sans-serif",
+                    fontFamily: "inherit",
                     fontWeight: 700,
-                    fontSize: 14,
-                    background: plan.featured ? "#00d4aa" : "#161d28",
-                    color: plan.featured ? "#06070d" : "#94a3b8",
-                    marginBottom: 24,
-                    transition: "all 0.15s",
+                    fontSize: 13.5,
+                    background: plan.featured ? PALETTE.primary : "rgba(255,255,255,0.03)",
+                    color: plan.featured ? PALETTE.primaryDeep : PALETTE.text,
+                    marginBottom: 22,
+                    transition: "all 0.15s ease",
+                    letterSpacing: "-0.005em",
                   }}
                 >
                   {plan.cta}
                 </button>
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
-                >
+
+                <div style={{
+                  height: 1,
+                  background: PALETTE.borderSoft,
+                  marginBottom: 18,
+                }} />
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
                   {plan.features.map((f) => (
-                    <div
-                      key={f}
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "#00d4aa",
-                          fontWeight: 800,
-                          fontSize: 13,
-                          flexShrink: 0,
-                        }}
-                      >
-                        ✓
-                      </span>
-                      <span style={{ fontSize: 13, color: "#64748b" }}>
+                    <div key={f} style={{
+                      display: "flex", gap: 9, alignItems: "flex-start",
+                    }}>
+                      <CheckIcon
+                        color={plan.featured ? PALETTE.primary : PALETTE.textDim}
+                        size={13}
+                      />
+                      <span style={{ fontSize: 13, color: PALETTE.textMuted, lineHeight: 1.5 }}>
                         {f}
                       </span>
                     </div>
@@ -1651,122 +1302,214 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section
-        style={{
-          padding: "100px 24px",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(ellipse at 50% 50%, #00d4aa0a 0%, transparent 70%)",
-            pointerEvents: "none",
-          }}
-        />
-        <div style={{ position: "relative" }}>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(32px, 5vw, 56px)",
-              letterSpacing: "-0.03em",
-              color: "white",
-              marginBottom: 16,
-              lineHeight: 1.1,
-            }}
-          >
-            Your next great idea
+      {/* ── BIG CTA ──────────────────────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 1,
+        padding: "120px 24px",
+        textAlign: "center",
+        overflow: "hidden",
+      }}>
+        {/* Glow */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "radial-gradient(ellipse at 50% 50%, rgba(86,141,255,0.18) 0%, transparent 65%)",
+          pointerEvents: "none",
+        }} />
+        {/* Orbiting ring */}
+        <div style={{
+          position: "absolute",
+          left: "50%", top: "50%",
+          transform: "translate(-50%,-50%)",
+          width: 600, height: 600,
+          borderRadius: "50%",
+          border: `1px dashed ${PALETTE.borderSoft}`,
+          animation: "lp-orbit 60s linear infinite",
+          pointerEvents: "none",
+        }} />
+
+        <div style={{ position: "relative", maxWidth: 720, margin: "0 auto" }}>
+          <div className="lp-chip" style={{ marginBottom: 24 }}>
+            <span className="lp-mono" style={{ letterSpacing: "0.12em" }}>
+              FREE FOREVER · NO CARD REQUIRED
+            </span>
+          </div>
+          <h2 style={{
+            fontSize: "clamp(36px, 5.6vw, 64px)",
+            fontWeight: 800,
+            letterSpacing: "-0.035em",
+            color: PALETTE.text,
+            lineHeight: 1.02,
+            marginBottom: 18,
+          }}>
+            Your next idea
             <br />
-            starts with a blank board.
+            starts on a{" "}
+            <span className="lp-grad" style={{ fontStyle: "italic" }}>blank board.</span>
           </h2>
-          <p
-            style={{
-              fontSize: 17,
-              color: "#475569",
-              maxWidth: 460,
-              margin: "0 auto 36px",
-            }}
-          >
-            Join thousands of teams who replaced slide decks with CanvUs.
+          <p style={{
+            fontSize: 17,
+            color: PALETTE.textMuted,
+            maxWidth: 480,
+            margin: "0 auto 36px",
+            lineHeight: 1.6,
+          }}>
+            Open the canvas, invite your team, and ship a flowchart before
+            your standup ends.
           </p>
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              justifyContent: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <button
-              className="hero-btn-primary"
-              style={{ fontSize: 16, padding: "15px 36px" }}
-            >
-              Create your first board — it's free
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className="lp-btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
+              Open the canvas
+              <ArrowIcon />
             </button>
-            <button className="hero-btn-secondary" style={{ fontSize: 15 }}>
+            <button className="lp-btn-ghost" style={{ fontSize: 14 }}>
               Schedule a demo
             </button>
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer
-        style={{
-          borderTop: "1px solid #1a2332",
-          padding: "40px 24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 16,
-          maxWidth: 1200,
-          margin: "0 auto",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 8,
-              background: "linear-gradient(135deg, #00d4aa, #0ea5e9)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 13,
-            }}
-          >
-            ◈
+      {/* ── FOOTER ───────────────────────────────────────────────────── */}
+      <footer style={{
+        position: "relative", zIndex: 1,
+        borderTop: `1px solid ${PALETTE.borderSoft}`,
+        padding: "48px 24px 32px",
+      }}>
+        <div style={{
+          maxWidth: 1180, margin: "0 auto",
+          display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
+          gap: 40, marginBottom: 36,
+        }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <Logo />
+              <span style={{ fontSize: 15, fontWeight: 800, color: PALETTE.text, letterSpacing: "-0.02em" }}>
+                CanvUs
+              </span>
+            </div>
+            <p style={{
+              fontSize: 13, color: PALETTE.textDim,
+              lineHeight: 1.6, maxWidth: 320,
+            }}>
+              The canvas your team can actually think on.
+              Built in Manila & Berlin, shipping from anywhere.
+            </p>
           </div>
-          <span
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: 15,
-              color: "white",
-            }}
-          >
-            CanvUs
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 24 }}>
-          {["Privacy", "Terms", "Status", "GitHub"].map((l) => (
-            <span key={l} className="nav-link" style={{ fontSize: 13 }}>
-              {l}
-            </span>
+          {[
+            { title: "Product", links: ["Features", "Pricing", "Templates", "Changelog", "Roadmap"] },
+            { title: "Company", links: ["About", "Blog", "Careers", "Contact"] },
+            { title: "Resources", links: ["Docs", "API", "Status", "Community"] },
+          ].map((col) => (
+            <div key={col.title}>
+              <div className="lp-mono" style={{
+                fontSize: 11, color: PALETTE.textFaint,
+                letterSpacing: "0.16em", textTransform: "uppercase",
+                fontWeight: 600, marginBottom: 16,
+              }}>
+                {col.title}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {col.links.map((l) => (
+                  <span key={l} className="lp-link">{l}</span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-        <span style={{ fontSize: 12, color: "#334155" }}>
-          © 2026 CanvUs · Built with ♥
-        </span>
+
+        <div className="lp-divider" style={{ marginBottom: 22 }} />
+
+        <div style={{
+          maxWidth: 1180, margin: "0 auto",
+          display: "flex", justifyContent: "space-between",
+          alignItems: "center", flexWrap: "wrap", gap: 16,
+        }}>
+          <span className="lp-mono" style={{
+            fontSize: 11, color: PALETTE.textFaint,
+            letterSpacing: "0.06em",
+          }}>
+            © 2026 CanvUs · All systems operational
+            <span style={{
+              display: "inline-block", width: 7, height: 7,
+              borderRadius: "50%", background: PALETTE.mint,
+              boxShadow: `0 0 6px ${PALETTE.mint}`,
+              marginLeft: 8, verticalAlign: "middle",
+            }} />
+          </span>
+          <div style={{ display: "flex", gap: 18 }}>
+            {["Privacy", "Terms", "Security", "GitHub"].map((l) => (
+              <span key={l} className="lp-link" style={{ fontSize: 12 }}>{l}</span>
+            ))}
+          </div>
+        </div>
       </footer>
+    </div>
+  );
+}
+
+/* ── Tiny icon primitives ─────────────────────────────────────────────── */
+function PathIcon({ d }: { d: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" strokeWidth="1.6"
+         strokeLinecap="round" strokeLinejoin="round">
+      {d.split(" M").map((part, i) => (
+        <path key={i} d={i === 0 ? part : "M" + part} />
+      ))}
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" strokeWidth="2.2"
+         strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M13 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+
+function CheckIcon({ color, size = 14 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24"
+         fill="none" stroke={color} strokeWidth="2.6"
+         strokeLinecap="round" strokeLinejoin="round"
+         style={{ flexShrink: 0, marginTop: 2 }}>
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function Logo() {
+  return (
+    <div style={{ position: "relative", width: 28, height: 28 }}>
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: 8,
+        background: PALETTE.primaryStrong,
+        transform: "rotate(8deg) scale(0.92)",
+        opacity: 0.6,
+      }} />
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: 8,
+        background: `linear-gradient(135deg, ${PALETTE.primary}, ${PALETTE.primaryStrong})`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3)",
+      }}>
+        <svg width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke={PALETTE.primaryDeep} strokeWidth="2.6"
+             strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 4h7v7H4zM13 13h7v7h-7zM4 13h7v7H4zM13 4h7v7h-7z" opacity="0.4" />
+          <path d="M4 4h7v7H4zM13 13h7v7h-7z" />
+        </svg>
+      </div>
     </div>
   );
 }
