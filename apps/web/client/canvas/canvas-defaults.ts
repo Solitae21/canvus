@@ -1,6 +1,6 @@
-import type { Shape, ShapeType } from "@/redux/slice/canvas/canvas-slice";
+import type { Shape, ShapeType, PlaceableShapeType } from "@canvus/shared";
 
-export type PlaceableShapeType = "rect" | "diamond" | "oval" | "sticky";
+export type { PlaceableShapeType };
 
 export const PLACEABLE_TYPES: ReadonlySet<ShapeType> = new Set<ShapeType>([
   "rect",

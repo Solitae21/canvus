@@ -1,32 +1,13 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import type { Shape, ShapeType, Connection } from '@canvus/shared'
 
-export type ShapeType =
-  | 'rect' | 'rounded-rect' | 'diamond' | 'oval'
-  | 'parallelogram' | 'trapezoid' | 'hexagon' | 'cylinder'
-  | 'document' | 'predefined-process' | 'manual-input' | 'stored-data'
-  | 'internal-storage' | 'circle' | 'off-page' | 'delay'
-  | 'sticky'
+export type { Shape, ShapeType, Connection }
 
 export type ToolType =
   | 'select' | 'hand'
   | ShapeType
   | 'pen' | 'arrow' | 'text' | 'image'
-
-export interface Shape {
-  id: string
-  type: ShapeType
-  x: number; y: number; w: number; h: number
-  label: string
-  fill: string
-  strokeColor: string
-}
-
-export interface Connection {
-  id: string
-  fromId: string
-  toId: string
-}
 
 interface CanvasState {
   shapes: Shape[]
