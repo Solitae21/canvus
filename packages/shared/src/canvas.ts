@@ -5,7 +5,12 @@ export type ShapeType =
   | 'internal-storage' | 'circle' | 'off-page' | 'delay'
   | 'sticky';
 
-export type PlaceableShapeType = 'rect' | 'diamond' | 'oval' | 'sticky';
+export type PlaceableShapeType =
+  | 'rect' | 'rounded-rect' | 'diamond' | 'oval'
+  | 'parallelogram' | 'trapezoid' | 'hexagon' | 'cylinder'
+  | 'document' | 'predefined-process' | 'manual-input' | 'stored-data'
+  | 'internal-storage' | 'circle' | 'off-page' | 'delay'
+  | 'sticky';
 
 export interface Shape {
   id: string;

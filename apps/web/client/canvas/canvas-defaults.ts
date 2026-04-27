@@ -3,9 +3,10 @@ import type { Shape, ShapeType, PlaceableShapeType } from "@canvus/shared";
 export type { PlaceableShapeType };
 
 export const PLACEABLE_TYPES: ReadonlySet<ShapeType> = new Set<ShapeType>([
-  "rect",
-  "diamond",
-  "oval",
+  "rect", "rounded-rect", "diamond", "oval",
+  "parallelogram", "trapezoid", "hexagon", "cylinder",
+  "document", "predefined-process", "manual-input", "stored-data",
+  "internal-storage", "circle", "off-page", "delay",
   "sticky",
 ]);
 
@@ -34,6 +35,9 @@ export const defaultsFor = (type: PlaceableShapeType): ShapeDefaults => {
       strokeColor: STICKY_STROKE,
       label: "",
     };
+  }
+  if (type === "circle") {
+    return { w: 80, h: 80, fill: "transparent", strokeColor: DEFAULT_STROKE, label: "" };
   }
   return {
     w: 140,
