@@ -14,7 +14,7 @@ import {
   setPendingFromId,
   type Shape,
 } from "@/redux/slice/canvas/canvas-slice";
-import { setPanel, setViewport } from "@/redux/slice/ui/ui-slice";
+import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
 
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
 import {
@@ -54,6 +54,10 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const viewportRef = useRef(viewport);
   viewportRef.current = viewport;
 
+  // Middle-mouse-button pan state
+  const isMMBPanningRef = useRef(false);
+  const mmbLastPosRef = useRef({ x: 0, y: 0 });
+
   // Size the Stage to its container — works in fullscreen pages, sidebars, modals, etc.
   useEffect(() => {
     const el = wrapperRef.current;
@@ -65,6 +69,47 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Wheel: Ctrl+Wheel = zoom centered on cursor, plain/Shift+Wheel = pan
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const { x, y, scale } = viewportRef.current;
+
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom anchored to cursor position
+        const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+        const rect = el.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const worldX = (mouseX - x) / scale;
+        const worldY = (mouseY - y) / scale;
+        const newScale = Math.min(4, Math.max(0.1, scale * factor));
+        const newX = mouseX - worldX * newScale;
+        const newY = mouseY - worldY * newScale;
+        // Prevent the "keep screen-center stable" effect from overriding our cursor-anchored zoom
+        prevScaleRef.current = newScale;
+        dispatch(setViewport({ x: newX, y: newY, scale: newScale }));
+        // sync background grid
+        if (wrapperRef.current) {
+          const off = GRID_OFFSET * newScale;
+          wrapperRef.current.style.backgroundPosition = `${newX + off}px ${newY + off}px`;
+          wrapperRef.current.style.backgroundSize = `${GRID_SIZE * newScale}px ${GRID_SIZE * newScale}px`;
+        }
+      } else {
+        // Pan (Shift+Wheel = horizontal, plain = vertical)
+        const dx = e.shiftKey ? -e.deltaY : -e.deltaX;
+        const dy = e.shiftKey ? 0 : -e.deltaY;
+        dispatch(panViewport({ dx, dy }));
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [dispatch]);
 
   // When scale changes (via header zoom buttons), keep the screen-center stable
   // by adjusting viewport translation around the previous scale.
@@ -245,6 +290,26 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
 
   const draggableShapes = tool === "select";
 
+  const handleWrapperMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button === 1) {
+      e.preventDefault();
+      isMMBPanningRef.current = true;
+      mmbLastPosRef.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const handleWrapperMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isMMBPanningRef.current) return;
+    const dx = e.clientX - mmbLastPosRef.current.x;
+    const dy = e.clientY - mmbLastPosRef.current.y;
+    mmbLastPosRef.current = { x: e.clientX, y: e.clientY };
+    dispatch(panViewport({ dx, dy }));
+  };
+
+  const stopMMBPan = () => {
+    isMMBPanningRef.current = false;
+  };
+
   return (
     <div
       ref={wrapperRef}
@@ -254,8 +319,12 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
         backgroundSize: `${GRID_SIZE * viewport.scale}px ${GRID_SIZE * viewport.scale}px`,
         backgroundPosition: `${viewport.x + GRID_OFFSET * viewport.scale}px ${viewport.y + GRID_OFFSET * viewport.scale}px`,
-        cursor: tool === "hand" ? "grab" : "default",
+        cursor: tool === "hand" ? "grab" : isMMBPanningRef.current ? "grabbing" : "default",
       }}
+      onMouseDown={handleWrapperMouseDown}
+      onMouseMove={handleWrapperMouseMove}
+      onMouseUp={stopMMBPan}
+      onMouseLeave={stopMMBPan}
     >
       {stageSize.width > 0 && stageSize.height > 0 && (
         <Stage
