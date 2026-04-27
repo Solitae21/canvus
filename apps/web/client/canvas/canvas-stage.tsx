@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Transformer } from "react-konva";
+import { Stage, Layer, Transformer, Group } from "react-konva";
 import type Konva from "konva";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -48,7 +48,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const shapeRefs = useRef<Map<string, Konva.Shape>>(new Map());
+  const shapeRefs = useRef<Map<string, Konva.Group>>(new Map());
   const transformerRef = useRef<Konva.Transformer>(null);
   const prevScaleRef = useRef(viewport.scale);
   const viewportRef = useRef(viewport);
@@ -189,13 +189,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     e: Konva.KonvaEventObject<DragEvent>,
   ) => {
     const node = e.target;
-    let x = node.x();
-    let y = node.y();
-    if (shape.type === "oval" || shape.type === "circle") {
-      x -= shape.w / 2;
-      y -= shape.h / 2;
-    }
-    dispatch(updateShape({ id: shape.id, x, y }));
+    dispatch(updateShape({ id: shape.id, x: node.x(), y: node.y() }));
   };
 
   const handleStageDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -265,27 +259,28 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
             ))}
 
             {shapes.map((shape) => (
-              <CanvasShape
+              <Group
                 key={shape.id}
-                shape={shape}
-                pendingArrow={pendingFromId === shape.id}
-                draggable={draggableShapes}
-                nodeRef={(node) => {
+                ref={(node) => {
                   if (node) shapeRefs.current.set(shape.id, node);
                   else shapeRefs.current.delete(shape.id);
                 }}
+                x={shape.x}
+                y={shape.y}
+                draggable={draggableShapes}
                 onClick={(e) => handleShapeClick(shape, e)}
                 onDblClick={() => setEditingId(shape.id)}
                 onDragEnd={(e) => handleShapeDragEnd(shape, e)}
-              />
+              >
+                <CanvasShape
+                  shape={shape}
+                  pendingArrow={pendingFromId === shape.id}
+                />
+                {editingId !== shape.id && (
+                  <CanvasShapeLabel shape={shape} />
+                )}
+              </Group>
             ))}
-
-            {shapes.map((shape) => {
-              if (editingId === shape.id) return null;
-              return (
-                <CanvasShapeLabel key={`label-${shape.id}`} shape={shape} />
-              );
-            })}
 
             <Transformer ref={transformerRef} />
           </Layer>
