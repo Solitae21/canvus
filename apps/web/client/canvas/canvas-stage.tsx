@@ -215,6 +215,27 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     );
   };
 
+  const handleTransformEnd = () => {
+    const tr = transformerRef.current;
+    if (!tr) return;
+    const nodes = tr.nodes();
+    if (nodes.length === 0) return;
+    const node = nodes[0];
+    const shapeId = [...shapeRefs.current.entries()].find(
+      ([, n]) => n === node,
+    )?.[0];
+    if (!shapeId) return;
+    const shape = shapeMap.get(shapeId);
+    if (!shape) return;
+    const newW = Math.max(20, node.scaleX() * shape.w);
+    const newH = Math.max(20, node.scaleY() * shape.h);
+    node.scaleX(1);
+    node.scaleY(1);
+    dispatch(
+      updateShape({ id: shapeId, x: node.x(), y: node.y(), w: newW, h: newH }),
+    );
+  };
+
   const commitLabel = (value: string) => {
     if (editingId) {
       dispatch(updateShape({ id: editingId, label: value }));
@@ -282,7 +303,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
               </Group>
             ))}
 
-            <Transformer ref={transformerRef} />
+            <Transformer ref={transformerRef} onTransformEnd={handleTransformEnd} />
           </Layer>
         </Stage>
       )}
