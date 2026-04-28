@@ -39,7 +39,10 @@ const initialState: CanvasState = {
 }
 
 function pushHistory(state: CanvasState) {
-  state.past.push({ shapes: [...state.shapes], connections: [...state.connections] })
+  state.past.push({
+    shapes: state.shapes.map(s => ({ ...s })),
+    connections: state.connections.map(c => ({ ...c })),
+  })
   if (state.past.length > 50) state.past.shift()
   state.future = []
 }
@@ -85,7 +88,10 @@ const canvasSlice = createSlice({
     undo: (state) => {
       const entry = state.past.pop()
       if (!entry) return
-      state.future.push({ shapes: [...state.shapes], connections: [...state.connections] })
+      state.future.push({
+        shapes: state.shapes.map(s => ({ ...s })),
+        connections: state.connections.map(c => ({ ...c })),
+      })
       state.shapes = entry.shapes
       state.connections = entry.connections
       // deselect if selected shape no longer exists
@@ -96,7 +102,10 @@ const canvasSlice = createSlice({
     redo: (state) => {
       const entry = state.future.pop()
       if (!entry) return
-      state.past.push({ shapes: [...state.shapes], connections: [...state.connections] })
+      state.past.push({
+        shapes: state.shapes.map(s => ({ ...s })),
+        connections: state.connections.map(c => ({ ...c })),
+      })
       state.shapes = entry.shapes
       state.connections = entry.connections
       if (state.selectedId && !state.shapes.find(s => s.id === state.selectedId)) {

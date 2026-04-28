@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { zoomIn, zoomOut } from "@/redux/slice/ui/ui-slice";
+import { undo, redo } from "@/redux/slice/canvas/canvas-slice";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Canvas-mode header — minimal overlay that sits on top of the canvas.
@@ -13,20 +15,24 @@ const IconBtn = ({
   children,
   label,
   onClick,
+  disabled = false,
   className = "",
 }: {
   children: React.ReactNode;
   label: string;
   onClick?: () => void;
+  disabled?: boolean;
   className?: string;
 }) => (
   <button
     onClick={onClick}
+    disabled={disabled}
     title={label}
     className={`group relative flex items-center justify-center
                 w-9 h-9 rounded-xl
                 text-on-surface-variant hover:text-on-surface
                 hover:bg-white/[0.06] transition-all duration-150
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
                 ${className}`}
   >
     {children}
@@ -80,7 +86,19 @@ const ZoomControls = () => {
 };
 
 /* ── Main canvas header ── */
-const CanvasHeader = () => (
+const CanvasHeader = () => {
+  const dispatch = useAppDispatch();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const canUndoStore = useAppSelector((s) => s.canvas.past.length > 0);
+  const canRedoStore = useAppSelector((s) => s.canvas.future.length > 0);
+
+  // Defer to client-only values to avoid SSR/localStorage hydration mismatch
+  const canUndo = mounted && canUndoStore;
+  const canRedo = mounted && canRedoStore;
+
+  return (
   <div className="fixed top-0 inset-x-0 z-40 pointer-events-none">
     <div className="mx-3 mt-3 flex items-center justify-between pointer-events-auto">
       {/* ── Left cluster ── */}
@@ -146,13 +164,13 @@ const CanvasHeader = () => (
                     shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
       >
         {/* Undo / Redo */}
-        <IconBtn label="Undo (Ctrl+Z)">
+        <IconBtn label="Undo (Ctrl+Z)" onClick={() => dispatch(undo())} disabled={!canUndo}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 7v6h6" />
             <path d="M3.51 15a9 9 0 1 0 .49-3.96" />
           </svg>
         </IconBtn>
-        <IconBtn label="Redo (Ctrl+Shift+Z)">
+        <IconBtn label="Redo (Ctrl+Shift+Z)" onClick={() => dispatch(redo())} disabled={!canRedo}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 7v6h-6" />
             <path d="M20.49 15a9 9 0 1 1-.49-3.96" />
@@ -198,6 +216,7 @@ const CanvasHeader = () => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default CanvasHeader;
