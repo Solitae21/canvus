@@ -24,10 +24,14 @@ export interface Shape {
   strokeColor: string;
 }
 
+export type ConnectionPort = 'top' | 'right' | 'bottom' | 'left';
+
 export interface Connection {
   id: string;
   fromId: string;
   toId: string;
+  fromPort?: ConnectionPort;
+  toPort?: ConnectionPort;
 }
 
 export interface Canvas {

@@ -1,8 +1,8 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { Shape, ShapeType, Connection } from '@canvus/shared'
+import type { Shape, ShapeType, Connection, ConnectionPort } from '@canvus/shared'
 
-export type { Shape, ShapeType, Connection }
+export type { Shape, ShapeType, Connection, ConnectionPort }
 
 export type ToolType =
   | 'select' | 'hand'

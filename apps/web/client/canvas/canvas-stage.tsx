@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Stage, Layer, Transformer, Group } from "react-konva";
 import type Konva from "konva";
 
@@ -13,6 +13,7 @@ import {
   addConnection,
   setPendingFromId,
   type Shape,
+  type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
 import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
 
@@ -28,6 +29,7 @@ import {
 import CanvasShape, { CanvasShapeLabel } from "./canvas-shape";
 import CanvasConnection from "./canvas-connection";
 import CanvasLabelEditor from "./canvas-label-editor";
+import CanvasShapeConnectors from "./canvas-shape-connectors";
 
 export interface CanvasStageProps {
   className?: string;
@@ -46,6 +48,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [pendingFromPort, setPendingFromPort] = useState<ConnectionPort | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shapeRefs = useRef<Map<string, Konva.Group>>(new Map());
@@ -53,6 +57,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const prevScaleRef = useRef(viewport.scale);
   const viewportRef = useRef(viewport);
   viewportRef.current = viewport;
+  const hoverLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Middle-mouse-button pan state
   const isMMBPanningRef = useRef(false);
@@ -193,6 +198,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
             id: newId(),
             fromId: pendingFromId,
             toId: shape.id,
+            ...(pendingFromPort ? { fromPort: pendingFromPort } : {}),
           }),
         );
         dispatch(setPendingFromId(null));
@@ -259,6 +265,26 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
       }),
     );
   };
+
+  // Clear pendingFromPort whenever the Redux pending connection is cancelled
+  useEffect(() => {
+    if (pendingFromId === null) setPendingFromPort(null);
+  }, [pendingFromId]);
+
+  const handleShapeMouseEnter = useCallback((shapeId: string) => {
+    if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current);
+    setHoveredId(shapeId);
+  }, []);
+
+  const handleShapeMouseLeave = useCallback(() => {
+    hoverLeaveTimerRef.current = setTimeout(() => setHoveredId(null), 60);
+  }, []);
+
+  const handlePortClick = useCallback((shapeId: string, port: ConnectionPort) => {
+    dispatch(setPendingFromId(shapeId));
+    setPendingFromPort(port);
+    dispatch(setTool("arrow"));
+  }, [dispatch]);
 
   const handleTransformEnd = () => {
     const tr = transformerRef.current;
@@ -361,6 +387,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 onClick={(e) => handleShapeClick(shape, e)}
                 onDblClick={() => setEditingId(shape.id)}
                 onDragEnd={(e) => handleShapeDragEnd(shape, e)}
+                onMouseEnter={() => handleShapeMouseEnter(shape.id)}
+                onMouseLeave={handleShapeMouseLeave}
               >
                 <CanvasShape
                   shape={shape}
@@ -371,6 +399,27 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 )}
               </Group>
             ))}
+
+            {shapes.map((shape) => {
+              const show =
+                tool === "select" &&
+                (hoveredId === shape.id || selectedId === shape.id) &&
+                pendingFromId !== shape.id;
+              return show ? (
+                <Group
+                  key={`conn-${shape.id}`}
+                  x={shape.x}
+                  y={shape.y}
+                  onMouseEnter={() => handleShapeMouseEnter(shape.id)}
+                  onMouseLeave={handleShapeMouseLeave}
+                >
+                  <CanvasShapeConnectors
+                    shape={shape}
+                    onPortClick={(port) => handlePortClick(shape.id, port)}
+                  />
+                </Group>
+              ) : null;
+            })}
 
             <Transformer ref={transformerRef} onTransformEnd={handleTransformEnd} />
           </Layer>
