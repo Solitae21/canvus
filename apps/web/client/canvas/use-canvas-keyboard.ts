@@ -11,6 +11,7 @@ import {
   updateShape,
   undo,
   redo,
+  deleteConnection,
   type ToolType,
 } from "@/redux/slice/canvas/canvas-slice";
 import { zoomIn, zoomOut, resetViewport } from "@/redux/slice/ui/ui-slice";
@@ -31,12 +32,15 @@ const TOOL_KEYS: Record<string, ToolType> = {
 export function useCanvasKeyboard() {
   const dispatch = useAppDispatch();
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
+  const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
   const tool = useAppSelector((s) => s.canvas.tool);
   const shapes = useAppSelector((s) => s.canvas.shapes);
 
   // Stable refs so event handlers don't go stale
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
+  const selectedConnectionIdRef = useRef(selectedConnectionId);
+  selectedConnectionIdRef.current = selectedConnectionId;
   const toolRef = useRef(tool);
   toolRef.current = tool;
   const shapesRef = useRef(shapes);
@@ -106,10 +110,17 @@ export function useCanvasKeyboard() {
       }
 
       // ── Delete ───────────────────────────────────────────────────────────────
-      if ((e.key === "Backspace" || e.key === "Delete") && selectedIdRef.current) {
-        e.preventDefault();
-        dispatch(deleteShape(selectedIdRef.current));
-        return;
+      if (e.key === "Backspace" || e.key === "Delete") {
+        if (selectedIdRef.current) {
+          e.preventDefault();
+          dispatch(deleteShape(selectedIdRef.current));
+          return;
+        }
+        if (selectedConnectionIdRef.current) {
+          e.preventDefault();
+          dispatch(deleteConnection(selectedConnectionIdRef.current));
+          return;
+        }
       }
 
       // ── Escape ───────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ interface CanvasState {
   past: HistoryEntry[]
   future: HistoryEntry[]
   selectedId: string | null
+  selectedConnectionId: string | null
   pendingFromId: string | null
   tool: ToolType
 }
@@ -34,6 +35,7 @@ const initialState: CanvasState = {
   past: [],
   future: [],
   selectedId: null,
+  selectedConnectionId: null,
   pendingFromId: null,
   tool: 'select',
 }
@@ -70,6 +72,7 @@ const canvasSlice = createSlice({
     },
     selectShape: (state, action: PayloadAction<string | null>) => {
       state.selectedId = action.payload
+      state.selectedConnectionId = null
     },
     setTool: (state, action: PayloadAction<CanvasState['tool']>) => {
       state.tool = action.payload
@@ -81,6 +84,16 @@ const canvasSlice = createSlice({
     deleteConnection: (state, action: PayloadAction<string>) => {
       pushHistory(state)
       state.connections = state.connections.filter(c => c.id !== action.payload)
+      if (state.selectedConnectionId === action.payload) state.selectedConnectionId = null
+    },
+    selectConnection: (state, action: PayloadAction<string | null>) => {
+      state.selectedConnectionId = action.payload
+      state.selectedId = null
+    },
+    updateConnection: (state, action: PayloadAction<{ id: string } & Partial<Connection>>) => {
+      pushHistory(state)
+      const conn = state.connections.find(c => c.id === action.payload.id)
+      if (conn) Object.assign(conn, action.payload)
     },
     setPendingFromId: (state, action: PayloadAction<string | null>) => {
       state.pendingFromId = action.payload
@@ -98,6 +111,9 @@ const canvasSlice = createSlice({
       if (state.selectedId && !state.shapes.find(s => s.id === state.selectedId)) {
         state.selectedId = null
       }
+      if (state.selectedConnectionId && !state.connections.find(c => c.id === state.selectedConnectionId)) {
+        state.selectedConnectionId = null
+      }
     },
     redo: (state) => {
       const entry = state.future.pop()
@@ -111,6 +127,9 @@ const canvasSlice = createSlice({
       if (state.selectedId && !state.shapes.find(s => s.id === state.selectedId)) {
         state.selectedId = null
       }
+      if (state.selectedConnectionId && !state.connections.find(c => c.id === state.selectedConnectionId)) {
+        state.selectedConnectionId = null
+      }
     },
   },
 })
@@ -123,6 +142,8 @@ export const {
   setTool,
   addConnection,
   deleteConnection,
+  selectConnection,
+  updateConnection,
   setPendingFromId,
   undo,
   redo,

@@ -4,7 +4,11 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   deleteShape,
   updateShape,
+  deleteConnection,
+  updateConnection,
 } from "@/redux/slice/canvas/canvas-slice";
+
+const DEFAULT_CONNECTION_COLOR = "#ffffff";
 
 const ColorRow = ({
   label,
@@ -53,11 +57,58 @@ const CanvasRightPanel = () => {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((s) => s.ui.panels.right);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
+  const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
   const shape = useAppSelector((s) =>
     selectedId ? s.canvas.shapes.find((sh) => sh.id === selectedId) : undefined,
   );
+  const connection = useAppSelector((s) =>
+    selectedConnectionId
+      ? s.canvas.connections.find((c) => c.id === selectedConnectionId)
+      : undefined,
+  );
 
-  if (!isOpen || !shape) return null;
+  if (!isOpen || (!shape && !connection)) return null;
+
+  if (connection) {
+    return (
+      <div
+        className="fixed right-4 top-20 w-72
+                   bg-surface-container/80 backdrop-blur-[16px]
+                   border border-white/[0.06] rounded-2xl
+                   shadow-xl pointer-events-auto z-30"
+      >
+        <div className="px-4 pt-3 pb-2 border-b border-white/[0.06]">
+          <div className="text-[11px] font-medium tracking-widest uppercase text-on-surface-variant">
+            Properties
+          </div>
+          <div className="text-sm font-medium text-on-surface mt-0.5">
+            Connector
+          </div>
+        </div>
+
+        <div className="px-4 py-2">
+          <ColorRow
+            label="Color"
+            value={connection.color ?? DEFAULT_CONNECTION_COLOR}
+            onChange={(v) =>
+              dispatch(updateConnection({ id: connection.id, color: v }))
+            }
+          />
+        </div>
+
+        <div className="px-4 pb-3 pt-2 border-t border-white/[0.06]">
+          <button
+            onClick={() => dispatch(deleteConnection(connection.id))}
+            className="w-full text-xs text-red-400 hover:text-red-300
+                       hover:bg-red-500/[0.08] rounded-lg py-2
+                       transition-colors duration-150"
+          >
+            Delete connector
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -71,28 +122,28 @@ const CanvasRightPanel = () => {
           Properties
         </div>
         <div className="text-sm font-medium text-on-surface mt-0.5 capitalize">
-          {shape.type.replace(/-/g, " ")}
+          {shape!.type.replace(/-/g, " ")}
         </div>
       </div>
 
       <div className="px-4 py-2">
         <ColorRow
           label="Fill"
-          value={shape.fill}
-          onChange={(v) => dispatch(updateShape({ id: shape.id, fill: v }))}
+          value={shape!.fill}
+          onChange={(v) => dispatch(updateShape({ id: shape!.id, fill: v }))}
         />
         <ColorRow
           label="Stroke"
-          value={shape.strokeColor}
+          value={shape!.strokeColor}
           onChange={(v) =>
-            dispatch(updateShape({ id: shape.id, strokeColor: v }))
+            dispatch(updateShape({ id: shape!.id, strokeColor: v }))
           }
         />
       </div>
 
       <div className="px-4 pb-3 pt-2 border-t border-white/[0.06]">
         <button
-          onClick={() => dispatch(deleteShape(shape.id))}
+          onClick={() => dispatch(deleteShape(shape!.id))}
           className="w-full text-xs text-red-400 hover:text-red-300
                      hover:bg-red-500/[0.08] rounded-lg py-2
                      transition-colors duration-150"

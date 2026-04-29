@@ -1,12 +1,18 @@
 "use client";
 
-import { Arrow } from "react-konva";
+import { Arrow, Group, Label, Tag, Text } from "react-konva";
+import type { KonvaEventObject } from "konva/lib/Node";
 import type { Connection, Shape, ConnectionPort } from "@/redux/slice/canvas/canvas-slice";
-import { ARROW_COLOR } from "./canvas-defaults";
+
+const DEFAULT_CONNECTION_COLOR = "#ffffff";
 
 export interface CanvasConnectionProps {
   connection: Connection;
   shapeMap: Map<string, Shape>;
+  isSelected: boolean;
+  editingLabel: boolean;
+  onSelect: () => void;
+  onDoubleClick: () => void;
 }
 
 function getPortPoint(shape: Shape, port: ConnectionPort): { x: number; y: number } {
@@ -81,7 +87,7 @@ const STUB = 24; // minimum straight run before the first bend
  * Builds an array of [x, y, x, y, ...] waypoints for an orthogonal
  * (horizontal/vertical only) connector between two shapes.
  */
-function buildOrthogonalPoints(
+export function buildOrthogonalPoints(
   from: Shape,
   to: Shape,
   fromPort?: ConnectionPort,
@@ -163,7 +169,46 @@ function buildOrthogonalPoints(
   return pts;
 }
 
-const CanvasConnection = ({ connection, shapeMap }: CanvasConnectionProps) => {
+/**
+ * Returns the world-space midpoint of an orthogonal polyline defined by
+ * a flat [x, y, x, y, ...] array.
+ */
+export function getPathMidpoint(pts: number[]): { x: number; y: number } {
+  const count = pts.length / 2;
+  if (count < 2) return { x: pts[0] ?? 0, y: pts[1] ?? 0 };
+
+  let totalLen = 0;
+  for (let i = 0; i < count - 1; i++) {
+    const ddx = pts[(i + 1) * 2] - pts[i * 2];
+    const ddy = pts[(i + 1) * 2 + 1] - pts[i * 2 + 1];
+    totalLen += Math.sqrt(ddx * ddx + ddy * ddy);
+  }
+
+  let half = totalLen / 2;
+  for (let i = 0; i < count - 1; i++) {
+    const x1 = pts[i * 2],       y1 = pts[i * 2 + 1];
+    const x2 = pts[(i + 1) * 2], y2 = pts[(i + 1) * 2 + 1];
+    const ddx = x2 - x1,         ddy = y2 - y1;
+    const segLen = Math.sqrt(ddx * ddx + ddy * ddy);
+    if (half <= segLen) {
+      const t = half / segLen;
+      return { x: x1 + ddx * t, y: y1 + ddy * t };
+    }
+    half -= segLen;
+  }
+  return { x: pts[pts.length - 2], y: pts[pts.length - 1] };
+}
+
+const LABEL_WIDTH = 160;
+
+const CanvasConnection = ({
+  connection,
+  shapeMap,
+  isSelected,
+  editingLabel,
+  onSelect,
+  onDoubleClick,
+}: CanvasConnectionProps) => {
   const from = shapeMap.get(connection.fromId);
   const to   = shapeMap.get(connection.toId);
   if (!from || !to) return null;
@@ -174,16 +219,47 @@ const CanvasConnection = ({ connection, shapeMap }: CanvasConnectionProps) => {
     connection.toPort,
   );
 
+  const mid = getPathMidpoint(points);
+  const color = connection.color ?? DEFAULT_CONNECTION_COLOR;
+
+  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+    e.cancelBubble = true;
+    onSelect();
+  };
+
+  const handleDblClick = (e: KonvaEventObject<MouseEvent>) => {
+    e.cancelBubble = true;
+    onDoubleClick();
+  };
+
   return (
-    <Arrow
-      points={points}
-      stroke={ARROW_COLOR}
-      fill={ARROW_COLOR}
-      pointerLength={10}
-      pointerWidth={10}
-      strokeWidth={2}
-      listening={false}
-    />
+    <Group>
+      <Arrow
+        points={points}
+        stroke={isSelected ? "#60a5fa" : color}
+        fill={isSelected ? "#60a5fa" : color}
+        pointerLength={10}
+        pointerWidth={10}
+        strokeWidth={isSelected ? 3 : 2}
+        hitStrokeWidth={20}
+        onClick={handleClick}
+        onDblClick={handleDblClick}
+      />
+      {connection.label && !editingLabel && (
+        <Label x={mid.x} y={mid.y} offsetX={LABEL_WIDTH / 2} offsetY={10}>
+          <Tag fill="#1a1625" cornerRadius={4} opacity={0.9} />
+          <Text
+            text={connection.label}
+            fill="#ffffff"
+            fontSize={12}
+            padding={4}
+            width={LABEL_WIDTH}
+            align="center"
+            listening={false}
+          />
+        </Label>
+      )}
+    </Group>
   );
 };
 

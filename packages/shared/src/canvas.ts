@@ -32,6 +32,8 @@ export interface Connection {
   toId: string;
   fromPort?: ConnectionPort;
   toPort?: ConnectionPort;
+  color?: string;
+  label?: string;
 }
 
 export interface Canvas {

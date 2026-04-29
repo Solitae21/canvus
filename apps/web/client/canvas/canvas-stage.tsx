@@ -12,6 +12,8 @@ import {
   setTool,
   addConnection,
   setPendingFromId,
+  selectConnection,
+  updateConnection,
   type Shape,
   type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
@@ -28,7 +30,9 @@ import {
 } from "./canvas-defaults";
 import CanvasShape, { CanvasShapeLabel } from "./canvas-shape";
 import CanvasConnection from "./canvas-connection";
+import { buildOrthogonalPoints, getPathMidpoint } from "./canvas-connection";
 import CanvasLabelEditor from "./canvas-label-editor";
+import CanvasConnectionLabelEditor from "./canvas-connection-label-editor";
 import CanvasShapeConnectors from "./canvas-shape-connectors";
 
 export interface CanvasStageProps {
@@ -42,12 +46,14 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const shapes = useAppSelector((s) => s.canvas.shapes);
   const connections = useAppSelector((s) => s.canvas.connections);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
+  const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
   const tool = useAppSelector((s) => s.canvas.tool);
   const pendingFromId = useAppSelector((s) => s.canvas.pendingFromId);
   const viewport = useAppSelector((s) => s.ui.viewport);
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingFromPort, setPendingFromPort] = useState<ConnectionPort | null>(null);
 
@@ -286,6 +292,16 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     dispatch(setTool("arrow"));
   }, [dispatch]);
 
+  const handleConnectionClick = useCallback((connectionId: string) => {
+    dispatch(selectConnection(connectionId));
+    dispatch(setPanel({ panel: "right", open: true }));
+  }, [dispatch]);
+
+  const handleConnectionDoubleClick = useCallback((connectionId: string) => {
+    dispatch(selectConnection(connectionId));
+    setEditingConnectionId(connectionId);
+  }, [dispatch]);
+
   const handleTransformEnd = () => {
     const tr = transformerRef.current;
     if (!tr) return;
@@ -371,6 +387,10 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 key={c.id}
                 connection={c}
                 shapeMap={shapeMap}
+                isSelected={c.id === selectedConnectionId}
+                editingLabel={c.id === editingConnectionId}
+                onSelect={() => handleConnectionClick(c.id)}
+                onDoubleClick={() => handleConnectionDoubleClick(c.id)}
               />
             ))}
 
@@ -437,6 +457,32 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           onCancel={() => setEditingId(null)}
         />
       )}
+
+      {editingConnectionId && (() => {
+        const conn = connections.find((c) => c.id === editingConnectionId);
+        if (!conn) return null;
+        const from = shapeMap.get(conn.fromId);
+        const to = shapeMap.get(conn.toId);
+        if (!from || !to) return null;
+        const pts = buildOrthogonalPoints(from, to, conn.fromPort, conn.toPort);
+        const mid = getPathMidpoint(pts);
+        return (
+          <CanvasConnectionLabelEditor
+            key={editingConnectionId}
+            connection={conn}
+            midX={mid.x}
+            midY={mid.y}
+            offsetX={viewport.x}
+            offsetY={viewport.y}
+            scale={viewport.scale}
+            onCommit={(value) => {
+              dispatch(updateConnection({ id: editingConnectionId, label: value }));
+              setEditingConnectionId(null);
+            }}
+            onCancel={() => setEditingConnectionId(null)}
+          />
+        );
+      })()}
     </div>
   );
 };
