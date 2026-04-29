@@ -204,6 +204,52 @@ export function getPathMidpoint(pts: number[]): { x: number; y: number } {
   return { x: pts[pts.length - 2], y: pts[pts.length - 1] };
 }
 
+/**
+ * Builds orthogonal waypoints from a shape port to a free cursor position.
+ * Used during connector tip drag to keep the line H/V-only.
+ */
+function buildOrthogonalPointsToPos(
+  from: Shape,
+  fromPort: ConnectionPort | undefined,
+  targetX: number,
+  targetY: number,
+): number[] {
+  const fromCx = from.x + from.w / 2;
+  const fromCy = from.y + from.h / 2;
+
+  const dx = targetX - fromCx;
+  const dy = targetY - fromCy;
+  const resolvedFromPort: ConnectionPort = fromPort ?? (
+    Math.abs(dx) >= Math.abs(dy)
+      ? (dx >= 0 ? "right" : "left")
+      : (dy >= 0 ? "bottom" : "top")
+  );
+
+  const fp = getPortPoint(from, resolvedFromPort);
+
+  if (resolvedFromPort === "right" || resolvedFromPort === "left") {
+    const dir = resolvedFromPort === "right" ? 1 : -1;
+    if (Math.abs(fp.y - targetY) < 1) {
+      return [fp.x, fp.y, targetX, targetY];
+    }
+    const elbowX = dir > 0
+      ? Math.max(fp.x + STUB, (fp.x + targetX) / 2)
+      : Math.min(fp.x - STUB, (fp.x + targetX) / 2);
+    return [fp.x, fp.y, elbowX, fp.y, elbowX, targetY, targetX, targetY];
+  } else {
+    const dir = resolvedFromPort === "bottom" ? 1 : -1;
+    if (Math.abs(fp.x - targetX) < 1) {
+      return [fp.x, fp.y, targetX, targetY];
+    }
+    const elbowY = dir > 0
+      ? Math.max(fp.y + STUB, (fp.y + targetY) / 2)
+      : Math.min(fp.y - STUB, (fp.y + targetY) / 2);
+    return [fp.x, fp.y, fp.x, elbowY, targetX, elbowY, targetX, targetY];
+  }
+}
+
+
+
 const LABEL_WIDTH = 160;
 
 const CanvasConnection = ({
@@ -230,12 +276,13 @@ const CanvasConnection = ({
   const tipX = points[points.length - 2];
   const tipY = points[points.length - 1];
 
-  // During drag: straight rubber-band line from source port to cursor
+  // During drag: orthogonal routing from source port to cursor (keeps H/V lines only)
   const activePoints = draggingTipPos
-    ? [points[0], points[1], draggingTipPos.x, draggingTipPos.y]
+    ? buildOrthogonalPointsToPos(from, connection.fromPort, draggingTipPos.x, draggingTipPos.y)
     : points;
 
-  const mid = getPathMidpoint(points);
+  // Label follows the midpoint of the active path (moves with the line during drag)
+  const mid = getPathMidpoint(activePoints);
   const color = connection.color ?? DEFAULT_CONNECTION_COLOR;
 
   const tipCircleRef = useRef<Konva.Circle>(null);
