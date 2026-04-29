@@ -1,6 +1,8 @@
 "use client";
 
-import { Arrow, Group, Label, Tag, Text } from "react-konva";
+import { useRef } from "react";
+import { Arrow, Circle, Group, Label, Tag, Text } from "react-konva";
+import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Connection, Shape, ConnectionPort } from "@/redux/slice/canvas/canvas-slice";
 
@@ -11,8 +13,11 @@ export interface CanvasConnectionProps {
   shapeMap: Map<string, Shape>;
   isSelected: boolean;
   editingLabel: boolean;
+  draggingTipPos?: { x: number; y: number };
   onSelect: () => void;
   onDoubleClick: () => void;
+  onTipDragMove: (pos: { x: number; y: number }) => void;
+  onTipDragEnd: () => void;
 }
 
 function getPortPoint(shape: Shape, port: ConnectionPort): { x: number; y: number } {
@@ -206,8 +211,11 @@ const CanvasConnection = ({
   shapeMap,
   isSelected,
   editingLabel,
+  draggingTipPos,
   onSelect,
   onDoubleClick,
+  onTipDragMove,
+  onTipDragEnd,
 }: CanvasConnectionProps) => {
   const from = shapeMap.get(connection.fromId);
   const to   = shapeMap.get(connection.toId);
@@ -219,8 +227,18 @@ const CanvasConnection = ({
     connection.toPort,
   );
 
+  const tipX = points[points.length - 2];
+  const tipY = points[points.length - 1];
+
+  // During drag: straight rubber-band line from source port to cursor
+  const activePoints = draggingTipPos
+    ? [points[0], points[1], draggingTipPos.x, draggingTipPos.y]
+    : points;
+
   const mid = getPathMidpoint(points);
   const color = connection.color ?? DEFAULT_CONNECTION_COLOR;
+
+  const tipCircleRef = useRef<Konva.Circle>(null);
 
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
     e.cancelBubble = true;
@@ -232,10 +250,15 @@ const CanvasConnection = ({
     onDoubleClick();
   };
 
+  const handleTipDragEnd = () => {
+    tipCircleRef.current?.position({ x: tipX, y: tipY });
+    onTipDragEnd();
+  };
+
   return (
     <Group>
       <Arrow
-        points={points}
+        points={activePoints}
         stroke={isSelected ? "#60a5fa" : color}
         fill={isSelected ? "#60a5fa" : color}
         pointerLength={10}
@@ -245,6 +268,33 @@ const CanvasConnection = ({
         onClick={handleClick}
         onDblClick={handleDblClick}
       />
+
+      {isSelected && (
+        <Circle
+          ref={tipCircleRef}
+          x={tipX}
+          y={tipY}
+          radius={6}
+          fill="#60a5fa"
+          stroke="#ffffff"
+          strokeWidth={1.5}
+          draggable
+          onDragMove={(e: KonvaEventObject<DragEvent>) => {
+            onTipDragMove(e.target.position());
+          }}
+          onDragEnd={handleTipDragEnd}
+          onMouseEnter={(e) => {
+            const stage = e.target.getStage();
+            if (stage) stage.container().style.cursor = "crosshair";
+          }}
+          onMouseLeave={(e) => {
+            const stage = e.target.getStage();
+            if (stage) stage.container().style.cursor = "";
+          }}
+          onClick={(e: KonvaEventObject<MouseEvent>) => { e.cancelBubble = true; }}
+        />
+      )}
+
       {connection.label && !editingLabel && (
         <Label x={mid.x} y={mid.y} offsetX={LABEL_WIDTH / 2} offsetY={10}>
           <Tag fill="#1a1625" cornerRadius={4} opacity={0.9} />

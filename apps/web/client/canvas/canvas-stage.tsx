@@ -54,6 +54,10 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
+  const [draggingTip, setDraggingTip] = useState<{
+    connId: string;
+    pos: { x: number; y: number };
+  } | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingFromPort, setPendingFromPort] = useState<ConnectionPort | null>(null);
 
@@ -389,8 +393,11 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 shapeMap={shapeMap}
                 isSelected={c.id === selectedConnectionId}
                 editingLabel={c.id === editingConnectionId}
+                draggingTipPos={draggingTip?.connId === c.id ? draggingTip.pos : undefined}
                 onSelect={() => handleConnectionClick(c.id)}
                 onDoubleClick={() => handleConnectionDoubleClick(c.id)}
+                onTipDragMove={(pos) => setDraggingTip({ connId: c.id, pos })}
+                onTipDragEnd={() => setDraggingTip(null)}
               />
             ))}
 
