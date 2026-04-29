@@ -514,7 +514,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
         const from = shapeMap.get(conn.fromId);
         const to = shapeMap.get(conn.toId);
         if (!from || !to) return null;
-        const pts = buildOrthogonalPoints(from, to, conn.fromPort, conn.toPort);
+        const pts = buildOrthogonalPoints(from, to);
         const mid = getPathMidpoint(pts);
         return (
           <CanvasConnectionLabelEditor

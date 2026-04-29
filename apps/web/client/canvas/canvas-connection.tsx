@@ -29,149 +29,60 @@ function getPortPoint(shape: Shape, port: ConnectionPort): { x: number; y: numbe
   }
 }
 
-/**
- * Returns the point on the shape border where a ray from the shape's center
- * toward (fromX, fromY) exits — used to clip arrowheads to the shape edge.
- */
-function getShapeEdgePoint(
-  shape: Shape,
-  fromX: number,
-  fromY: number,
-): { x: number; y: number } {
-  const cx = shape.x + shape.w / 2;
-  const cy = shape.y + shape.h / 2;
-  const { x: sx, y: sy, w, h } = shape;
-
-  let dx = fromX - cx;
-  let dy = fromY - cy;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len < 0.001) return { x: cx, y: cy };
-  dx /= len;
-  dy /= len;
-
-  // Ellipse
-  if (shape.type === "oval" || shape.type === "circle") {
-    const rx = w / 2;
-    const ry = h / 2;
-    const t = 1 / Math.sqrt((dx / rx) ** 2 + (dy / ry) ** 2);
-    return { x: cx + dx * t, y: cy + dy * t };
-  }
-
-  // Diamond: intersect ray against each of the 4 edge segments
-  if (shape.type === "diamond") {
-    const segs: [number, number, number, number][] = [
-      [cx,     sy,     sx + w, cy    ],
-      [sx + w, cy,     cx,     sy + h],
-      [cx,     sy + h, sx,     cy    ],
-      [sx,     cy,     cx,     sy    ],
-    ];
-    for (const [x1, y1, x2, y2] of segs) {
-      const ex = x2 - x1;
-      const ey = y2 - y1;
-      const det = ex * dy - ey * dx;
-      if (Math.abs(det) < 0.0001) continue;
-      const t = ((y1 - cy) * ex - (x1 - cx) * ey) / det;
-      const s = (dx * (y1 - cy) - dy * (x1 - cx)) / det;
-      if (t > -0.001 && s >= -0.001 && s <= 1.001) {
-        return { x: cx + dx * t, y: cy + dy * t };
-      }
-    }
-  }
-
-  // Bounding-box fallback
-  const hw = w / 2;
-  const hh = h / 2;
-  const tx = dx > 0 ? hw / dx : dx < 0 ? hw / -dx : Infinity;
-  const ty = dy > 0 ? hh / dy : dy < 0 ? hh / -dy : Infinity;
-  return { x: cx + dx * Math.min(tx, ty), y: cy + dy * Math.min(tx, ty) };
-}
-
 const STUB = 24; // minimum straight run before the first bend
 
 /**
  * Builds an array of [x, y, x, y, ...] waypoints for an orthogonal
  * (horizontal/vertical only) connector between two shapes.
+ * Always picks the best port pair based on current relative positions —
+ * stored ports are intentionally ignored so connectors re-route correctly
+ * whenever shapes are moved.
  */
 export function buildOrthogonalPoints(
   from: Shape,
   to: Shape,
-  fromPort?: ConnectionPort,
-  toPort?: ConnectionPort,
 ): number[] {
   const fromCx = from.x + from.w / 2;
   const fromCy = from.y + from.h / 2;
   const toCx   = to.x   + to.w   / 2;
   const toCy   = to.y   + to.h   / 2;
 
-  // Auto-detect exit port when none is set
   const dx = toCx - fromCx;
   const dy = toCy - fromCy;
-  const resolvedFromPort: ConnectionPort = fromPort ?? (
-    Math.abs(dx) >= Math.abs(dy)
-      ? (dx >= 0 ? "right" : "left")
-      : (dy >= 0 ? "bottom" : "top")
-  );
 
-  // Source point is always the port midpoint on the shape edge
-  const fp = getPortPoint(from, resolvedFromPort);
-
-  // ── Build waypoints ending at the target centre ──────────────────────────
-  let pts: number[];
-
-  if (resolvedFromPort === "right" || resolvedFromPort === "left") {
-    const dir = resolvedFromPort === "right" ? 1 : -1;
-
-    if (Math.abs(fp.y - toCy) < 1) {
-      // Same horizontal row → straight line
-      pts = [fp.x, fp.y, toCx, toCy];
-    } else {
-      // Horizontal stub → vertical run → horizontal run to centre
-      const elbowX = dir > 0
-        ? Math.max(fp.x + STUB, (fp.x + toCx) / 2)
-        : Math.min(fp.x - STUB, (fp.x + toCx) / 2);
-      pts = [fp.x, fp.y, elbowX, fp.y, elbowX, toCy, toCx, toCy];
-    }
+  // Pick the face of each shape that points most directly toward the other
+  let fromPort: ConnectionPort;
+  let toPort: ConnectionPort;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    fromPort = dx >= 0 ? "right" : "left";
+    toPort   = dx >= 0 ? "left"  : "right";
   } else {
-    // top / bottom
-    const dir = resolvedFromPort === "bottom" ? 1 : -1;
-
-    if (Math.abs(fp.x - toCx) < 1) {
-      // Same vertical column → straight line
-      pts = [fp.x, fp.y, toCx, toCy];
-    } else {
-      // Vertical stub → horizontal run → vertical run to centre
-      const elbowY = dir > 0
-        ? Math.max(fp.y + STUB, (fp.y + toCy) / 2)
-        : Math.min(fp.y - STUB, (fp.y + toCy) / 2);
-      pts = [fp.x, fp.y, fp.x, elbowY, toCx, elbowY, toCx, toCy];
-    }
+    fromPort = dy >= 0 ? "bottom" : "top";
+    toPort   = dy >= 0 ? "top"    : "bottom";
   }
 
-  // ── Clip the last point to the target shape's actual border ───────────────
-  // Determine approach direction from the penultimate waypoint
-  const n = pts.length;
-  const approachX = pts[n - 4];
-  const approachY = pts[n - 3];
-  const FAR = 1e6;
-  const isHorizApproach = Math.abs(approachY - toCy) < 1;
+  const fp = getPortPoint(from, fromPort);
+  const tp = getPortPoint(to, toPort);
 
-  let clippedTo: { x: number; y: number };
-  if (toPort) {
-    clippedTo = getPortPoint(to, toPort);
+  if (fromPort === "right" || fromPort === "left") {
+    if (Math.abs(fp.y - tp.y) < 1) {
+      return [fp.x, fp.y, tp.x, tp.y];
+    }
+    const dir = fromPort === "right" ? 1 : -1;
+    const elbowX = dir > 0
+      ? Math.max(fp.x + STUB, (fp.x + tp.x) / 2)
+      : Math.min(fp.x - STUB, (fp.x + tp.x) / 2);
+    return [fp.x, fp.y, elbowX, fp.y, elbowX, tp.y, tp.x, tp.y];
   } else {
-    const clipFromX = isHorizApproach
-      ? (approachX < toCx ? toCx - FAR : toCx + FAR)
-      : approachX;
-    const clipFromY = isHorizApproach
-      ? approachY
-      : (approachY < toCy ? toCy - FAR : toCy + FAR);
-    clippedTo = getShapeEdgePoint(to, clipFromX, clipFromY);
+    if (Math.abs(fp.x - tp.x) < 1) {
+      return [fp.x, fp.y, tp.x, tp.y];
+    }
+    const dir = fromPort === "bottom" ? 1 : -1;
+    const elbowY = dir > 0
+      ? Math.max(fp.y + STUB, (fp.y + tp.y) / 2)
+      : Math.min(fp.y - STUB, (fp.y + tp.y) / 2);
+    return [fp.x, fp.y, fp.x, elbowY, tp.x, elbowY, tp.x, tp.y];
   }
-
-  pts[n - 2] = clippedTo.x;
-  pts[n - 1] = clippedTo.y;
-
-  return pts;
 }
 
 /**
@@ -205,12 +116,12 @@ export function getPathMidpoint(pts: number[]): { x: number; y: number } {
 }
 
 /**
- * Builds orthogonal waypoints from a shape port to a free cursor position.
+ * Builds orthogonal waypoints from a shape to a free cursor position.
  * Used during connector tip drag to keep the line H/V-only.
+ * Always auto-detects the best exit port based on current positions.
  */
 function buildOrthogonalPointsToPos(
   from: Shape,
-  fromPort: ConnectionPort | undefined,
   targetX: number,
   targetY: number,
 ): number[] {
@@ -219,16 +130,15 @@ function buildOrthogonalPointsToPos(
 
   const dx = targetX - fromCx;
   const dy = targetY - fromCy;
-  const resolvedFromPort: ConnectionPort = fromPort ?? (
+  const fromPort: ConnectionPort =
     Math.abs(dx) >= Math.abs(dy)
       ? (dx >= 0 ? "right" : "left")
-      : (dy >= 0 ? "bottom" : "top")
-  );
+      : (dy >= 0 ? "bottom" : "top");
 
-  const fp = getPortPoint(from, resolvedFromPort);
+  const fp = getPortPoint(from, fromPort);
 
-  if (resolvedFromPort === "right" || resolvedFromPort === "left") {
-    const dir = resolvedFromPort === "right" ? 1 : -1;
+  if (fromPort === "right" || fromPort === "left") {
+    const dir = fromPort === "right" ? 1 : -1;
     if (Math.abs(fp.y - targetY) < 1) {
       return [fp.x, fp.y, targetX, targetY];
     }
@@ -237,7 +147,7 @@ function buildOrthogonalPointsToPos(
       : Math.min(fp.x - STUB, (fp.x + targetX) / 2);
     return [fp.x, fp.y, elbowX, fp.y, elbowX, targetY, targetX, targetY];
   } else {
-    const dir = resolvedFromPort === "bottom" ? 1 : -1;
+    const dir = fromPort === "bottom" ? 1 : -1;
     if (Math.abs(fp.x - targetX) < 1) {
       return [fp.x, fp.y, targetX, targetY];
     }
@@ -267,18 +177,14 @@ const CanvasConnection = ({
   const to   = shapeMap.get(connection.toId);
   if (!from || !to) return null;
 
-  const points = buildOrthogonalPoints(
-    from, to,
-    connection.fromPort,
-    connection.toPort,
-  );
+  const points = buildOrthogonalPoints(from, to);
 
   const tipX = points[points.length - 2];
   const tipY = points[points.length - 1];
 
   // During drag: orthogonal routing from source port to cursor (keeps H/V lines only)
   const activePoints = draggingTipPos
-    ? buildOrthogonalPointsToPos(from, connection.fromPort, draggingTipPos.x, draggingTipPos.y)
+    ? buildOrthogonalPointsToPos(from, draggingTipPos.x, draggingTipPos.y)
     : points;
 
   // Label follows the midpoint of the active path (moves with the line during drag)
