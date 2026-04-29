@@ -471,6 +471,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
             {shapes.map((shape) => {
               const show =
                 tool === "select" &&
+                !draggingTip &&
+                !selectedConnectionId &&
                 (hoveredId === shape.id || selectedId === shape.id) &&
                 pendingFromId !== shape.id;
               return show ? (
