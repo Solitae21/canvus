@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Stage, Layer, Transformer, Group } from "react-konva";
+import { Stage, Layer, Transformer, Group, Rect } from "react-konva";
 import type Konva from "konva";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -58,6 +58,9 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     connId: string;
     pos: { x: number; y: number };
   } | null>(null);
+  const [tipDragTargetId, setTipDragTargetId] = useState<string | null>(null);
+  const tipDragTargetIdRef = useRef<string | null>(null);
+  tipDragTargetIdRef.current = tipDragTargetId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingFromPort, setPendingFromPort] = useState<ConnectionPort | null>(null);
 
@@ -396,10 +399,48 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 draggingTipPos={draggingTip?.connId === c.id ? draggingTip.pos : undefined}
                 onSelect={() => handleConnectionClick(c.id)}
                 onDoubleClick={() => handleConnectionDoubleClick(c.id)}
-                onTipDragMove={(pos) => setDraggingTip({ connId: c.id, pos })}
-                onTipDragEnd={() => setDraggingTip(null)}
+                onTipDragMove={(pos) => {
+                  setDraggingTip({ connId: c.id, pos });
+                  const target = shapes.find(
+                    (s) =>
+                      s.id !== c.fromId &&
+                      pos.x >= s.x && pos.x <= s.x + s.w &&
+                      pos.y >= s.y && pos.y <= s.y + s.h,
+                  );
+                  setTipDragTargetId(target?.id ?? null);
+                }}
+                onTipDragEnd={() => {
+                  if (tipDragTargetIdRef.current) {
+                    dispatch(updateConnection({
+                      id: c.id,
+                      toId: tipDragTargetIdRef.current,
+                      toPort: undefined,
+                    }));
+                  }
+                  setDraggingTip(null);
+                  setTipDragTargetId(null);
+                }}
               />
             ))}
+
+            {/* Drop target highlight during tip drag */}
+            {tipDragTargetId && (() => {
+              const s = shapeMap.get(tipDragTargetId);
+              if (!s) return null;
+              return (
+                <Rect
+                  x={s.x - 3}
+                  y={s.y - 3}
+                  width={s.w + 6}
+                  height={s.h + 6}
+                  stroke="#60a5fa"
+                  strokeWidth={2}
+                  fill="transparent"
+                  listening={false}
+                  cornerRadius={4}
+                />
+              );
+            })()}
 
             {shapes.map((shape) => (
               <Group
