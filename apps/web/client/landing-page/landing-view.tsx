@@ -33,7 +33,7 @@ const PALETTE = {
 
 function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll(".lp-reveal, .lp-reveal-scale");
+    const els = document.querySelectorAll(".lp-reveal, .lp-reveal-scale, .lp-reveal-line");
     const io = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
@@ -126,7 +126,12 @@ const GlobalStyles = () => (
     }
     .lp-reveal-scale.lp-in { opacity: 1; transform: scale(1) translateY(0); }
 
-    .lp-d1 { transition-delay: 0.07s !important; }
+    .lp-reveal-line {
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.7s 0.15s cubic-bezier(0.16,1,0.3,1);
+    }
+    .lp-reveal-line.lp-in { transform: scaleX(1); }
     .lp-d2 { transition-delay: 0.15s !important; }
     .lp-d3 { transition-delay: 0.24s !important; }
     .lp-d4 { transition-delay: 0.34s !important; }
@@ -1001,7 +1006,7 @@ export default function LandingPageView() {
             gap: 20, position: "relative",
           }}>
             {/* Connector line */}
-            <div style={{
+            <div className="lp-reveal-line" style={{
               position: "absolute",
               top: 24, left: "16%", right: "16%",
               height: 1,
