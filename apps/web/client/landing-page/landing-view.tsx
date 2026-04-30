@@ -431,7 +431,6 @@ const CanvasPreview = () => {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 export default function LandingPageView() {
-  const [billingAnnual, setBillingAnnual] = useState(true);
   const [activeFeature, setActiveFeature] = useState(0);
 
   /* keep a ticking value to subtly animate ambient elements */
@@ -599,7 +598,7 @@ export default function LandingPageView() {
 
           {/* Links */}
           <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            {["Features", "How it works", "Pricing", "Templates", "Changelog"].map((l) => (
+            {["Features", "How it works", "Changelog"].map((l) => (
               <span key={l} className="lp-link">{l}</span>
             ))}
           </div>
@@ -641,7 +640,7 @@ export default function LandingPageView() {
                 background: PALETTE.mint, boxShadow: `0 0 8px ${PALETTE.mint}`,
               }} />
               <span className="lp-mono" style={{ letterSpacing: "0.12em" }}>
-                v1.0 · OPEN BETA · FREE TO START
+                v1.0 · OPEN SOURCE · FREE FOREVER
               </span>
             </div>
 
@@ -1107,201 +1106,6 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── PRICING ──────────────────────────────────────────────────── */}
-      <section style={{
-        position: "relative", zIndex: 1,
-        padding: "80px 24px 100px",
-        background: `linear-gradient(180deg, transparent 0%, ${PALETTE.bgDeep} 50%, transparent 100%)`,
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <div className="lp-eyebrow" style={{ justifyContent: "center" }}>Pricing</div>
-            <h2 style={{
-              fontSize: "clamp(28px, 3.6vw, 42px)",
-              fontWeight: 800,
-              letterSpacing: "-0.03em",
-              color: PALETTE.text,
-              marginTop: 16, marginBottom: 24,
-            }}>
-              Honest pricing.
-              <br />
-              No surprises.
-            </h2>
-
-            {/* Toggle */}
-            <div style={{
-              display: "inline-flex",
-              background: PALETTE.surface,
-              border: `1px solid ${PALETTE.borderSoft}`,
-              borderRadius: 12,
-              padding: 4, gap: 4,
-            }}>
-              {["Monthly", "Annual · save 30%"].map((label, i) => (
-                <button
-                  key={label}
-                  onClick={() => setBillingAnnual(i === 1)}
-                  style={{
-                    padding: "7px 16px",
-                    borderRadius: 8,
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    fontFamily: "inherit",
-                    background: billingAnnual === (i === 1) ? PALETTE.primary : "transparent",
-                    color: billingAnnual === (i === 1) ? PALETTE.primaryDeep : PALETTE.textDim,
-                    transition: "all 0.18s ease",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14,
-          }}>
-            {[
-              {
-                name: "Hobby",
-                price: 0,
-                desc: "For individuals & small experiments",
-                features: ["3 boards", "Up to 5 collaborators per board", "PNG export", "30-day board history"],
-                cta: "Start free",
-                featured: false,
-              },
-              {
-                name: "Pro",
-                price: billingAnnual ? 12 : 17,
-                desc: "For teams who meet weekly",
-                features: ["Unlimited boards", "Unlimited collaborators", "Present mode + Follow", "PDF & SVG export", "Snapshot history", "Priority support"],
-                cta: "Start free trial",
-                featured: true,
-              },
-              {
-                name: "Team",
-                price: billingAnnual ? 29 : 39,
-                desc: "For organizations with multiple teams",
-                features: ["Everything in Pro", "SSO / SAML auth", "Admin dashboard", "Usage analytics", "Custom templates", "SLA + dedicated support"],
-                cta: "Contact sales",
-                featured: false,
-              },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                style={{
-                  background: plan.featured
-                    ? `linear-gradient(180deg, ${PALETTE.surfaceHigher} 0%, ${PALETTE.surface} 100%)`
-                    : PALETTE.surfaceHi,
-                  border: plan.featured
-                    ? `1px solid rgba(176,198,255,0.35)`
-                    : `1px solid ${PALETTE.borderSoft}`,
-                  borderRadius: 20,
-                  padding: 30,
-                  position: "relative",
-                  boxShadow: plan.featured
-                    ? `0 24px 60px -20px rgba(86,141,255,0.35), 0 0 0 1px rgba(176,198,255,0.08)`
-                    : "none",
-                }}
-              >
-                {plan.featured && (
-                  <div style={{
-                    position: "absolute", top: -11, left: 24,
-                    background: PALETTE.primary,
-                    color: PALETTE.primaryDeep,
-                    fontSize: 10, fontWeight: 800,
-                    padding: "4px 10px", borderRadius: 6,
-                    letterSpacing: "0.12em",
-                    fontFamily: "var(--font-jetbrains-mono), monospace",
-                  }}>
-                    MOST POPULAR
-                  </div>
-                )}
-
-                <h3 style={{
-                  fontSize: 18, fontWeight: 700,
-                  color: PALETTE.text, marginBottom: 4,
-                  letterSpacing: "-0.015em",
-                }}>
-                  {plan.name}
-                </h3>
-                <p style={{
-                  fontSize: 13, color: PALETTE.textDim,
-                  marginBottom: 20, lineHeight: 1.5,
-                }}>
-                  {plan.desc}
-                </p>
-
-                <div style={{
-                  display: "flex", alignItems: "baseline", gap: 4,
-                  marginBottom: 22,
-                }}>
-                  <span style={{
-                    fontSize: 40, fontWeight: 800,
-                    color: PALETTE.text,
-                    letterSpacing: "-0.04em",
-                    lineHeight: 1,
-                  }}>
-                    {plan.price === 0 ? "Free" : `$${plan.price}`}
-                  </span>
-                  {plan.price > 0 && (
-                    <span className="lp-mono" style={{
-                      color: PALETTE.textDim, fontSize: 12,
-                      letterSpacing: "0.04em",
-                    }}>
-                      /user/mo
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  style={{
-                    width: "100%",
-                    padding: "11px",
-                    borderRadius: 10,
-                    border: plan.featured ? "none" : `1px solid ${PALETTE.border}`,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    fontWeight: 700,
-                    fontSize: 13.5,
-                    background: plan.featured ? PALETTE.primary : "rgba(255,255,255,0.03)",
-                    color: plan.featured ? PALETTE.primaryDeep : PALETTE.text,
-                    marginBottom: 22,
-                    transition: "all 0.15s ease",
-                    letterSpacing: "-0.005em",
-                  }}
-                >
-                  {plan.cta}
-                </button>
-
-                <div style={{
-                  height: 1,
-                  background: PALETTE.borderSoft,
-                  marginBottom: 18,
-                }} />
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                  {plan.features.map((f) => (
-                    <div key={f} style={{
-                      display: "flex", gap: 9, alignItems: "flex-start",
-                    }}>
-                      <CheckIcon
-                        color={plan.featured ? PALETTE.primary : PALETTE.textDim}
-                        size={13}
-                      />
-                      <span style={{ fontSize: 13, color: PALETTE.textMuted, lineHeight: 1.5 }}>
-                        {f}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── BIG CTA ──────────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
@@ -1395,7 +1199,7 @@ export default function LandingPageView() {
             </p>
           </div>
           {[
-            { title: "Product", links: ["Features", "Pricing", "Templates", "Changelog", "Roadmap"] },
+            { title: "Product", links: ["Features", "Changelog", "Roadmap"] },
             { title: "Company", links: ["About", "Blog", "Careers", "Contact"] },
             { title: "Resources", links: ["Docs", "API", "Status", "Community"] },
           ].map((col) => (

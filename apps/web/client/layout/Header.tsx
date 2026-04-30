@@ -64,9 +64,7 @@ function Header() {
         {/* ── Center: navigation ── */}
         <nav className="hidden md:flex items-center gap-1">
           <NavLink href="/canvas">Canvas</NavLink>
-          <NavLink href="#">Templates</NavLink>
           <NavLink href="#">Community</NavLink>
-          <NavLink href="#">Pricing</NavLink>
         </nav>
 
         {/* ── Right: actions ── */}
