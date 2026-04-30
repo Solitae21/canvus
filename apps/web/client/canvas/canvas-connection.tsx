@@ -20,7 +20,7 @@ export interface CanvasConnectionProps {
   onTipDragEnd: () => void;
 }
 
-function getPortPoint(shape: Shape, port: ConnectionPort): { x: number; y: number } {
+export function getPortPoint(shape: Shape, port: ConnectionPort): { x: number; y: number } {
   switch (port) {
     case "top":    return { x: shape.x + shape.w / 2, y: shape.y };
     case "right":  return { x: shape.x + shape.w,     y: shape.y + shape.h / 2 };
@@ -41,6 +41,8 @@ const STUB = 24; // minimum straight run before the first bend
 export function buildOrthogonalPoints(
   from: Shape,
   to: Shape,
+  preferredFromPort?: ConnectionPort,
+  preferredToPort?: ConnectionPort,
 ): number[] {
   const fromCx = from.x + from.w / 2;
   const fromCy = from.y + from.h / 2;
@@ -60,6 +62,8 @@ export function buildOrthogonalPoints(
     fromPort = dy >= 0 ? "bottom" : "top";
     toPort   = dy >= 0 ? "top"    : "bottom";
   }
+  fromPort = preferredFromPort ?? fromPort;
+  toPort = preferredToPort ?? toPort;
 
   const fp = getPortPoint(from, fromPort);
   const tp = getPortPoint(to, toPort);
@@ -120,20 +124,22 @@ export function getPathMidpoint(pts: number[]): { x: number; y: number } {
  * Used during connector tip drag to keep the line H/V-only.
  * Always auto-detects the best exit port based on current positions.
  */
-function buildOrthogonalPointsToPos(
+export function buildOrthogonalPointsToPos(
   from: Shape,
   targetX: number,
   targetY: number,
+  preferredFromPort?: ConnectionPort,
 ): number[] {
   const fromCx = from.x + from.w / 2;
   const fromCy = from.y + from.h / 2;
 
   const dx = targetX - fromCx;
   const dy = targetY - fromCy;
-  const fromPort: ConnectionPort =
+  const fromPort: ConnectionPort = preferredFromPort ?? (
     Math.abs(dx) >= Math.abs(dy)
       ? (dx >= 0 ? "right" : "left")
-      : (dy >= 0 ? "bottom" : "top");
+      : (dy >= 0 ? "bottom" : "top")
+  );
 
   const fp = getPortPoint(from, fromPort);
 
@@ -173,25 +179,25 @@ const CanvasConnection = ({
   onTipDragMove,
   onTipDragEnd,
 }: CanvasConnectionProps) => {
+  const tipCircleRef = useRef<Konva.Circle>(null);
+
   const from = shapeMap.get(connection.fromId);
   const to   = shapeMap.get(connection.toId);
   if (!from || !to) return null;
 
-  const points = buildOrthogonalPoints(from, to);
+  const points = buildOrthogonalPoints(from, to, connection.fromPort, connection.toPort);
 
   const tipX = points[points.length - 2];
   const tipY = points[points.length - 1];
 
   // During drag: orthogonal routing from source port to cursor (keeps H/V lines only)
   const activePoints = draggingTipPos
-    ? buildOrthogonalPointsToPos(from, draggingTipPos.x, draggingTipPos.y)
+    ? buildOrthogonalPointsToPos(from, draggingTipPos.x, draggingTipPos.y, connection.fromPort)
     : points;
 
   // Label follows the midpoint of the active path (moves with the line during drag)
   const mid = getPathMidpoint(activePoints);
   const color = connection.color ?? DEFAULT_CONNECTION_COLOR;
-
-  const tipCircleRef = useRef<Konva.Circle>(null);
 
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
     e.cancelBubble = true;

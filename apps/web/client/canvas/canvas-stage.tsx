@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Stage, Layer, Transformer, Group, Rect } from "react-konva";
+import { Stage, Layer, Transformer, Group, Rect, Arrow } from "react-konva";
 import type Konva from "konva";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -30,7 +30,11 @@ import {
 } from "./canvas-defaults";
 import CanvasShape, { CanvasShapeLabel } from "./canvas-shape";
 import CanvasConnection from "./canvas-connection";
-import { buildOrthogonalPoints, getPathMidpoint } from "./canvas-connection";
+import {
+  buildOrthogonalPoints,
+  buildOrthogonalPointsToPos,
+  getPathMidpoint,
+} from "./canvas-connection";
 import CanvasLabelEditor from "./canvas-label-editor";
 import CanvasConnectionLabelEditor from "./canvas-connection-label-editor";
 import CanvasShapeConnectors from "./canvas-shape-connectors";
@@ -63,6 +67,12 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   tipDragTargetIdRef.current = tipDragTargetId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pendingFromPort, setPendingFromPort] = useState<ConnectionPort | null>(null);
+  const [connectorDrag, setConnectorDrag] = useState<{
+    fromId: string;
+    fromPort: ConnectionPort;
+    pos: { x: number; y: number };
+  } | null>(null);
+  const [connectorDragTargetId, setConnectorDragTargetId] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shapeRefs = useRef<Map<string, Konva.Group>>(new Map());
@@ -299,6 +309,66 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     dispatch(setTool("arrow"));
   }, [dispatch]);
 
+  const getShapeAtPoint = useCallback((pos: { x: number; y: number }, sourceId: string) => (
+    shapes.find(
+      (s) =>
+        s.id !== sourceId &&
+        pos.x >= s.x && pos.x <= s.x + s.w &&
+        pos.y >= s.y && pos.y <= s.y + s.h,
+    ) ?? null
+  ), [shapes]);
+
+  const getNearestPort = (shape: Shape, pos: { x: number; y: number }): ConnectionPort => {
+    const distances: Array<{ port: ConnectionPort; distance: number }> = [
+      { port: "top", distance: Math.abs(pos.y - shape.y) },
+      { port: "right", distance: Math.abs(pos.x - (shape.x + shape.w)) },
+      { port: "bottom", distance: Math.abs(pos.y - (shape.y + shape.h)) },
+      { port: "left", distance: Math.abs(pos.x - shape.x) },
+    ];
+    distances.sort((a, b) => a.distance - b.distance);
+    return distances[0].port;
+  };
+
+  const updateConnectorDrag = useCallback((
+    fromId: string,
+    fromPort: ConnectionPort,
+    pos: { x: number; y: number },
+  ) => {
+    setConnectorDrag({ fromId, fromPort, pos });
+    setConnectorDragTargetId(getShapeAtPoint(pos, fromId)?.id ?? null);
+  }, [getShapeAtPoint]);
+
+  const handlePortDragStart = useCallback((
+    shapeId: string,
+    port: ConnectionPort,
+    pos: { x: number; y: number },
+  ) => {
+    dispatch(selectShape(null));
+    dispatch(selectConnection(null));
+    updateConnectorDrag(shapeId, port, pos);
+  }, [dispatch, updateConnectorDrag]);
+
+  const handlePortDragEnd = useCallback((
+    shapeId: string,
+    port: ConnectionPort,
+    pos: { x: number; y: number },
+  ) => {
+    const target = getShapeAtPoint(pos, shapeId);
+    if (target) {
+      dispatch(
+        addConnection({
+          id: newId(),
+          fromId: shapeId,
+          toId: target.id,
+          fromPort: port,
+          toPort: getNearestPort(target, pos),
+        }),
+      );
+    }
+    setConnectorDrag(null);
+    setConnectorDragTargetId(null);
+  }, [dispatch, getShapeAtPoint]);
+
   const handleConnectionClick = useCallback((connectionId: string) => {
     dispatch(selectConnection(connectionId));
     dispatch(setPanel({ panel: "right", open: true }));
@@ -423,9 +493,9 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
               />
             ))}
 
-            {/* Drop target highlight during tip drag */}
-            {tipDragTargetId && (() => {
-              const s = shapeMap.get(tipDragTargetId);
+            {/* Drop target highlight during connector drag */}
+            {(tipDragTargetId ?? connectorDragTargetId) && (() => {
+              const s = shapeMap.get((tipDragTargetId ?? connectorDragTargetId)!);
               if (!s) return null;
               return (
                 <Rect
@@ -438,6 +508,28 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                   fill="transparent"
                   listening={false}
                   cornerRadius={4}
+                />
+              );
+            })()}
+
+            {connectorDrag && (() => {
+              const from = shapeMap.get(connectorDrag.fromId);
+              if (!from) return null;
+              return (
+                <Arrow
+                  points={buildOrthogonalPointsToPos(
+                    from,
+                    connectorDrag.pos.x,
+                    connectorDrag.pos.y,
+                    connectorDrag.fromPort,
+                  )}
+                  stroke="#ffffff"
+                  fill="#ffffff"
+                  pointerLength={10}
+                  pointerWidth={10}
+                  strokeWidth={2}
+                  dash={[8, 6]}
+                  listening={false}
                 />
               );
             })()}
@@ -486,6 +578,9 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                   <CanvasShapeConnectors
                     shape={shape}
                     onPortClick={(port) => handlePortClick(shape.id, port)}
+                    onPortDragStart={(port, pos) => handlePortDragStart(shape.id, port, pos)}
+                    onPortDragMove={(port, pos) => updateConnectorDrag(shape.id, port, pos)}
+                    onPortDragEnd={(port, pos) => handlePortDragEnd(shape.id, port, pos)}
                   />
                 </Group>
               ) : null;
