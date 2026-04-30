@@ -795,7 +795,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
               />
             )}
 
-            <Transformer ref={transformerRef} onTransformEnd={handleTransformEnd} />
+            <Transformer ref={transformerRef} onTransformEnd={handleTransformEnd} rotateEnabled={false} />
           </Layer>
         </Stage>
       )}
