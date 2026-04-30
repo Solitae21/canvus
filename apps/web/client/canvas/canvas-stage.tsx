@@ -410,13 +410,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
         setDraggingPositions(() => {
           const next = new Map<string, { x: number; y: number }>();
           for (const [id, start] of groupStart) {
-            const newX = start.x + dx;
-            const newY = start.y + dy;
-            if (id !== shape.id) {
-              const otherNode = shapeRefs.current.get(id);
-              if (otherNode) { otherNode.x(newX); otherNode.y(newY); }
-            }
-            next.set(id, { x: newX, y: newY });
+            next.set(id, { x: start.x + dx, y: start.y + dy });
           }
           return next;
         });
@@ -440,12 +434,6 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           x: start.x + dx,
           y: start.y + dy,
         }));
-        for (const [id, start] of groupStart) {
-          if (id !== shape.id) {
-            const otherNode = shapeRefs.current.get(id);
-            if (otherNode) { otherNode.x(start.x); otherNode.y(start.y); }
-          }
-        }
         setDraggingPositions((prev) => {
           const next = new Map(prev);
           for (const id of groupStart.keys()) next.delete(id);
@@ -743,8 +731,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                   if (node) shapeRefs.current.set(shape.id, node);
                   else shapeRefs.current.delete(shape.id);
                 }}
-                x={shape.x}
-                y={shape.y}
+                x={draggingPositions.get(shape.id)?.x ?? shape.x}
+                y={draggingPositions.get(shape.id)?.y ?? shape.y}
                 draggable={draggableShapes}
                 onClick={(e) => handleShapeClick(shape, e)}
                 onDblClick={() => setEditingId(shape.id)}
