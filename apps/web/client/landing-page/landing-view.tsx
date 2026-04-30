@@ -31,6 +31,24 @@ const PALETTE = {
   mint: "#7dd3a4",
 } as const;
 
+function useReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll(".lp-reveal, .lp-reveal-scale");
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("lp-in");
+            io.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.1, rootMargin: "0px 0px -48px 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
 /* ── Global injected styles (animations + utility classes) ─────────────── */
 const GlobalStyles = () => (
   <style>{`
@@ -83,6 +101,37 @@ const GlobalStyles = () => (
     .lp-fade-2 { animation: lp-fadeUp 0.8s 0.18s cubic-bezier(0.16,1,0.3,1) both; }
     .lp-fade-3 { animation: lp-fadeUp 0.8s 0.30s cubic-bezier(0.16,1,0.3,1) both; }
     .lp-fade-4 { animation: lp-fadeUp 0.8s 0.44s cubic-bezier(0.16,1,0.3,1) both; }
+
+    @keyframes lp-word-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes lp-line-in {
+      from { transform: scaleX(0); transform-origin: left center; }
+      to   { transform: scaleX(1); transform-origin: left center; }
+    }
+
+    /* Scroll-reveal */
+    .lp-reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+    }
+    .lp-reveal.lp-in { opacity: 1; transform: translateY(0); }
+
+    .lp-reveal-scale {
+      opacity: 0;
+      transform: scale(0.95) translateY(14px);
+      transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+    .lp-reveal-scale.lp-in { opacity: 1; transform: scale(1) translateY(0); }
+
+    .lp-d1 { transition-delay: 0.07s !important; }
+    .lp-d2 { transition-delay: 0.15s !important; }
+    .lp-d3 { transition-delay: 0.24s !important; }
+    .lp-d4 { transition-delay: 0.34s !important; }
+    .lp-d5 { transition-delay: 0.45s !important; }
+    .lp-d6 { transition-delay: 0.56s !important; }
 
     .lp-mono {
       font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -432,6 +481,7 @@ const CanvasPreview = () => {
 
 export default function LandingPageView() {
   const [activeFeature, setActiveFeature] = useState(0);
+  useReveal();
 
   /* keep a ticking value to subtly animate ambient elements */
   const [, setT] = useState(0);
@@ -644,7 +694,7 @@ export default function LandingPageView() {
               </span>
             </div>
 
-            <h1 className="lp-fade-1" style={{
+            <h1 style={{
               fontSize: "clamp(40px, 5.6vw, 68px)",
               lineHeight: 0.98,
               letterSpacing: "-0.035em",
@@ -652,14 +702,40 @@ export default function LandingPageView() {
               color: PALETTE.text,
               margin: "26px 0 22px",
             }}>
-              The canvas
-              <br />
-              your team can{" "}
-              <span className="lp-grad" style={{ fontStyle: "italic" }}>
-                actually
+              <span style={{ display: "block" }}>
+                {["The", "canvas"].map((w, i) => (
+                  <span key={w} style={{
+                    display: "inline-block",
+                    animation: `lp-word-up 0.6s ${0.08 + i * 0.1}s cubic-bezier(0.16,1,0.3,1) both`,
+                    marginRight: "0.25em",
+                  }}>{w}</span>
+                ))}
               </span>
-              <br />
-              think on.
+              <span style={{ display: "block" }}>
+                {["your", "team", "can"].map((w, i) => (
+                  <span key={w} style={{
+                    display: "inline-block",
+                    animation: `lp-word-up 0.6s ${0.28 + i * 0.1}s cubic-bezier(0.16,1,0.3,1) both`,
+                    marginRight: "0.25em",
+                  }}>{w}</span>
+                ))}
+                <span className="lp-grad" style={{
+                  fontStyle: "italic",
+                  display: "inline-block",
+                  animation: "lp-word-up 0.6s 0.58s cubic-bezier(0.16,1,0.3,1) both",
+                }}>
+                  actually
+                </span>
+              </span>
+              <span style={{ display: "block" }}>
+                {["think", "on."].map((w, i) => (
+                  <span key={w} style={{
+                    display: "inline-block",
+                    animation: `lp-word-up 0.6s ${0.68 + i * 0.1}s cubic-bezier(0.16,1,0.3,1) both`,
+                    marginRight: i === 0 ? "0.25em" : 0,
+                  }}>{w}</span>
+                ))}
+              </span>
             </h1>
 
             <p className="lp-fade-2" style={{
@@ -809,70 +885,6 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── TRUST BAR ────────────────────────────────────────────────── */}
-      <section style={{ position: "relative", zIndex: 1, padding: "30px 24px 18px" }}>
-        <div style={{
-          maxWidth: 1180, margin: "0 auto",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexWrap: "wrap", gap: 32,
-        }}>
-          <span className="lp-mono" style={{
-            fontSize: 11, color: PALETTE.textFaint,
-            letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600,
-          }}>
-            Trusted by teams at
-          </span>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 36, flexWrap: "wrap",
-            opacity: 0.7,
-          }}>
-            {["LINEAR", "STRIPE", "FIGMA", "VERCEL", "SUPABASE", "RAYCAST"].map((logo) => (
-              <span key={logo} style={{
-                fontSize: 14, fontWeight: 700, letterSpacing: "0.18em",
-                color: PALETTE.textDim,
-              }}>
-                {logo}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats strip */}
-        <div style={{
-          maxWidth: 1180, margin: "32px auto 0",
-          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 1,
-          background: PALETTE.border,
-          border: `1px solid ${PALETTE.borderSoft}`,
-          borderRadius: 18,
-          overflow: "hidden",
-        }}>
-          {[
-            { val: "12,400+", label: "boards created" },
-            { val: "99.9%",   label: "uptime SLA" },
-            { val: "<50ms",   label: "median sync" },
-            { val: "4.9★",    label: "user rating" },
-          ].map((s) => (
-            <div key={s.label} style={{
-              background: PALETTE.surface,
-              padding: "26px 28px",
-              display: "flex", flexDirection: "column", gap: 6,
-            }}>
-              <div className="lp-mono" style={{
-                fontSize: 28, fontWeight: 700,
-                color: PALETTE.text,
-                letterSpacing: "-0.02em",
-              }}>
-                {s.val}
-              </div>
-              <div style={{ fontSize: 12.5, color: PALETTE.textDim, fontWeight: 500 }}>
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── FEATURES ─────────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
@@ -884,8 +896,8 @@ export default function LandingPageView() {
           gap: 60, marginBottom: 56, alignItems: "end",
         }}>
           <div>
-            <div className="lp-eyebrow">Capabilities</div>
-            <h2 style={{
+            <div className="lp-eyebrow lp-reveal">Capabilities</div>
+            <h2 className="lp-reveal lp-d1" style={{
               fontSize: "clamp(30px, 3.6vw, 44px)",
               fontWeight: 800,
               letterSpacing: "-0.03em",
@@ -898,7 +910,7 @@ export default function LandingPageView() {
               for idea-driven work.
             </h2>
           </div>
-          <p style={{
+          <p className="lp-reveal lp-d2" style={{
             fontSize: 16,
             color: PALETTE.textMuted,
             lineHeight: 1.65,
@@ -919,7 +931,7 @@ export default function LandingPageView() {
           {features.map((f, i) => (
             <div
               key={i}
-              className="lp-card"
+              className={`lp-card lp-reveal-scale lp-d${(i % 3) + 1}`}
               onMouseEnter={() => setActiveFeature(i)}
               style={{ padding: 26 }}
             >
@@ -970,8 +982,8 @@ export default function LandingPageView() {
       }}>
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div className="lp-eyebrow" style={{ justifyContent: "center" }}>How it works</div>
-            <h2 style={{
+            <div className="lp-eyebrow lp-reveal" style={{ justifyContent: "center" }}>How it works</div>
+            <h2 className="lp-reveal lp-d1" style={{
               fontSize: "clamp(28px, 3.6vw, 42px)",
               fontWeight: 800,
               letterSpacing: "-0.03em",
@@ -1001,8 +1013,8 @@ export default function LandingPageView() {
               { n: "01", t: "Create a board",   d: "Sign in with Google or GitHub. Name your board, pick a template, start in seconds.", c: PALETTE.primary },
               { n: "02", t: "Invite your team", d: "Share a link. Everyone joins with their name and color. No installs. No accounts to wrangle.", c: PALETTE.primaryStrong },
               { n: "03", t: "Build & present", d: "Drag shapes, draw connections, pin notes. Press P to project — viewers follow your cursor live.", c: PALETTE.tertiary },
-            ].map((s) => (
-              <div key={s.n} style={{
+            ].map((s, si) => (
+              <div key={s.n} className={`lp-reveal lp-d${si + 1}`} style={{
                 display: "flex", flexDirection: "column", alignItems: "center",
                 textAlign: "center", padding: "0 18px",
               }}>
@@ -1047,8 +1059,8 @@ export default function LandingPageView() {
         maxWidth: 1180, margin: "0 auto",
       }}>
         <div style={{ marginBottom: 48 }}>
-          <div className="lp-eyebrow">Voices</div>
-          <h2 style={{
+          <div className="lp-eyebrow lp-reveal">Voices</div>
+          <h2 className="lp-reveal lp-d1" style={{
             fontSize: "clamp(28px, 3.6vw, 42px)",
             fontWeight: 800,
             letterSpacing: "-0.03em",
@@ -1068,7 +1080,7 @@ export default function LandingPageView() {
           gap: 16,
         }}>
           {testimonials.map((t, i) => (
-            <div key={i} className="lp-card" style={{ padding: 28 }}>
+            <div key={i} className={`lp-card lp-reveal-scale lp-d${i + 1}`} style={{ padding: 28 }}>
               <svg width="22" height="18" viewBox="0 0 24 20"
                    fill={t.color} style={{ marginBottom: 14, opacity: 0.85 }}>
                 <path d="M3 16c0-4 2-7 5-9l1 2c-2 1-3 3-3 5h3v6H3v-4zm10 0c0-4 2-7 5-9l1 2c-2 1-3 3-3 5h3v6h-6v-4z" />
@@ -1132,12 +1144,12 @@ export default function LandingPageView() {
         }} />
 
         <div style={{ position: "relative", maxWidth: 720, margin: "0 auto" }}>
-          <div className="lp-chip" style={{ marginBottom: 24 }}>
+          <div className="lp-chip lp-reveal" style={{ marginBottom: 24 }}>
             <span className="lp-mono" style={{ letterSpacing: "0.12em" }}>
               FREE FOREVER · NO CARD REQUIRED
             </span>
           </div>
-          <h2 style={{
+          <h2 className="lp-reveal lp-d1" style={{
             fontSize: "clamp(36px, 5.6vw, 64px)",
             fontWeight: 800,
             letterSpacing: "-0.035em",
@@ -1150,7 +1162,7 @@ export default function LandingPageView() {
             starts on a{" "}
             <span className="lp-grad" style={{ fontStyle: "italic" }}>blank board.</span>
           </h2>
-          <p style={{
+          <p className="lp-reveal lp-d2" style={{
             fontSize: 17,
             color: PALETTE.textMuted,
             maxWidth: 480,
@@ -1160,7 +1172,7 @@ export default function LandingPageView() {
             Open the canvas, invite your team, and ship a flowchart before
             your standup ends.
           </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="lp-reveal lp-d3" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button className="lp-btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
               Open the canvas
               <ArrowIcon />
