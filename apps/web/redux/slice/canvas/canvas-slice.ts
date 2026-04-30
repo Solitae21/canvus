@@ -21,6 +21,8 @@ interface CanvasState {
   future: HistoryEntry[]
   selectedId: string | null
   selectedConnectionId: string | null
+  selectedIds: string[]
+  selectedConnectionIds: string[]
   pendingFromId: string | null
   tool: ToolType
 }
@@ -36,6 +38,8 @@ const initialState: CanvasState = {
   future: [],
   selectedId: null,
   selectedConnectionId: null,
+  selectedIds: [],
+  selectedConnectionIds: [],
   pendingFromId: null,
   tool: 'select',
 }
@@ -62,6 +66,13 @@ const canvasSlice = createSlice({
       const shape = state.shapes.find(s => s.id === action.payload.id)
       if (shape) Object.assign(shape, action.payload)
     },
+    batchUpdateShapes: (state, action: PayloadAction<Array<{ id: string; x: number; y: number }>>) => {
+      pushHistory(state)
+      for (const update of action.payload) {
+        const shape = state.shapes.find(s => s.id === update.id)
+        if (shape) { shape.x = update.x; shape.y = update.y }
+      }
+    },
     deleteShape: (state, action: PayloadAction<string>) => {
       pushHistory(state)
       const id = action.payload
@@ -69,9 +80,31 @@ const canvasSlice = createSlice({
       state.connections = state.connections.filter(c => c.fromId !== id && c.toId !== id)
       if (state.selectedId === id) state.selectedId = null
       if (state.pendingFromId === id) state.pendingFromId = null
+      state.selectedIds = state.selectedIds.filter(i => i !== id)
+    },
+    deleteSelectedItems: (state) => {
+      if (state.selectedIds.length === 0 && state.selectedConnectionIds.length === 0) return
+      pushHistory(state)
+      const shapeIdSet = new Set(state.selectedIds)
+      const connIdSet = new Set(state.selectedConnectionIds)
+      state.shapes = state.shapes.filter(s => !shapeIdSet.has(s.id))
+      state.connections = state.connections.filter(
+        c => !connIdSet.has(c.id) && !shapeIdSet.has(c.fromId) && !shapeIdSet.has(c.toId),
+      )
+      if (state.pendingFromId && shapeIdSet.has(state.pendingFromId)) state.pendingFromId = null
+      state.selectedIds = []
+      state.selectedConnectionIds = []
     },
     selectShape: (state, action: PayloadAction<string | null>) => {
       state.selectedId = action.payload
+      state.selectedConnectionId = null
+      state.selectedIds = []
+      state.selectedConnectionIds = []
+    },
+    setMultiSelection: (state, action: PayloadAction<{ shapeIds: string[]; connectionIds: string[] }>) => {
+      state.selectedIds = action.payload.shapeIds
+      state.selectedConnectionIds = action.payload.connectionIds
+      state.selectedId = null
       state.selectedConnectionId = null
     },
     setTool: (state, action: PayloadAction<CanvasState['tool']>) => {
@@ -85,10 +118,13 @@ const canvasSlice = createSlice({
       pushHistory(state)
       state.connections = state.connections.filter(c => c.id !== action.payload)
       if (state.selectedConnectionId === action.payload) state.selectedConnectionId = null
+      state.selectedConnectionIds = state.selectedConnectionIds.filter(id => id !== action.payload)
     },
     selectConnection: (state, action: PayloadAction<string | null>) => {
       state.selectedConnectionId = action.payload
       state.selectedId = null
+      state.selectedIds = []
+      state.selectedConnectionIds = []
     },
     updateConnection: (state, action: PayloadAction<{ id: string } & Partial<Connection>>) => {
       pushHistory(state)
@@ -107,13 +143,14 @@ const canvasSlice = createSlice({
       })
       state.shapes = entry.shapes
       state.connections = entry.connections
-      // deselect if selected shape no longer exists
       if (state.selectedId && !state.shapes.find(s => s.id === state.selectedId)) {
         state.selectedId = null
       }
       if (state.selectedConnectionId && !state.connections.find(c => c.id === state.selectedConnectionId)) {
         state.selectedConnectionId = null
       }
+      state.selectedIds = state.selectedIds.filter(id => state.shapes.some(s => s.id === id))
+      state.selectedConnectionIds = state.selectedConnectionIds.filter(id => state.connections.some(c => c.id === id))
     },
     redo: (state) => {
       const entry = state.future.pop()
@@ -130,6 +167,8 @@ const canvasSlice = createSlice({
       if (state.selectedConnectionId && !state.connections.find(c => c.id === state.selectedConnectionId)) {
         state.selectedConnectionId = null
       }
+      state.selectedIds = state.selectedIds.filter(id => state.shapes.some(s => s.id === id))
+      state.selectedConnectionIds = state.selectedConnectionIds.filter(id => state.connections.some(c => c.id === id))
     },
   },
 })
@@ -137,8 +176,11 @@ const canvasSlice = createSlice({
 export const {
   addShape,
   updateShape,
+  batchUpdateShapes,
   deleteShape,
+  deleteSelectedItems,
   selectShape,
+  setMultiSelection,
   setTool,
   addConnection,
   deleteConnection,

@@ -8,11 +8,14 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   addShape,
   updateShape,
+  batchUpdateShapes,
   selectShape,
   setTool,
   addConnection,
   setPendingFromId,
   selectConnection,
+  setMultiSelection,
+  deleteSelectedItems,
   updateConnection,
   type Shape,
   type ConnectionPort,
@@ -51,6 +54,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const connections = useAppSelector((s) => s.canvas.connections);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
+  const selectedIds = useAppSelector((s) => s.canvas.selectedIds);
+  const selectedConnectionIds = useAppSelector((s) => s.canvas.selectedConnectionIds);
   const tool = useAppSelector((s) => s.canvas.tool);
   const pendingFromId = useAppSelector((s) => s.canvas.pendingFromId);
   const viewport = useAppSelector((s) => s.ui.viewport);
@@ -75,6 +80,16 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const [draggingPositions, setDraggingPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
   const [connectorDragTargetId, setConnectorDragTargetId] = useState<string | null>(null);
 
+  // Rubber-band selection
+  const [selectionRect, setSelectionRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const selectionRectRef = useRef(selectionRect);
+  selectionRectRef.current = selectionRect;
+  const selectionStartRef = useRef<{ x: number; y: number } | null>(null);
+  const didRubberBandRef = useRef(false);
+
+  // Group drag
+  const groupDragStartRef = useRef<Map<string, { x: number; y: number }> | null>(null);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shapeRefs = useRef<Map<string, Konva.Group>>(new Map());
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -82,6 +97,12 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const viewportRef = useRef(viewport);
   viewportRef.current = viewport;
   const hoverLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Stable refs for selectors used in closures
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
+  const shapesRef = useRef(shapes);
+  shapesRef.current = shapes;
 
   // Middle-mouse-button pan state
   const isMMBPanningRef = useRef(false);
@@ -165,20 +186,22 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     );
   }, [viewport.scale, stageSize.width, stageSize.height, dispatch]);
 
+  // Attach transformer to all selected shape nodes
   useEffect(() => {
     const tr = transformerRef.current;
     if (!tr) return;
+    const nodes: Konva.Node[] = [];
     if (selectedId) {
       const node = shapeRefs.current.get(selectedId);
-      if (node) {
-        tr.nodes([node]);
-        tr.getLayer()?.batchDraw();
-        return;
-      }
+      if (node) nodes.push(node);
     }
-    tr.nodes([]);
+    for (const id of selectedIds) {
+      const node = shapeRefs.current.get(id);
+      if (node) nodes.push(node);
+    }
+    tr.nodes(nodes);
     tr.getLayer()?.batchDraw();
-  }, [selectedId, shapes]);
+  }, [selectedId, selectedIds, shapes]);
 
   const shapeMap = useMemo(() => {
     const m = new Map<string, Shape>();
@@ -242,12 +265,27 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     }
 
     if (tool === "select") {
-      dispatch(selectShape(shape.id));
-      dispatch(setPanel({ panel: "right", open: true }));
+      if (e.evt.shiftKey) {
+        // Combine selectedId + selectedIds into one array, then toggle this shape
+        const all = [...(selectedId ? [selectedId] : []), ...selectedIds];
+        const next = all.includes(shape.id)
+          ? all.filter((id) => id !== shape.id)
+          : [...all, shape.id];
+        dispatch(setMultiSelection({ shapeIds: next, connectionIds: selectedConnectionIds }));
+      } else {
+        dispatch(selectShape(shape.id));
+        dispatch(setPanel({ panel: "right", open: true }));
+      }
     }
   };
 
   const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // Skip deselect if this click was the end of a rubber-band drag
+    if (didRubberBandRef.current) {
+      didRubberBandRef.current = false;
+      return;
+    }
+
     const stage = e.target.getStage();
     if (!stage || e.target !== stage) return;
     if (tool === "hand") return;
@@ -269,18 +307,163 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     dispatch(setPanel({ panel: "right", open: false }));
   };
 
-  const handleShapeDragEnd = (
-    shape: Shape,
-    e: Konva.KonvaEventObject<DragEvent>,
-  ) => {
-    const node = e.target;
-    setDraggingPositions(prev => {
-      const next = new Map(prev);
-      next.delete(shape.id);
-      return next;
-    });
-    dispatch(updateShape({ id: shape.id, x: node.x(), y: node.y() }));
+  // ── Rubber-band selection ──────────────────────────────────────────────────
+
+  const handleStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (tool !== "select") return;
+    if (e.evt.button !== 0) return;
+    const stage = e.target.getStage();
+    if (!stage) return;
+    const pos = stage.getRelativePointerPosition();
+    if (!pos) return;
+    // Don't start rubber-band when the click lands on a user shape
+    const hitShape = shapesRef.current.find(
+      (s) => pos.x >= s.x && pos.x <= s.x + s.w && pos.y >= s.y && pos.y <= s.y + s.h,
+    );
+    if (hitShape) return;
+    selectionStartRef.current = pos;
   };
+
+  const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
+    if (!selectionStartRef.current) return;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const domRect = wrapper.getBoundingClientRect();
+    const screenX = e.clientX - domRect.left;
+    const screenY = e.clientY - domRect.top;
+    const vp = viewportRef.current;
+    const worldX = (screenX - vp.x) / vp.scale;
+    const worldY = (screenY - vp.y) / vp.scale;
+    const start = selectionStartRef.current;
+    const x = Math.min(worldX, start.x);
+    const y = Math.min(worldY, start.y);
+    const w = Math.abs(worldX - start.x);
+    const h = Math.abs(worldY - start.y);
+    if (w > 3 || h > 3) {
+      setSelectionRect({ x, y, w, h });
+    }
+  }, []);
+
+  const handleStageMouseUp = useCallback(() => {
+    const rect = selectionRectRef.current;
+    if (selectionStartRef.current && rect && (rect.w > 3 || rect.h > 3)) {
+      const selectedShapeIds = shapesRef.current
+        .filter(
+          (s) =>
+            s.x < rect.x + rect.w &&
+            s.x + s.w > rect.x &&
+            s.y < rect.y + rect.h &&
+            s.y + s.h > rect.y,
+        )
+        .map((s) => s.id);
+
+      const selectedShapeIdSet = new Set(selectedShapeIds);
+      const selectedConnIds = connections
+        .filter((c) => selectedShapeIdSet.has(c.fromId) && selectedShapeIdSet.has(c.toId))
+        .map((c) => c.id);
+
+      dispatch(setMultiSelection({ shapeIds: selectedShapeIds, connectionIds: selectedConnIds }));
+      didRubberBandRef.current = true;
+    }
+    selectionStartRef.current = null;
+    setSelectionRect(null);
+  }, [connections, dispatch]);
+
+  // Global listeners catch events outside the Konva canvas during rubber-band
+  useEffect(() => {
+    window.addEventListener("mouseup", handleStageMouseUp);
+    window.addEventListener("mousemove", handleGlobalMouseMove);
+    return () => {
+      window.removeEventListener("mouseup", handleStageMouseUp);
+      window.removeEventListener("mousemove", handleGlobalMouseMove);
+    };
+  }, [handleStageMouseUp, handleGlobalMouseMove]);
+
+  // ── Shape drag (single and group) ─────────────────────────────────────────
+
+  const handleShapeDragStart = useCallback(
+    (shape: Shape) => {
+      if (selectedIdsRef.current.includes(shape.id)) {
+        // Record initial world positions of all shapes in the multi-select group
+        const starts = new Map<string, { x: number; y: number }>();
+        for (const id of selectedIdsRef.current) {
+          const s = shapesRef.current.find((sh) => sh.id === id);
+          if (s) starts.set(id, { x: s.x, y: s.y });
+        }
+        groupDragStartRef.current = starts;
+      } else {
+        groupDragStartRef.current = null;
+      }
+    },
+    [],
+  );
+
+  const handleShapeDragMove = useCallback(
+    (shape: Shape, e: Konva.KonvaEventObject<DragEvent>) => {
+      const node = e.target;
+      const groupStart = groupDragStartRef.current;
+      if (groupStart && selectedIdsRef.current.includes(shape.id)) {
+        const startPos = groupStart.get(shape.id);
+        if (!startPos) return;
+        const dx = node.x() - startPos.x;
+        const dy = node.y() - startPos.y;
+        setDraggingPositions(() => {
+          const next = new Map<string, { x: number; y: number }>();
+          for (const [id, start] of groupStart) {
+            const newX = start.x + dx;
+            const newY = start.y + dy;
+            if (id !== shape.id) {
+              const otherNode = shapeRefs.current.get(id);
+              if (otherNode) { otherNode.x(newX); otherNode.y(newY); }
+            }
+            next.set(id, { x: newX, y: newY });
+          }
+          return next;
+        });
+      } else {
+        setDraggingPositions((prev) => new Map(prev).set(shape.id, { x: node.x(), y: node.y() }));
+      }
+    },
+    [],
+  );
+
+  const handleShapeDragEnd = useCallback(
+    (shape: Shape, e: Konva.KonvaEventObject<DragEvent>) => {
+      const node = e.target;
+      const groupStart = groupDragStartRef.current;
+      if (groupStart && selectedIdsRef.current.includes(shape.id)) {
+        const startPos = groupStart.get(shape.id)!;
+        const dx = node.x() - startPos.x;
+        const dy = node.y() - startPos.y;
+        const updates = [...groupStart.entries()].map(([id, start]) => ({
+          id,
+          x: start.x + dx,
+          y: start.y + dy,
+        }));
+        for (const [id, start] of groupStart) {
+          if (id !== shape.id) {
+            const otherNode = shapeRefs.current.get(id);
+            if (otherNode) { otherNode.x(start.x); otherNode.y(start.y); }
+          }
+        }
+        setDraggingPositions((prev) => {
+          const next = new Map(prev);
+          for (const id of groupStart.keys()) next.delete(id);
+          return next;
+        });
+        groupDragStartRef.current = null;
+        dispatch(batchUpdateShapes(updates));
+      } else {
+        setDraggingPositions((prev) => {
+          const next = new Map(prev);
+          next.delete(shape.id);
+          return next;
+        });
+        dispatch(updateShape({ id: shape.id, x: node.x(), y: node.y() }));
+      }
+    },
+    [dispatch],
+  );
 
   const handleStageDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
     if (tool !== "hand") return;
@@ -400,20 +583,19 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     if (!tr) return;
     const nodes = tr.nodes();
     if (nodes.length === 0) return;
-    const node = nodes[0];
-    const shapeId = [...shapeRefs.current.entries()].find(
-      ([, n]) => n === node,
-    )?.[0];
-    if (!shapeId) return;
-    const shape = shapeMap.get(shapeId);
-    if (!shape) return;
-    const newW = Math.max(20, node.scaleX() * shape.w);
-    const newH = Math.max(20, node.scaleY() * shape.h);
-    node.scaleX(1);
-    node.scaleY(1);
-    dispatch(
-      updateShape({ id: shapeId, x: node.x(), y: node.y(), w: newW, h: newH }),
-    );
+    for (const node of nodes) {
+      const shapeId = [...shapeRefs.current.entries()].find(
+        ([, n]) => n === node,
+      )?.[0];
+      if (!shapeId) continue;
+      const shape = shapeMap.get(shapeId);
+      if (!shape) continue;
+      const newW = Math.max(20, node.scaleX() * shape.w);
+      const newH = Math.max(20, node.scaleY() * shape.h);
+      node.scaleX(1);
+      node.scaleY(1);
+      dispatch(updateShape({ id: shapeId, x: node.x(), y: node.y(), w: newW, h: newH }));
+    }
   };
 
   const commitLabel = (value: string) => {
@@ -445,6 +627,9 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     isMMBPanningRef.current = false;
   };
 
+  // Suppress Konva's default context menu so right-click doesn't break things
+  const isMultiSelectActive = selectedIds.length > 0;
+
   return (
     <div
       ref={wrapperRef}
@@ -454,7 +639,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
         backgroundSize: `${GRID_SIZE * viewport.scale}px ${GRID_SIZE * viewport.scale}px`,
         backgroundPosition: `${viewport.x + GRID_OFFSET * viewport.scale}px ${viewport.y + GRID_OFFSET * viewport.scale}px`,
-        cursor: tool === "hand" ? "grab" : isMMBPanningRef.current ? "grabbing" : "default",
+        cursor: tool === "hand" ? "grab" : isMMBPanningRef.current ? "grabbing" : (selectionRect ? "crosshair" : "default"),
       }}
       onMouseDown={handleWrapperMouseDown}
       onMouseMove={handleWrapperMouseMove}
@@ -471,6 +656,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           scaleY={viewport.scale}
           draggable={tool === "hand"}
           onClick={handleStageClick}
+          onMouseDown={handleStageMouseDown}
           onDragMove={handleStageDragMove}
           onDragEnd={handleStageDragEnd}
         >
@@ -480,7 +666,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 key={c.id}
                 connection={c}
                 shapeMap={liveShapeMap}
-                isSelected={c.id === selectedConnectionId}
+                isSelected={c.id === selectedConnectionId || selectedConnectionIds.includes(c.id)}
                 editingLabel={c.id === editingConnectionId}
                 draggingTipPos={draggingTip?.connId === c.id ? draggingTip.pos : undefined}
                 onSelect={() => handleConnectionClick(c.id)}
@@ -562,10 +748,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 draggable={draggableShapes}
                 onClick={(e) => handleShapeClick(shape, e)}
                 onDblClick={() => setEditingId(shape.id)}
-                onDragMove={(e) => {
-                  const node = e.target;
-                  setDraggingPositions(prev => new Map(prev).set(shape.id, { x: node.x(), y: node.y() }));
-                }}
+                onDragStart={() => handleShapeDragStart(shape)}
+                onDragMove={(e) => handleShapeDragMove(shape, e)}
                 onDragEnd={(e) => handleShapeDragEnd(shape, e)}
                 onMouseEnter={() => handleShapeMouseEnter(shape.id)}
                 onMouseLeave={handleShapeMouseLeave}
@@ -585,6 +769,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 tool === "select" &&
                 !draggingTip &&
                 !selectedConnectionId &&
+                selectedConnectionIds.length === 0 &&
+                !isMultiSelectActive &&
                 (hoveredId === shape.id || selectedId === shape.id) &&
                 pendingFromId !== shape.id;
               return show ? (
@@ -605,6 +791,21 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 </Group>
               ) : null;
             })}
+
+            {/* Rubber-band selection rectangle */}
+            {selectionRect && (
+              <Rect
+                x={selectionRect.x}
+                y={selectionRect.y}
+                width={selectionRect.w}
+                height={selectionRect.h}
+                fill="rgba(96,165,250,0.08)"
+                stroke="#60a5fa"
+                strokeWidth={1 / viewport.scale}
+                dash={[5 / viewport.scale, 4 / viewport.scale]}
+                listening={false}
+              />
+            )}
 
             <Transformer ref={transformerRef} onTransformEnd={handleTransformEnd} />
           </Layer>

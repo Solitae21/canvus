@@ -15,6 +15,9 @@ function loadCanvasState() {
             canvas: {
                 ...parsed,
                 selectedId: null,
+                selectedConnectionId: null,
+                selectedIds: [],
+                selectedConnectionIds: [],
                 pendingFromId: null,
                 tool: 'select',
             },

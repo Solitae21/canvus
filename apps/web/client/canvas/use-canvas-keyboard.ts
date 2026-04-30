@@ -9,9 +9,12 @@ import {
   setPendingFromId,
   setTool,
   updateShape,
+  batchUpdateShapes,
   undo,
   redo,
   deleteConnection,
+  deleteSelectedItems,
+  setMultiSelection,
   type ToolType,
 } from "@/redux/slice/canvas/canvas-slice";
 import { zoomIn, zoomOut, resetViewport } from "@/redux/slice/ui/ui-slice";
@@ -33,6 +36,8 @@ export function useCanvasKeyboard() {
   const dispatch = useAppDispatch();
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
+  const selectedIds = useAppSelector((s) => s.canvas.selectedIds);
+  const selectedConnectionIds = useAppSelector((s) => s.canvas.selectedConnectionIds);
   const tool = useAppSelector((s) => s.canvas.tool);
   const shapes = useAppSelector((s) => s.canvas.shapes);
 
@@ -41,6 +46,10 @@ export function useCanvasKeyboard() {
   selectedIdRef.current = selectedId;
   const selectedConnectionIdRef = useRef(selectedConnectionId);
   selectedConnectionIdRef.current = selectedConnectionId;
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
+  const selectedConnectionIdsRef = useRef(selectedConnectionIds);
+  selectedConnectionIdsRef.current = selectedConnectionIds;
   const toolRef = useRef(tool);
   toolRef.current = tool;
   const shapesRef = useRef(shapes);
@@ -111,6 +120,13 @@ export function useCanvasKeyboard() {
 
       // ── Delete ───────────────────────────────────────────────────────────────
       if (e.key === "Backspace" || e.key === "Delete") {
+        const hasMulti =
+          selectedIdsRef.current.length > 0 || selectedConnectionIdsRef.current.length > 0;
+        if (hasMulti) {
+          e.preventDefault();
+          dispatch(deleteSelectedItems());
+          return;
+        }
         if (selectedIdRef.current) {
           e.preventDefault();
           dispatch(deleteShape(selectedIdRef.current));
@@ -125,25 +141,42 @@ export function useCanvasKeyboard() {
 
       // ── Escape ───────────────────────────────────────────────────────────────
       if (e.key === "Escape") {
-        dispatch(selectShape(null));
+        dispatch(selectShape(null)); // clears selectedId + selectedIds + selectedConnectionIds
         dispatch(setPendingFromId(null));
         return;
       }
 
       // ── Arrow nudge ──────────────────────────────────────────────────────────
-      if (
-        selectedIdRef.current &&
-        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
-      ) {
-        e.preventDefault();
-        const step = e.shiftKey ? 8 : 1;
-        const shape = shapesRef.current.find((s) => s.id === selectedIdRef.current);
-        if (shape) {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        const multiIds = selectedIdsRef.current;
+        const singleId = selectedIdRef.current;
+
+        if (multiIds.length > 0) {
+          e.preventDefault();
+          const step = e.shiftKey ? 8 : 1;
           const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
           const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
-          dispatch(updateShape({ id: shape.id, x: shape.x + dx, y: shape.y + dy }));
+          const updates = multiIds
+            .map((id) => {
+              const shape = shapesRef.current.find((s) => s.id === id);
+              return shape ? { id, x: shape.x + dx, y: shape.y + dy } : null;
+            })
+            .filter(Boolean) as Array<{ id: string; x: number; y: number }>;
+          if (updates.length > 0) dispatch(batchUpdateShapes(updates));
+          return;
         }
-        return;
+
+        if (singleId) {
+          e.preventDefault();
+          const step = e.shiftKey ? 8 : 1;
+          const shape = shapesRef.current.find((s) => s.id === singleId);
+          if (shape) {
+            const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+            const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+            dispatch(updateShape({ id: shape.id, x: shape.x + dx, y: shape.y + dy }));
+          }
+          return;
+        }
       }
 
       // ── Space to pan ─────────────────────────────────────────────────────────
