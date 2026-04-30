@@ -72,6 +72,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     fromPort: ConnectionPort;
     pos: { x: number; y: number };
   } | null>(null);
+  const [draggingPositions, setDraggingPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
   const [connectorDragTargetId, setConnectorDragTargetId] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -185,6 +186,16 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     return m;
   }, [shapes]);
 
+  const liveShapeMap = useMemo(() => {
+    if (draggingPositions.size === 0) return shapeMap;
+    const live = new Map(shapeMap);
+    for (const [id, pos] of draggingPositions) {
+      const s = live.get(id);
+      if (s) live.set(id, { ...s, ...pos });
+    }
+    return live;
+  }, [shapeMap, draggingPositions]);
+
   const editingShape = editingId ? shapeMap.get(editingId) ?? null : null;
 
   const placeShape = (type: PlaceableShapeType, x: number, y: number) => {
@@ -263,6 +274,11 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     e: Konva.KonvaEventObject<DragEvent>,
   ) => {
     const node = e.target;
+    setDraggingPositions(prev => {
+      const next = new Map(prev);
+      next.delete(shape.id);
+      return next;
+    });
     dispatch(updateShape({ id: shape.id, x: node.x(), y: node.y() }));
   };
 
@@ -463,7 +479,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
               <CanvasConnection
                 key={c.id}
                 connection={c}
-                shapeMap={shapeMap}
+                shapeMap={liveShapeMap}
                 isSelected={c.id === selectedConnectionId}
                 editingLabel={c.id === editingConnectionId}
                 draggingTipPos={draggingTip?.connId === c.id ? draggingTip.pos : undefined}
@@ -546,6 +562,10 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 draggable={draggableShapes}
                 onClick={(e) => handleShapeClick(shape, e)}
                 onDblClick={() => setEditingId(shape.id)}
+                onDragMove={(e) => {
+                  const node = e.target;
+                  setDraggingPositions(prev => new Map(prev).set(shape.id, { x: node.x(), y: node.y() }));
+                }}
                 onDragEnd={(e) => handleShapeDragEnd(shape, e)}
                 onMouseEnter={() => handleShapeMouseEnter(shape.id)}
                 onMouseLeave={handleShapeMouseLeave}
@@ -570,8 +590,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
               return show ? (
                 <Group
                   key={`conn-${shape.id}`}
-                  x={shape.x}
-                  y={shape.y}
+                  x={(draggingPositions.get(shape.id) ?? shape).x}
+                  y={(draggingPositions.get(shape.id) ?? shape).y}
                   onMouseEnter={() => handleShapeMouseEnter(shape.id)}
                   onMouseLeave={handleShapeMouseLeave}
                 >
