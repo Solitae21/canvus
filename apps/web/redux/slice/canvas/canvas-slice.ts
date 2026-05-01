@@ -1,6 +1,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { Shape, ShapeType, Connection, ConnectionPort } from '@canvus/shared'
+import { newId } from '@/client/canvas/canvas-defaults'
 
 export type { Shape, ShapeType, Connection, ConnectionPort }
 
@@ -25,6 +26,7 @@ interface CanvasState {
   selectedConnectionIds: string[]
   pendingFromId: string | null
   tool: ToolType
+  clipboard: { shapes: Shape[]; connections: Connection[] } | null
 }
 
 const initialState: CanvasState = {
@@ -42,6 +44,7 @@ const initialState: CanvasState = {
   selectedConnectionIds: [],
   pendingFromId: null,
   tool: 'select',
+  clipboard: null,
 }
 
 function pushHistory(state: CanvasState) {
@@ -134,6 +137,41 @@ const canvasSlice = createSlice({
     setPendingFromId: (state, action: PayloadAction<string | null>) => {
       state.pendingFromId = action.payload
     },
+    copySelection: (state) => {
+      const ids = state.selectedIds.length > 0
+        ? new Set(state.selectedIds)
+        : state.selectedId ? new Set([state.selectedId]) : null
+      if (!ids || ids.size === 0) return
+      const shapes = state.shapes.filter(s => ids.has(s.id)).map(s => ({ ...s }))
+      const connections = state.connections
+        .filter(c => ids.has(c.fromId) && ids.has(c.toId))
+        .map(c => ({ ...c }))
+      state.clipboard = { shapes, connections }
+    },
+    pasteClipboard: (state) => {
+      if (!state.clipboard || state.clipboard.shapes.length === 0) return
+      pushHistory(state)
+      const idMap = new Map<string, string>()
+      for (const s of state.clipboard.shapes) idMap.set(s.id, newId())
+      const newShapes = state.clipboard.shapes.map(s => ({
+        ...s,
+        id: idMap.get(s.id)!,
+        x: s.x + 20,
+        y: s.y + 20,
+      }))
+      const newConnections = state.clipboard.connections.map(c => ({
+        ...c,
+        id: newId(),
+        fromId: idMap.get(c.fromId)!,
+        toId: idMap.get(c.toId)!,
+      }))
+      state.shapes.push(...newShapes)
+      state.connections.push(...newConnections)
+      state.selectedIds = newShapes.map(s => s.id)
+      state.selectedConnectionIds = newConnections.map(c => c.id)
+      state.selectedId = null
+      state.selectedConnectionId = null
+    },
     undo: (state) => {
       const entry = state.past.pop()
       if (!entry) return
@@ -193,6 +231,8 @@ export const {
   selectConnection,
   updateConnection,
   setPendingFromId,
+  copySelection,
+  pasteClipboard,
   undo,
   redo,
 } = canvasSlice.actions

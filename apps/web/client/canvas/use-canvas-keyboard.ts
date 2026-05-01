@@ -15,6 +15,8 @@ import {
   deleteConnection,
   deleteSelectedItems,
   setMultiSelection,
+  copySelection,
+  pasteClipboard,
   type ToolType,
 } from "@/redux/slice/canvas/canvas-slice";
 import { zoomIn, zoomOut, resetViewport } from "@/redux/slice/ui/ui-slice";
@@ -84,6 +86,18 @@ export function useCanvasKeyboard() {
       if (ctrl && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
         e.preventDefault();
         dispatch(redo());
+        return;
+      }
+
+      // ── Copy / Paste ─────────────────────────────────────────────────────────
+      if (ctrl && e.key === "c") {
+        e.preventDefault();
+        dispatch(copySelection());
+        return;
+      }
+      if (ctrl && e.key === "v") {
+        e.preventDefault();
+        dispatch(pasteClipboard());
         return;
       }
 
