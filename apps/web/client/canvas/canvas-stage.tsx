@@ -34,6 +34,7 @@ import {
   type PlaceableShapeType,
 } from "./canvas-defaults";
 import CanvasShape, { CanvasShapeLabel } from "./canvas-shape";
+import CanvasImageShape from "./canvas-image-shape";
 import CanvasConnection from "./canvas-connection";
 import {
   buildOrthogonalPoints,
@@ -101,6 +102,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const groupDragStartRef = useRef<Map<string, { x: number; y: number }> | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const shapeRefs = useRef<Map<string, Konva.Group>>(new Map());
   const transformerRef = useRef<Konva.Transformer>(null);
   const prevScaleRef = useRef(viewport.scale);
@@ -129,6 +131,64 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  const handleImageFile = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      const el = new window.Image();
+      el.onload = () => {
+        const maxW = 600;
+        const scale = el.naturalWidth > maxW ? maxW / el.naturalWidth : 1;
+        const w = Math.round(el.naturalWidth * scale);
+        const h = Math.round(el.naturalHeight * scale);
+        const { x, y, scale: vScale } = viewportRef.current;
+        const cx = (stageSize.width / 2 - x) / vScale;
+        const cy = (stageSize.height / 2 - y) / vScale;
+        dispatch(
+          addShape({
+            id: newId(),
+            type: "image",
+            x: cx - w / 2,
+            y: cy - h / 2,
+            w,
+            h,
+            label: "",
+            fill: "transparent",
+            strokeColor: "transparent",
+            src,
+          }),
+        );
+        dispatch(setTool("select"));
+      };
+      el.src = src;
+    };
+    reader.readAsDataURL(file);
+  }, [dispatch, stageSize]);
+
+  // Open file picker when image tool is activated
+  useEffect(() => {
+    if (tool === "image") {
+      fileInputRef.current?.click();
+    }
+  }, [tool]);
+
+  // Clipboard paste — place any pasted image on canvas
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) handleImageFile(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [handleImageFile]);
 
   // Wheel: Ctrl+Wheel = zoom centered on cursor, plain/Shift+Wheel = pan
   useEffect(() => {
@@ -302,6 +362,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
 
     const pointer = stage.getRelativePointerPosition();
     if (!pointer) return;
+
+    if (tool === "image") return;
 
     if (isPlaceable(tool)) {
       placeShape(tool, pointer.x, pointer.y);
@@ -697,6 +759,22 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
       onMouseUp={stopMMBPan}
       onMouseLeave={stopMMBPan}
     >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleImageFile(file);
+          } else {
+            dispatch(setTool("select"));
+          }
+          e.target.value = "";
+        }}
+      />
+
       {stageSize.width > 0 && stageSize.height > 0 && (
         <Stage
           width={stageSize.width}
@@ -805,12 +883,18 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
                 onMouseEnter={() => handleShapeMouseEnter(shape.id)}
                 onMouseLeave={handleShapeMouseLeave}
               >
-                <CanvasShape
-                  shape={shape}
-                  pendingArrow={pendingFromId === shape.id}
-                />
-                {editingId !== shape.id && (
-                  <CanvasShapeLabel shape={shape} />
+                {shape.type === "image" ? (
+                  <CanvasImageShape shape={shape} />
+                ) : (
+                  <>
+                    <CanvasShape
+                      shape={shape}
+                      pendingArrow={pendingFromId === shape.id}
+                    />
+                    {editingId !== shape.id && (
+                      <CanvasShapeLabel shape={shape} />
+                    )}
+                  </>
                 )}
               </Group>
             ))}

@@ -7,7 +7,7 @@ export const PLACEABLE_TYPES: ReadonlySet<ShapeType> = new Set<ShapeType>([
   "parallelogram", "trapezoid", "hexagon", "cylinder",
   "document", "predefined-process", "manual-input", "stored-data",
   "internal-storage", "circle", "off-page", "delay",
-  "sticky",
+  "sticky", "image",
 ]);
 
 export const STICKY_FILL = "#FEF3C7";
@@ -38,6 +38,9 @@ export const defaultsFor = (type: PlaceableShapeType): ShapeDefaults => {
   }
   if (type === "circle") {
     return { w: 80, h: 80, fill: "transparent", strokeColor: DEFAULT_STROKE, label: "" };
+  }
+  if (type === "image") {
+    return { w: 200, h: 150, fill: "transparent", strokeColor: "transparent", label: "" };
   }
   return {
     w: 140,

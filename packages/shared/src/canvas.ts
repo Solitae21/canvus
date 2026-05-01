@@ -3,14 +3,14 @@ export type ShapeType =
   | 'parallelogram' | 'trapezoid' | 'hexagon' | 'cylinder'
   | 'document' | 'predefined-process' | 'manual-input' | 'stored-data'
   | 'internal-storage' | 'circle' | 'off-page' | 'delay'
-  | 'sticky';
+  | 'sticky' | 'image';
 
 export type PlaceableShapeType =
   | 'rect' | 'rounded-rect' | 'diamond' | 'oval'
   | 'parallelogram' | 'trapezoid' | 'hexagon' | 'cylinder'
   | 'document' | 'predefined-process' | 'manual-input' | 'stored-data'
   | 'internal-storage' | 'circle' | 'off-page' | 'delay'
-  | 'sticky';
+  | 'sticky' | 'image';
 
 export interface Shape {
   id: string;
@@ -22,6 +22,7 @@ export interface Shape {
   label: string;
   fill: string;
   strokeColor: string;
+  src?: string;
 }
 
 export type ConnectionPort = 'top' | 'right' | 'bottom' | 'left';
