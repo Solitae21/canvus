@@ -1,36 +1,393 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Canvus
 
-## Getting Started
+Canvus is a TypeScript npm workspace for a collaborative flowchart and canvas application. It includes a Next.js web app, an Express API, a Socket.IO collaboration channel, and shared domain contracts used by both sides of the stack.
 
-First, run the development server:
+The current app focuses on a rich browser canvas experience: flowchart shapes, connectors, labels, image placement, selection, drag and resize controls, keyboard shortcuts, undo/redo, zoom, pan, and local canvas state persistence.
+
+## Tech Stack
+
+- **Workspace:** npm workspaces
+- **Web:** Next.js 16, React 19, Redux Toolkit, Tailwind CSS 4, shadcn/Radix-style components, lucide-react, Konva, react-konva
+- **API:** Express, CORS, Socket.IO, TypeScript
+- **Shared:** TypeScript canvas/domain types exported as `@canvus/shared`
+- **Runtime state:** browser `localStorage` for the current web canvas state; in-memory API store for API-created canvases
+
+## Workspace Structure
+
+```text
+.
++-- apps
+|   +-- web                 # Next.js application and interactive canvas UI
+|   +-- api                 # Express REST API and Socket.IO server
++-- packages
+|   +-- shared              # Shared canvas/domain TypeScript contracts
++-- package.json            # Root workspace scripts
++-- package-lock.json
++-- tsconfig.base.json      # Shared TypeScript defaults
+```
+
+### `apps/web`
+
+The web app contains the landing page, canvas page, Redux store, canvas components, API client, and Socket.IO client.
+
+Important areas:
+
+- `app/`: Next.js app routes and layout
+- `client/canvas/`: Konva canvas stage, shapes, connectors, labels, keyboard behavior, and panels
+- `components/`: shared UI components such as the toolbar
+- `lib/api.ts`: REST client for the API
+- `lib/ws.ts`: Socket.IO client wrapper
+- `redux/`: Redux store, hooks, and canvas/UI slices
+
+### `apps/api`
+
+The API serves simple REST endpoints for canvases and hosts the Socket.IO collaboration channel.
+
+Important areas:
+
+- `src/index.ts`: Express app, HTTP server, CORS, JSON body limit, route registration, Socket.IO attach point
+- `src/env.ts`: API environment defaults
+- `src/routes/health.ts`: health check route
+- `src/routes/canvases.ts`: canvas CRUD routes
+- `src/store/memory.ts`: in-memory canvas store
+- `src/ws/index.ts`: Socket.IO room handling and broadcasts
+
+### `packages/shared`
+
+The shared package exports the canvas domain model consumed by both `@canvus/web` and `@canvus/api`.
+
+Important types include:
+
+- `Canvas`
+- `CanvasSummary`
+- `Shape`
+- `ShapeType`
+- `PlaceableShapeType`
+- `Connection`
+- `ConnectionPort`
+
+## Quick Start
+
+### 1. Install dependencies
+
+Run from the repository root:
+
+```bash
+npm install
+```
+
+### 2. Configure environment files
+
+Copy the provided examples:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item apps/api/.env.example apps/api/.env
+Copy-Item apps/web/.env.example apps/web/.env
+```
+
+Default local values:
+
+```env
+# apps/api/.env
+PORT=4000
+ALLOWED_ORIGIN=http://localhost:3000
+```
+
+```env
+# apps/web/.env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+### 3. Start development servers
+
+Run the web and API servers together:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Development URLs:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Web app: `http://localhost:3000`
+- API: `http://localhost:4000`
+- API health check: `http://localhost:4000/health`
+- Socket.IO endpoint: `http://localhost:4000/ws`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+Run workspace scripts from the repository root unless you are intentionally targeting one workspace.
 
-To learn more about Next.js, take a look at the following resources:
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the web and API dev servers together. |
+| `npm run dev:web` | Start only `@canvus/web`. |
+| `npm run dev:api` | Start only `@canvus/api`. |
+| `npm run build` | Build all workspaces that define a build script. |
+| `npm run lint` | Lint all workspaces that define a lint script. |
+| `npm run typecheck` | Typecheck all workspaces that define a typecheck script. |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Focused workspace examples:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint -w @canvus/web
+npm run typecheck -w @canvus/api
+npm run typecheck -w @canvus/shared
+```
 
-## Deploy on Vercel
+## Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### API
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PORT` | `4000` | Port used by the Express and Socket.IO server. |
+| `ALLOWED_ORIGIN` | `http://localhost:3000` | CORS origin allowed by the API and Socket.IO server. |
+
+### Web
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | Base URL used by the web REST and Socket.IO clients. |
+
+## Canvas Features
+
+The canvas page is available at `/canvas`.
+
+Implemented canvas behavior includes:
+
+- Flowchart shape placement, including process, decision, terminal, database, document, sticky note, image, and other supported shape types
+- Shape selection, multi-selection, drag, resize, delete, copy, paste, and duplicate
+- Orthogonal connectors between shapes, connector labels, connector selection, color editing, and retargeting
+- Shape labels with inline editing
+- Image placement from file selection or pasted image data
+- Bottom toolbar with selection, hand/pan, shape, arrow, text, sticky, and image tools
+- Right-side properties panel for selected shapes and connectors
+- Undo/redo history for canvas mutations
+- Keyboard shortcuts for common tools and editing operations
+- Zoom and pan controls, including wheel and keyboard-driven zoom
+- Browser `localStorage` persistence for the current canvas state
+
+Common keyboard shortcuts:
+
+| Shortcut | Action |
+| --- | --- |
+| `V` | Select tool |
+| `H` | Hand/pan tool |
+| `R` | Process rectangle |
+| `D` | Decision diamond |
+| `O` | Terminal oval |
+| `A` | Arrow/connector tool |
+| `T` | Text tool |
+| `S` | Sticky note |
+| `Space` | Temporarily switch to hand/pan |
+| `Ctrl+Z` / `Cmd+Z` | Undo |
+| `Ctrl+Y` or `Ctrl+Shift+Z` / `Cmd+Shift+Z` | Redo |
+| `Ctrl+C` / `Cmd+C` | Copy selected shapes |
+| `Ctrl+V` / `Cmd+V` | Paste copied shapes |
+| `Ctrl+D` / `Cmd+D` | Duplicate selected shape |
+| `Delete` / `Backspace` | Delete selection |
+| Arrow keys | Nudge selected shape or shapes |
+| `Shift` + arrow keys | Nudge by a larger step |
+| `Ctrl+Plus` / `Cmd+Plus` | Zoom in |
+| `Ctrl+Minus` / `Cmd+Minus` | Zoom out |
+| `Ctrl+0` / `Cmd+0` | Reset zoom |
+| `Escape` | Clear selection or pending connector |
+
+## API
+
+The API uses JSON request and response bodies.
+
+### Health
+
+```http
+GET /health
+```
+
+Response:
+
+```json
+{
+  "ok": true
+}
+```
+
+### List canvases
+
+```http
+GET /canvases
+```
+
+Returns an array of `CanvasSummary` objects.
+
+### Create canvas
+
+```http
+POST /canvases
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "name": "Untitled"
+}
+```
+
+Returns the created `Canvas`.
+
+### Get canvas
+
+```http
+GET /canvases/:id
+```
+
+Returns a `Canvas`, or `404` with:
+
+```json
+{
+  "error": "not_found"
+}
+```
+
+### Replace canvas
+
+```http
+PUT /canvases/:id
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "name": "Updated canvas name",
+  "shapes": [],
+  "connections": []
+}
+```
+
+The `shapes` and `connections` fields must be arrays. A successful replacement updates `updatedAt`, returns the updated `Canvas`, and broadcasts a `canvas:replaced` envelope to the canvas Socket.IO room.
+
+Invalid request body:
+
+```json
+{
+  "error": "invalid_body",
+  "detail": "shapes and connections must be arrays"
+}
+```
+
+### Delete canvas
+
+```http
+DELETE /canvases/:id
+```
+
+Returns `204 No Content` when deleted, or `404` when the canvas does not exist.
+
+## WebSocket Collaboration Channel
+
+The API hosts Socket.IO at path `/ws`.
+
+Clients connect with a `canvasId` query parameter:
+
+```ts
+io("http://localhost:4000", {
+  path: "/ws",
+  query: { canvasId },
+  transports: ["websocket"],
+});
+```
+
+Connection behavior:
+
+- A socket without `canvasId` is disconnected.
+- Each socket joins a room named by its `canvasId`.
+- Client `message` events are forwarded to other clients in the same canvas room.
+- Server-side canvas replacements broadcast a `message` envelope to the room.
+
+Current envelope shape used by the web client:
+
+```ts
+type WsEnvelope = {
+  type: string;
+  payload?: unknown;
+  clientId?: string;
+};
+```
+
+## Shared Canvas Model
+
+The source of truth for canvas data contracts is `packages/shared/src/canvas.ts`.
+
+```ts
+interface Canvas {
+  id: string;
+  name: string;
+  shapes: Shape[];
+  connections: Connection[];
+  updatedAt: string;
+}
+
+interface Shape {
+  id: string;
+  type: ShapeType;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+  fill: string;
+  strokeColor: string;
+  src?: string;
+}
+
+interface Connection {
+  id: string;
+  fromId: string;
+  toId: string;
+  fromPort?: ConnectionPort;
+  toPort?: ConnectionPort;
+  color?: string;
+  label?: string;
+}
+```
+
+When changing canvas data, update `@canvus/shared` first, then align API validation/storage, `apps/web/lib/api.ts`, `apps/web/lib/ws.ts`, Redux state, and canvas rendering.
+
+## Development Notes
+
+- Keep shared wire shapes synchronized across `packages/shared`, `apps/api`, and `apps/web`.
+- The API store is intentionally in-memory. Restarting the API clears API-created canvases.
+- The web canvas currently persists local Redux canvas data to browser `localStorage`.
+- Canvas mutation behavior should preserve undo/redo history.
+- Rendering changes often need coordinated updates across shapes, connectors, labels, hit areas, selection, keyboard behavior, and the properties panel.
+- Keep client-only canvas behavior inside client components and hooks.
+
+## Verification
+
+For documentation-only changes, no runtime test is required.
+
+Useful checks for code changes:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+For focused work, prefer the smallest relevant workspace check first:
+
+```bash
+npm run lint -w @canvus/web
+npm run typecheck -w @canvus/api
+npm run typecheck -w @canvus/shared
+```
