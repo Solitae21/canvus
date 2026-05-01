@@ -4,7 +4,7 @@ import cors from 'cors';
 import { ALLOWED_ORIGIN, PORT } from './env.js';
 import { healthRouter } from './routes/health.js';
 import { canvasesRouter } from './routes/canvases.js';
-import { attachWebSocket } from './ws/index.js';
+import { attachSocketIO } from './ws/index.js';
 
 const app = express();
 
@@ -15,7 +15,7 @@ app.use(healthRouter);
 app.use(canvasesRouter);
 
 const server = http.createServer(app);
-attachWebSocket(server);
+attachSocketIO(server, ALLOWED_ORIGIN);
 
 server.listen(PORT, () => {
   console.log(`[api] listening on http://localhost:${PORT}`);

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Connection, Shape } from '@canvus/shared';
 import * as store from '../store/memory.js';
-import { broadcast } from '../ws/index.js';
+import { broadcastToCanvas } from '../ws/index.js';
 
 export const canvasesRouter: Router = Router();
 
@@ -39,7 +39,7 @@ canvasesRouter.put('/canvases/:id', (req, res) => {
     res.status(404).json({ error: 'not_found' });
     return;
   }
-  broadcast(req.params.id, { type: 'canvas:replaced', payload: updated, clientId: 'server' });
+  broadcastToCanvas(req.params.id, { type: 'canvas:replaced', payload: updated, clientId: 'server' });
   res.json(updated);
 });
 
