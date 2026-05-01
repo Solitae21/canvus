@@ -152,6 +152,11 @@ const canvasSlice = createSlice({
       state.selectedIds = state.selectedIds.filter(id => state.shapes.some(s => s.id === id))
       state.selectedConnectionIds = state.selectedConnectionIds.filter(id => state.connections.some(c => c.id === id))
     },
+    addShapeWithConnection: (state, action: PayloadAction<{ shape: Shape; connection: Connection }>) => {
+      pushHistory(state)
+      state.shapes.push(action.payload.shape)
+      state.connections.push(action.payload.connection)
+    },
     redo: (state) => {
       const entry = state.future.pop()
       if (!entry) return
@@ -183,6 +188,7 @@ export const {
   setMultiSelection,
   setTool,
   addConnection,
+  addShapeWithConnection,
   deleteConnection,
   selectConnection,
   updateConnection,

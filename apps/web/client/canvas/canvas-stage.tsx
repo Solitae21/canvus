@@ -12,12 +12,14 @@ import {
   selectShape,
   setTool,
   addConnection,
+  addShapeWithConnection,
   setPendingFromId,
   selectConnection,
   setMultiSelection,
   deleteSelectedItems,
   updateConnection,
   type Shape,
+  type ShapeType,
   type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
 import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
@@ -41,6 +43,7 @@ import {
 import CanvasLabelEditor from "./canvas-label-editor";
 import CanvasConnectionLabelEditor from "./canvas-connection-label-editor";
 import CanvasShapeConnectors from "./canvas-shape-connectors";
+import ShapePickerPopup from "./shape-picker-popup";
 
 export interface CanvasStageProps {
   className?: string;
@@ -79,6 +82,13 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   } | null>(null);
   const [draggingPositions, setDraggingPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
   const [connectorDragTargetId, setConnectorDragTargetId] = useState<string | null>(null);
+  const [shapePickerPopup, setShapePickerPopup] = useState<{
+    fromId: string;
+    fromPort: ConnectionPort;
+    pos: { x: number; y: number };
+    relX: number;
+    relY: number;
+  } | null>(null);
 
   // Rubber-band selection
   const [selectionRect, setSelectionRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -551,10 +561,63 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           toPort: getNearestPort(target, pos),
         }),
       );
+      setConnectorDrag(null);
+      setConnectorDragTargetId(null);
+    } else {
+      // Released on empty canvas — show shape picker popup
+      const vp = viewportRef.current;
+      const relX = pos.x * vp.scale + vp.x;
+      const relY = pos.y * vp.scale + vp.y;
+      setShapePickerPopup({ fromId: shapeId, fromPort: port, pos, relX, relY });
+      setConnectorDragTargetId(null);
+      // Keep connectorDrag so the dashed arrow stays visible while popup is open
     }
-    setConnectorDrag(null);
-    setConnectorDragTargetId(null);
   }, [dispatch, getShapeAtPoint]);
+
+  const dismissShapePicker = useCallback(() => {
+    setShapePickerPopup(null);
+    setConnectorDrag(null);
+  }, []);
+
+  const handleShapePickerSelect = useCallback((type: ShapeType) => {
+    if (!shapePickerPopup) return;
+    const { fromId, fromPort, pos } = shapePickerPopup;
+    const defs = defaultsFor(type as PlaceableShapeType);
+    const newShapeId = newId();
+
+    const oppositePort = (p: ConnectionPort): ConnectionPort => {
+      if (p === "top") return "bottom";
+      if (p === "bottom") return "top";
+      if (p === "left") return "right";
+      return "left";
+    };
+
+    dispatch(
+      addShapeWithConnection({
+        shape: {
+          id: newShapeId,
+          type,
+          x: pos.x - defs.w / 2,
+          y: pos.y - defs.h / 2,
+          w: defs.w,
+          h: defs.h,
+          label: defs.label,
+          fill: defs.fill,
+          strokeColor: defs.strokeColor,
+        },
+        connection: {
+          id: newId(),
+          fromId,
+          toId: newShapeId,
+          fromPort,
+          toPort: oppositePort(fromPort),
+        },
+      }),
+    );
+    dispatch(selectShape(newShapeId));
+    setShapePickerPopup(null);
+    setConnectorDrag(null);
+  }, [dispatch, shapePickerPopup]);
 
   const handleConnectionClick = useCallback((connectionId: string) => {
     dispatch(selectConnection(connectionId));
@@ -809,6 +872,15 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           scale={viewport.scale}
           onCommit={commitLabel}
           onCancel={() => setEditingId(null)}
+        />
+      )}
+
+      {shapePickerPopup && (
+        <ShapePickerPopup
+          relX={shapePickerPopup.relX}
+          relY={shapePickerPopup.relY}
+          onSelect={handleShapePickerSelect}
+          onDismiss={dismissShapePicker}
         />
       )}
 
