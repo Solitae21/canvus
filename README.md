@@ -4,6 +4,8 @@ Canvus is a TypeScript npm workspace for a collaborative flowchart and canvas ap
 
 The current app focuses on a rich browser canvas experience: flowchart shapes, connectors, labels, image placement, selection, drag and resize controls, keyboard shortcuts, undo/redo, zoom, pan, and local canvas state persistence.
 
+> **Note:** The backend API is hosted on a free [Render](https://render.com) web service. Free-tier instances spin down after inactivity, so the **first request after a period of idle may take 30–60 seconds** to respond while the service cold-starts. Subsequent requests will be fast. Thank you for your patience.
+
 ## Tech Stack
 
 - **Workspace:** npm workspaces
