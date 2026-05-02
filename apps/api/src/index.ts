@@ -17,7 +17,7 @@ app.use(canvasesRouter);
 const server = http.createServer(app);
 attachSocketIO(server, ALLOWED_ORIGIN);
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`[api] listening on http://localhost:${PORT}`);
   console.log(`[api] ws endpoint  ws://localhost:${PORT}/ws?canvasId=…`);
 });
