@@ -14,19 +14,19 @@
   },
   "dependencies": {
     "@canvus/shared": "*",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "socket.io": "^4.8.3",
-    "ws": "^8.18.0"
-  },
-  "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20",
     "@types/ws": "^8.5.13",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.3",
+    "typescript": "^5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
     "cross-env": "^7.0.3",
-    "tsx": "^4.19.2",
-    "typescript": "^5"
+    "tsx": "^4.19.2"
   }
 }
