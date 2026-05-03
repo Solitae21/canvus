@@ -17,7 +17,7 @@ export const connectCanvasWs = (canvasId: string): CanvasWsClient => {
   const socket = io(base, {
     path: '/ws',
     query: { canvasId },
-    transports: ['websocket'],
+    transports: ['polling', 'websocket'],
   });
 
   const handlers = new Set<(e: WsEnvelope) => void>();
