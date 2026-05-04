@@ -81,6 +81,7 @@ Defined in `src/env.ts` and loaded from the `.env` file.
 |---|---|---|
 | `PORT` | `4000` | The port the HTTP + WebSocket server listens on |
 | `ALLOWED_ORIGIN` | `http://localhost:3000` | The frontend origin allowed by CORS. Requests from any other origin will be blocked. |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection URL for Socket.IO pub/sub, active room membership, and Redis integration tests. |
 
 ---
 
@@ -95,6 +96,23 @@ Run these from the workspace root (`canvus/`) unless noted.
 | `npm run start -w @canvus/api` | Run the compiled server (`node dist/index.js`) — for production |
 | `npm run typecheck -w @canvus/api` | Check types without emitting files |
 | `npm run lint -w @canvus/api` | Lint `src/` with ESLint |
+| `npm run test:redis -w @canvus/api` | Run Redis/Socket.IO integration tests |
+
+### Tests
+
+The API currently has one integration test suite:
+
+| Command | Test file | Covers |
+|---|---|---|
+| `npm run test:redis -w @canvus/api` | `apps/api/test/redis-pubsub.test.ts` | Redis-backed Socket.IO room membership caching, disconnect cleanup, multi-socket user membership, and cross-instance `canvas:replaced` pub/sub delivery. |
+
+This suite starts two API instances on ports `4001` and `4002`, connects Socket.IO clients to both, and inspects Redis directly with `ioredis`.
+
+Before running it:
+
+- Set `REDIS_URL` to a reachable Redis instance.
+- Make sure ports `4001` and `4002` are free.
+- On Windows PowerShell, run `npm.cmd run test:redis -w @canvus/api` if execution policy blocks `npm.ps1`.
 
 ---
 

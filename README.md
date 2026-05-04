@@ -134,6 +134,7 @@ Run workspace scripts from the repository root unless you are intentionally targ
 | `npm run build` | Build all workspaces that define a build script. |
 | `npm run lint` | Lint all workspaces that define a lint script. |
 | `npm run typecheck` | Typecheck all workspaces that define a typecheck script. |
+| `npm run test:redis -w @canvus/api` | Run the API Redis/Socket.IO integration tests. |
 
 Focused workspace examples:
 
@@ -141,7 +142,24 @@ Focused workspace examples:
 npm run lint -w @canvus/web
 npm run typecheck -w @canvus/api
 npm run typecheck -w @canvus/shared
+npm run test:redis -w @canvus/api
 ```
+
+## Tests
+
+Current test suites:
+
+| Command | Workspace | Covers |
+| --- | --- | --- |
+| `npm run test:redis -w @canvus/api` | `@canvus/api` | Redis-backed Socket.IO behavior: room membership caching, disconnect cleanup, multi-socket user membership, and cross-instance `canvas:replaced` pub/sub delivery. |
+
+The Redis test suite lives at `apps/api/test/redis-pubsub.test.ts`. It starts two API instances on ports `4001` and `4002`, connects Socket.IO clients to both instances, and inspects Redis directly with `ioredis`.
+
+Requirements for `test:redis`:
+
+- `REDIS_URL` must point at a reachable Redis instance.
+- Ports `4001` and `4002` must be available.
+- On Windows PowerShell, use `npm.cmd` if script execution policy blocks `npm.ps1`.
 
 ## Environment Variables
 
@@ -151,6 +169,7 @@ npm run typecheck -w @canvus/shared
 | --- | --- | --- |
 | `PORT` | `4000` | Port used by the Express and Socket.IO server. |
 | `ALLOWED_ORIGIN` | `http://localhost:3000` | CORS origin allowed by the API and Socket.IO server. |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection URL used by Socket.IO pub/sub and room membership tests. |
 
 ### Web
 
@@ -384,6 +403,7 @@ Useful checks for code changes:
 npm run lint
 npm run typecheck
 npm run build
+npm run test:redis -w @canvus/api
 ```
 
 For focused work, prefer the smallest relevant workspace check first:

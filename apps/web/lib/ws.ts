@@ -12,11 +12,25 @@ export type CanvasWsClient = {
   close: () => void;
 };
 
-export const connectCanvasWs = (canvasId: string): CanvasWsClient => {
+export type CanvasWsOptions = {
+  userId: string;
+  metadata?: Record<string, unknown>;
+};
+
+export const connectCanvasWs = (canvasId: string, options: CanvasWsOptions): CanvasWsClient => {
   const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+  const query: Record<string, string> = {
+    canvasId,
+    userId: options.userId,
+  };
+
+  if (options.metadata) {
+    query.metadata = JSON.stringify(options.metadata);
+  }
+
   const socket = io(base, {
     path: '/ws',
-    query: { canvasId },
+    query,
     transports: ['polling', 'websocket'],
   });
 
