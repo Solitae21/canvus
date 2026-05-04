@@ -15,7 +15,7 @@ app.use(healthRouter);
 app.use(canvasesRouter);
 
 const server = http.createServer(app);
-attachSocketIO(server, ALLOWED_ORIGIN);
+await attachSocketIO(server, ALLOWED_ORIGIN);
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[${NODE_ENV}] API listening on http://localhost:${PORT}`);
