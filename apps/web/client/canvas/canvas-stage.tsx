@@ -19,9 +19,14 @@ import {
   type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
 import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
+import { upsertCursor, pruneStale } from "@/redux/slice/presence/presence-slice";
+import type { CursorMovedPayload } from "@canvus/shared";
 
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
 import { useYjs } from "./use-yjs";
+import { useCanvasWs } from "./use-canvas-ws";
+import RemoteCursors from "./remote-cursors";
+import type { WsEnvelope } from "@/lib/ws";
 import {
   defaultsFor,
   isPlaceable,
@@ -60,6 +65,21 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     yjsShapes.observe(handler);
     return () => yjsShapes.unobserve(handler);
   }, [dispatch, yjsShapes]);
+
+  const cursorMessageHandler = useCallback((envelope: WsEnvelope) => {
+    if (envelope.type === "cursor:moved") {
+      const p = envelope.payload as CursorMovedPayload;
+      dispatch(upsertCursor({ userId: p.userId, x: p.x, y: p.y }));
+    }
+  }, [dispatch]);
+
+  const { send: wsSend, userId } = useCanvasWs("default", cursorMessageHandler);
+  const lastCursorBroadcastRef = useRef<number>(0);
+
+  useEffect(() => {
+    const id = setInterval(() => dispatch(pruneStale(3000)), 2000);
+    return () => clearInterval(id);
+  }, [dispatch]);
 
   useCanvasKeyboard(yjsShapes);
   const shapes = useAppSelector((s) => s.canvas.shapes);
@@ -743,11 +763,23 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   };
 
   const handleWrapperMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isMMBPanningRef.current) return;
-    const dx = e.clientX - mmbLastPosRef.current.x;
-    const dy = e.clientY - mmbLastPosRef.current.y;
-    mmbLastPosRef.current = { x: e.clientX, y: e.clientY };
-    dispatch(panViewport({ dx, dy }));
+    if (isMMBPanningRef.current) {
+      const dx = e.clientX - mmbLastPosRef.current.x;
+      const dy = e.clientY - mmbLastPosRef.current.y;
+      mmbLastPosRef.current = { x: e.clientX, y: e.clientY };
+      dispatch(panViewport({ dx, dy }));
+    }
+    const now = Date.now();
+    if (now - lastCursorBroadcastRef.current >= 33) {
+      lastCursorBroadcastRef.current = now;
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (rect) {
+        const vp = viewportRef.current;
+        const worldX = (e.clientX - rect.left - vp.x) / vp.scale;
+        const worldY = (e.clientY - rect.top - vp.y) / vp.scale;
+        wsSend({ type: "cursor:moved", payload: { userId, x: worldX, y: worldY } satisfies CursorMovedPayload, clientId: userId });
+      }
+    }
   };
 
   const stopMMBPan = () => {
@@ -1007,6 +1039,12 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           />
         );
       })()}
+
+      <RemoteCursors
+        viewportX={viewport.x}
+        viewportY={viewport.y}
+        viewportScale={viewport.scale}
+      />
     </div>
   );
 };

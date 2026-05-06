@@ -50,3 +50,9 @@ export interface CanvasSummary {
   name: string;
   updatedAt: string;
 }
+
+export interface CursorMovedPayload {
+  userId: string;
+  x: number;
+  y: number;
+}
