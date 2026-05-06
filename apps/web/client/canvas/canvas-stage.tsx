@@ -6,17 +6,12 @@ import type Konva from "konva";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
-  addShape,
-  updateShape,
-  batchUpdateShapes,
   selectShape,
   setTool,
   addConnection,
-  addShapeWithConnection,
   setPendingFromId,
   selectConnection,
   setMultiSelection,
-  deleteSelectedItems,
   updateConnection,
   setShapes,
   type Shape,
@@ -53,11 +48,11 @@ export interface CanvasStageProps {
 }
 
 const CanvasStage = ({ className }: CanvasStageProps) => {
-  useCanvasKeyboard();
-
   const dispatch = useAppDispatch();
 
-  const { shapes: yjsShapes } = useYjs("default");
+  const { doc, shapes: yjsShapes } = useYjs("default");
+  const yjsShapesRef = useRef(yjsShapes);
+  yjsShapesRef.current = yjsShapes;
   useEffect(() => {
     const handler = () => {
       dispatch(setShapes(Array.from(yjsShapes.values())));
@@ -65,6 +60,8 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     yjsShapes.observe(handler);
     return () => yjsShapes.unobserve(handler);
   }, [dispatch, yjsShapes]);
+
+  useCanvasKeyboard(yjsShapes);
   const shapes = useAppSelector((s) => s.canvas.shapes);
   const connections = useAppSelector((s) => s.canvas.connections);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
@@ -156,20 +153,19 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
         const { x, y, scale: vScale } = viewportRef.current;
         const cx = (stageSize.width / 2 - x) / vScale;
         const cy = (stageSize.height / 2 - y) / vScale;
-        dispatch(
-          addShape({
-            id: newId(),
-            type: "image",
-            x: cx - w / 2,
-            y: cy - h / 2,
-            w,
-            h,
-            label: "",
-            fill: "transparent",
-            strokeColor: "transparent",
-            src,
-          }),
-        );
+        const imageId = newId();
+        yjsShapesRef.current.set(imageId, {
+          id: imageId,
+          type: "image",
+          x: cx - w / 2,
+          y: cy - h / 2,
+          w,
+          h,
+          label: "",
+          fill: "transparent",
+          strokeColor: "transparent",
+          src,
+        });
         dispatch(setTool("select"));
       };
       el.src = src;
@@ -304,19 +300,18 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
 
   const placeShape = (type: PlaceableShapeType, x: number, y: number) => {
     const defs = defaultsFor(type);
-    dispatch(
-      addShape({
-        id: newId(),
-        type,
-        x: x - defs.w / 2,
-        y: y - defs.h / 2,
-        w: defs.w,
-        h: defs.h,
-        label: defs.label,
-        fill: defs.fill,
-        strokeColor: defs.strokeColor,
-      }),
-    );
+    const id = newId();
+    yjsShapes.set(id, {
+      id,
+      type,
+      x: x - defs.w / 2,
+      y: y - defs.h / 2,
+      w: defs.w,
+      h: defs.h,
+      label: defs.label,
+      fill: defs.fill,
+      strokeColor: defs.strokeColor,
+    });
     dispatch(setTool("select"));
   };
 
@@ -523,17 +518,25 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
           return next;
         });
         groupDragStartRef.current = null;
-        dispatch(batchUpdateShapes(updates));
+        const yjs = yjsShapesRef.current;
+        doc.transact(() => {
+          for (const { id, x, y } of updates) {
+            const existing = yjs.get(id) ?? shapesRef.current.find(s => s.id === id);
+            if (existing) yjs.set(id, { ...existing, x, y });
+          }
+        });
       } else {
         setDraggingPositions((prev) => {
           const next = new Map(prev);
           next.delete(shape.id);
           return next;
         });
-        dispatch(updateShape({ id: shape.id, x: node.x(), y: node.y() }));
+        const yjs = yjsShapesRef.current;
+        const existing = yjs.get(shape.id) ?? shapesRef.current.find(s => s.id === shape.id);
+        if (existing) yjs.set(shape.id, { ...existing, x: node.x(), y: node.y() });
       }
     },
-    [dispatch],
+    [dispatch, doc],
   );
 
   const handleStageDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -665,26 +668,24 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
       return "left";
     };
 
+    yjsShapesRef.current.set(newShapeId, {
+      id: newShapeId,
+      type,
+      x: pos.x - defs.w / 2,
+      y: pos.y - defs.h / 2,
+      w: defs.w,
+      h: defs.h,
+      label: defs.label,
+      fill: defs.fill,
+      strokeColor: defs.strokeColor,
+    });
     dispatch(
-      addShapeWithConnection({
-        shape: {
-          id: newShapeId,
-          type,
-          x: pos.x - defs.w / 2,
-          y: pos.y - defs.h / 2,
-          w: defs.w,
-          h: defs.h,
-          label: defs.label,
-          fill: defs.fill,
-          strokeColor: defs.strokeColor,
-        },
-        connection: {
-          id: newId(),
-          fromId,
-          toId: newShapeId,
-          fromPort,
-          toPort: oppositePort(fromPort),
-        },
+      addConnection({
+        id: newId(),
+        fromId,
+        toId: newShapeId,
+        fromPort,
+        toPort: oppositePort(fromPort),
       }),
     );
     dispatch(selectShape(newShapeId));
@@ -718,13 +719,15 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
       const newH = Math.max(20, node.scaleY() * shape.h);
       node.scaleX(1);
       node.scaleY(1);
-      dispatch(updateShape({ id: shapeId, x: node.x(), y: node.y(), w: newW, h: newH }));
+      const existing = yjsShapes.get(shapeId) ?? shape;
+      yjsShapes.set(shapeId, { ...existing, x: node.x(), y: node.y(), w: newW, h: newH });
     }
   };
 
   const commitLabel = (value: string) => {
     if (editingId) {
-      dispatch(updateShape({ id: editingId, label: value }));
+      const existing = yjsShapes.get(editingId) ?? shapeMap.get(editingId);
+      if (existing) yjsShapes.set(editingId, { ...existing, label: value });
       setEditingId(null);
     }
   };

@@ -216,6 +216,17 @@ const canvasSlice = createSlice({
     setShapes: (state, action: PayloadAction<Shape[]>) => {
       state.shapes = action.payload
     },
+    removeConnectionsForShapes: (state, action: PayloadAction<{ shapeIds: string[]; connectionIds?: string[] }>) => {
+      const shapeIdSet = new Set(action.payload.shapeIds)
+      const connIdSet = new Set(action.payload.connectionIds ?? [])
+      state.connections = state.connections.filter(
+        c => !connIdSet.has(c.id) && !shapeIdSet.has(c.fromId) && !shapeIdSet.has(c.toId),
+      )
+      state.selectedId = null
+      state.selectedConnectionId = null
+      state.selectedIds = []
+      state.selectedConnectionIds = []
+    },
   },
 })
 
@@ -239,5 +250,6 @@ export const {
   undo,
   redo,
   setShapes,
+  removeConnectionsForShapes,
 } = canvasSlice.actions
 export default canvasSlice.reducer

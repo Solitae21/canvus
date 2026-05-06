@@ -1,22 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type * as Y from "yjs";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
-  addShape,
-  deleteShape,
   selectShape,
   setPendingFromId,
   setTool,
-  updateShape,
-  batchUpdateShapes,
   undo,
   redo,
   deleteConnection,
-  deleteSelectedItems,
   setMultiSelection,
   copySelection,
-  pasteClipboard,
+  addConnection,
+  removeConnectionsForShapes,
+  type Shape,
   type ToolType,
 } from "@/redux/slice/canvas/canvas-slice";
 import { zoomIn, zoomOut, resetViewport } from "@/redux/slice/ui/ui-slice";
@@ -34,7 +32,7 @@ const TOOL_KEYS: Record<string, ToolType> = {
   s: "sticky",
 };
 
-export function useCanvasKeyboard() {
+export function useCanvasKeyboard(yjsShapes: Y.Map<Shape>) {
   const dispatch = useAppDispatch();
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
@@ -42,6 +40,7 @@ export function useCanvasKeyboard() {
   const selectedConnectionIds = useAppSelector((s) => s.canvas.selectedConnectionIds);
   const tool = useAppSelector((s) => s.canvas.tool);
   const shapes = useAppSelector((s) => s.canvas.shapes);
+  const clipboard = useAppSelector((s) => s.canvas.clipboard);
 
   // Stable refs so event handlers don't go stale
   const selectedIdRef = useRef(selectedId);
@@ -56,6 +55,10 @@ export function useCanvasKeyboard() {
   toolRef.current = tool;
   const shapesRef = useRef(shapes);
   shapesRef.current = shapes;
+  const clipboardRef = useRef(clipboard);
+  clipboardRef.current = clipboard;
+  const yjsShapesRef = useRef(yjsShapes);
+  yjsShapesRef.current = yjsShapes;
 
   // Space-to-pan state
   const spaceActiveRef = useRef(false);
@@ -97,7 +100,17 @@ export function useCanvasKeyboard() {
       }
       if (ctrl && e.key === "v") {
         e.preventDefault();
-        dispatch(pasteClipboard());
+        const cb = clipboardRef.current;
+        if (cb && cb.shapes.length > 0) {
+          const idMap = new Map<string, string>();
+          for (const s of cb.shapes) idMap.set(s.id, newId());
+          const newShapes = cb.shapes.map(s => ({ ...s, id: idMap.get(s.id)!, x: s.x + 20, y: s.y + 20 }));
+          const newConns = cb.connections.map(c => ({ ...c, id: newId(), fromId: idMap.get(c.fromId)!, toId: idMap.get(c.toId)! }));
+          const yjs = yjsShapesRef.current;
+          yjs.doc!.transact(() => { for (const s of newShapes) yjs.set(s.id, s); });
+          for (const c of newConns) dispatch(addConnection(c));
+          dispatch(setMultiSelection({ shapeIds: newShapes.map(s => s.id), connectionIds: newConns.map(c => c.id) }));
+        }
         return;
       }
 
@@ -109,7 +122,7 @@ export function useCanvasKeyboard() {
           const shape = shapesRef.current.find((s) => s.id === id);
           if (shape) {
             const newShape = { ...shape, id: newId(), x: shape.x + 20, y: shape.y + 20 };
-            dispatch(addShape(newShape));
+            yjsShapesRef.current.set(newShape.id, newShape);
           }
         }
         return;
@@ -138,12 +151,18 @@ export function useCanvasKeyboard() {
           selectedIdsRef.current.length > 0 || selectedConnectionIdsRef.current.length > 0;
         if (hasMulti) {
           e.preventDefault();
-          dispatch(deleteSelectedItems());
+          const shapeIds = selectedIdsRef.current;
+          const connectionIds = selectedConnectionIdsRef.current;
+          const yjs = yjsShapesRef.current;
+          yjs.doc!.transact(() => { for (const id of shapeIds) yjs.delete(id); });
+          dispatch(removeConnectionsForShapes({ shapeIds, connectionIds }));
           return;
         }
         if (selectedIdRef.current) {
           e.preventDefault();
-          dispatch(deleteShape(selectedIdRef.current));
+          const id = selectedIdRef.current;
+          yjsShapesRef.current.delete(id);
+          dispatch(removeConnectionsForShapes({ shapeIds: [id] }));
           return;
         }
         if (selectedConnectionIdRef.current) {
@@ -170,24 +189,25 @@ export function useCanvasKeyboard() {
           const step = e.shiftKey ? 8 : 1;
           const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
           const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
-          const updates = multiIds
-            .map((id) => {
-              const shape = shapesRef.current.find((s) => s.id === id);
-              return shape ? { id, x: shape.x + dx, y: shape.y + dy } : null;
-            })
-            .filter(Boolean) as Array<{ id: string; x: number; y: number }>;
-          if (updates.length > 0) dispatch(batchUpdateShapes(updates));
+          const yjs = yjsShapesRef.current;
+          yjs.doc!.transact(() => {
+            for (const id of multiIds) {
+              const shape = yjs.get(id) ?? shapesRef.current.find((s) => s.id === id);
+              if (shape) yjs.set(id, { ...shape, x: shape.x + dx, y: shape.y + dy });
+            }
+          });
           return;
         }
 
         if (singleId) {
           e.preventDefault();
           const step = e.shiftKey ? 8 : 1;
-          const shape = shapesRef.current.find((s) => s.id === singleId);
+          const yjs = yjsShapesRef.current;
+          const shape = yjs.get(singleId) ?? shapesRef.current.find((s) => s.id === singleId);
           if (shape) {
             const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
             const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
-            dispatch(updateShape({ id: shape.id, x: shape.x + dx, y: shape.y + dy }));
+            yjs.set(singleId, { ...shape, x: shape.x + dx, y: shape.y + dy });
           }
           return;
         }
