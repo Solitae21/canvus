@@ -213,6 +213,9 @@ const canvasSlice = createSlice({
       state.selectedIds = state.selectedIds.filter(id => state.shapes.some(s => s.id === id))
       state.selectedConnectionIds = state.selectedConnectionIds.filter(id => state.connections.some(c => c.id === id))
     },
+    setShapes: (state, action: PayloadAction<Shape[]>) => {
+      state.shapes = action.payload
+    },
   },
 })
 
@@ -235,5 +238,6 @@ export const {
   pasteClipboard,
   undo,
   redo,
+  setShapes,
 } = canvasSlice.actions
 export default canvasSlice.reducer

@@ -18,6 +18,7 @@ import {
   setMultiSelection,
   deleteSelectedItems,
   updateConnection,
+  setShapes,
   type Shape,
   type ShapeType,
   type ConnectionPort,
@@ -25,6 +26,7 @@ import {
 import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
 
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
+import { useYjs } from "./use-yjs";
 import {
   defaultsFor,
   isPlaceable,
@@ -54,6 +56,15 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   useCanvasKeyboard();
 
   const dispatch = useAppDispatch();
+
+  const { shapes: yjsShapes } = useYjs("default");
+  useEffect(() => {
+    const handler = () => {
+      dispatch(setShapes(Array.from(yjsShapes.values())));
+    };
+    yjsShapes.observe(handler);
+    return () => yjsShapes.unobserve(handler);
+  }, [dispatch, yjsShapes]);
   const shapes = useAppSelector((s) => s.canvas.shapes);
   const connections = useAppSelector((s) => s.canvas.connections);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
