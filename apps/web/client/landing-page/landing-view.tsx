@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createCanvas } from "@/lib/api";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CanvUs — Landing
@@ -485,8 +487,21 @@ const CanvasPreview = () => {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 export default function LandingPageView() {
+  const router = useRouter();
   const [activeFeature, setActiveFeature] = useState(0);
+  const [creating, setCreating] = useState(false);
   useReveal();
+
+  const handleCreate = async () => {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const canvas = await createCanvas("Untitled board");
+      router.push(`/canvas/${canvas.id}`);
+    } catch {
+      setCreating(false);
+    }
+  };
 
   /* keep a ticking value to subtly animate ambient elements */
   const [, setT] = useState(0);
@@ -661,8 +676,8 @@ export default function LandingPageView() {
           {/* CTAs */}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <span className="lp-link" style={{ padding: "6px 12px" }}>Sign in</span>
-            <button className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13 }}>
-              Open canvas
+            <button className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13 }} onClick={handleCreate} disabled={creating}>
+              {creating ? "Creating…" : "Open canvas"}
               <ArrowIcon />
             </button>
           </div>
@@ -758,8 +773,8 @@ export default function LandingPageView() {
             <div className="lp-fade-3" style={{
               display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 30,
             }}>
-              <button className="lp-btn-primary">
-                Start a free board
+              <button className="lp-btn-primary" onClick={handleCreate} disabled={creating}>
+                {creating ? "Creating…" : "Start a free board"}
                 <ArrowIcon />
               </button>
               <button className="lp-btn-ghost">
@@ -1178,8 +1193,8 @@ export default function LandingPageView() {
             your standup ends.
           </p>
           <div className="lp-reveal lp-d3" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="lp-btn-primary" style={{ fontSize: 15, padding: "14px 28px" }}>
-              Open the canvas
+            <button className="lp-btn-primary" style={{ fontSize: 15, padding: "14px 28px" }} onClick={handleCreate} disabled={creating}>
+              {creating ? "Creating…" : "Open the canvas"}
               <ArrowIcon />
             </button>
             <button className="lp-btn-ghost" style={{ fontSize: 14 }}>

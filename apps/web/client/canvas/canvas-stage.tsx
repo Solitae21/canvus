@@ -49,13 +49,14 @@ import CanvasShapeConnectors from "./canvas-shape-connectors";
 import ShapePickerPopup from "./shape-picker-popup";
 
 export interface CanvasStageProps {
+  canvasId: string;
   className?: string;
 }
 
-const CanvasStage = ({ className }: CanvasStageProps) => {
+const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const dispatch = useAppDispatch();
 
-  const { doc, shapes: yjsShapes } = useYjs("default");
+  const { doc, shapes: yjsShapes } = useYjs(canvasId);
   const yjsShapesRef = useRef(yjsShapes);
   yjsShapesRef.current = yjsShapes;
   useEffect(() => {
@@ -76,7 +77,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     }
   }, [dispatch]);
 
-  const { send: wsSend, userId, name, color } = useCanvasWs("default", cursorMessageHandler);
+  const { send: wsSend, userId, name, color } = useCanvasWs(canvasId, cursorMessageHandler);
   const lastCursorBroadcastRef = useRef<number>(0);
 
   useEffect(() => {
