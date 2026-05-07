@@ -55,4 +55,6 @@ export interface CursorMovedPayload {
   userId: string;
   x: number;
   y: number;
+  name: string;
+  color: string;
 }

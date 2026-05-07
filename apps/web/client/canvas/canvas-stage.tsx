@@ -69,11 +69,11 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
   const cursorMessageHandler = useCallback((envelope: WsEnvelope) => {
     if (envelope.type === "cursor:moved") {
       const p = envelope.payload as CursorMovedPayload;
-      dispatch(upsertCursor({ userId: p.userId, x: p.x, y: p.y }));
+      dispatch(upsertCursor({ userId: p.userId, x: p.x, y: p.y, name: p.name, color: p.color }));
     }
   }, [dispatch]);
 
-  const { send: wsSend, userId } = useCanvasWs("default", cursorMessageHandler);
+  const { send: wsSend, userId, name, color } = useCanvasWs("default", cursorMessageHandler);
   const lastCursorBroadcastRef = useRef<number>(0);
 
   useEffect(() => {
@@ -777,7 +777,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
         const vp = viewportRef.current;
         const worldX = (e.clientX - rect.left - vp.x) / vp.scale;
         const worldY = (e.clientY - rect.top - vp.y) / vp.scale;
-        wsSend({ type: "cursor:moved", payload: { userId, x: worldX, y: worldY } satisfies CursorMovedPayload, clientId: userId });
+        wsSend({ type: "cursor:moved", payload: { userId, x: worldX, y: worldY, name, color } satisfies CursorMovedPayload, clientId: userId });
       }
     }
   };
