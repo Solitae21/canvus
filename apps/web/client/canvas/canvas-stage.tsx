@@ -19,8 +19,8 @@ import {
   type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
 import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
-import { upsertCursor, pruneStale } from "@/redux/slice/presence/presence-slice";
-import type { CursorMovedPayload } from "@canvus/shared";
+import { upsertCursor, removeCursor, pruneStale } from "@/redux/slice/presence/presence-slice";
+import type { CursorMovedPayload, UserLeftPayload } from "@canvus/shared";
 
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
 import { useYjs } from "./use-yjs";
@@ -70,6 +70,9 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
     if (envelope.type === "cursor:moved") {
       const p = envelope.payload as CursorMovedPayload;
       dispatch(upsertCursor({ userId: p.userId, x: p.x, y: p.y, name: p.name, color: p.color }));
+    } else if (envelope.type === "user:left") {
+      const p = envelope.payload as UserLeftPayload;
+      dispatch(removeCursor(p.userId));
     }
   }, [dispatch]);
 

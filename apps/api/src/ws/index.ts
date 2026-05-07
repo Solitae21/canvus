@@ -45,7 +45,7 @@ const removeRoomMembership = async (
   canvasId: string,
   userId: string,
   socketId: string,
-): Promise<void> => {
+): Promise<boolean> => {
   const socketsKey = roomUserSocketsKey(canvasId, userId);
 
   await redis.srem(socketsKey, socketId);
@@ -54,7 +54,9 @@ const removeRoomMembership = async (
   if (socketCount === 0) {
     await redis.hdel(roomMembershipKey(canvasId), roomUserField(userId));
     await redis.del(socketsKey);
+    return true;
   }
+  return false;
 };
 
 export async function attachSocketIO(server: HttpServer, allowedOrigin: string): Promise<void> {
@@ -95,9 +97,15 @@ export async function attachSocketIO(server: HttpServer, allowedOrigin: string):
 
     socket.on('disconnect', () => {
       socket.leave(canvasId);
-      void removeRoomMembership(pubClient, canvasId, userId, socket.id).catch((error) => {
-        console.error('Failed to remove room membership', error);
-      });
+      void removeRoomMembership(pubClient, canvasId, userId, socket.id)
+        .then((userFullyLeft) => {
+          if (userFullyLeft) {
+            io.to(canvasId).emit('message', { type: 'user:left', payload: { userId } });
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to remove room membership', error);
+        });
     });
   });
 }

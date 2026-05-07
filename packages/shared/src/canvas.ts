@@ -58,3 +58,7 @@ export interface CursorMovedPayload {
   name: string;
   color: string;
 }
+
+export interface UserLeftPayload {
+  userId: string;
+}
