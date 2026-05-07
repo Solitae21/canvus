@@ -25,7 +25,7 @@ import type { CursorMovedPayload } from "@canvus/shared";
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
 import { useYjs } from "./use-yjs";
 import { useCanvasWs } from "./use-canvas-ws";
-import RemoteCursors from "./remote-cursors";
+import CursorLayer from "./cursor-layer";
 import type { WsEnvelope } from "@/lib/ws";
 import {
   defaultsFor,
@@ -990,6 +990,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
 
             <Transformer ref={transformerRef} onTransformEnd={handleTransformEnd} rotateEnabled={false} />
           </Layer>
+          <CursorLayer viewportScale={viewport.scale} />
         </Stage>
       )}
 
@@ -1040,11 +1041,7 @@ const CanvasStage = ({ className }: CanvasStageProps) => {
         );
       })()}
 
-      <RemoteCursors
-        viewportX={viewport.x}
-        viewportY={viewport.y}
-        viewportScale={viewport.scale}
-      />
+
     </div>
   );
 };
