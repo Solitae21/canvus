@@ -33,17 +33,11 @@ const STUB = 24; // minimum straight run before the first bend
 
 /**
  * Builds an array of [x, y, x, y, ...] waypoints for an orthogonal
- * (horizontal/vertical only) connector between two shapes.
- * Always picks the best port pair based on current relative positions —
- * stored ports are intentionally ignored so connectors re-route correctly
- * whenever shapes are moved.
+ * (horizontal/vertical only) connector between two shapes. Always picks the
+ * best port pair based on current relative positions, so connectors re-route
+ * correctly whenever shapes are moved.
  */
-export function buildOrthogonalPoints(
-  from: Shape,
-  to: Shape,
-  preferredFromPort?: ConnectionPort,
-  preferredToPort?: ConnectionPort,
-): number[] {
+export function buildOrthogonalPoints(from: Shape, to: Shape): number[] {
   const fromCx = from.x + from.w / 2;
   const fromCy = from.y + from.h / 2;
   const toCx   = to.x   + to.w   / 2;
@@ -62,8 +56,6 @@ export function buildOrthogonalPoints(
     fromPort = dy >= 0 ? "bottom" : "top";
     toPort   = dy >= 0 ? "top"    : "bottom";
   }
-  fromPort = preferredFromPort ?? fromPort;
-  toPort = preferredToPort ?? toPort;
 
   const fp = getPortPoint(from, fromPort);
   const tp = getPortPoint(to, toPort);
@@ -185,7 +177,7 @@ const CanvasConnection = ({
   const to   = shapeMap.get(connection.toId);
   if (!from || !to) return null;
 
-  const points = buildOrthogonalPoints(from, to, connection.fromPort, connection.toPort);
+  const points = buildOrthogonalPoints(from, to);
 
   const tipX = points[points.length - 2];
   const tipY = points[points.length - 1];

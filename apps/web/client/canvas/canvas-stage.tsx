@@ -118,7 +118,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const tipDragTargetIdRef = useRef<string | null>(null);
   tipDragTargetIdRef.current = tipDragTargetId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [pendingFromPort, setPendingFromPort] = useState<ConnectionPort | null>(null);
   const [connectorDrag, setConnectorDrag] = useState<{
     fromId: string;
     fromPort: ConnectionPort;
@@ -128,7 +127,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const [connectorDragTargetId, setConnectorDragTargetId] = useState<string | null>(null);
   const [shapePickerPopup, setShapePickerPopup] = useState<{
     fromId: string;
-    fromPort: ConnectionPort;
     pos: { x: number; y: number };
     relX: number;
     relY: number;
@@ -366,7 +364,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
           id: connId,
           fromId: pendingFromId,
           toId: shape.id,
-          ...(pendingFromPort ? { fromPort: pendingFromPort } : {}),
         };
         yjsConnectionsRef.current.set(connId, conn);
         dispatch(setPendingFromId(null));
@@ -597,11 +594,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
     );
   };
 
-  // Clear pendingFromPort whenever the Redux pending connection is cancelled
-  useEffect(() => {
-    if (pendingFromId === null) setPendingFromPort(null);
-  }, [pendingFromId]);
-
   const handleShapeMouseEnter = useCallback((shapeId: string) => {
     if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current);
     setHoveredId(shapeId);
@@ -611,9 +603,8 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
     hoverLeaveTimerRef.current = setTimeout(() => setHoveredId(null), 60);
   }, []);
 
-  const handlePortClick = useCallback((shapeId: string, port: ConnectionPort) => {
+  const handlePortClick = useCallback((shapeId: string, _port: ConnectionPort) => {
     dispatch(setPendingFromId(shapeId));
-    setPendingFromPort(port);
     dispatch(setTool("arrow"));
   }, [dispatch]);
 
@@ -625,17 +616,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         pos.y >= s.y && pos.y <= s.y + s.h,
     ) ?? null
   ), [shapes]);
-
-  const getNearestPort = (shape: Shape, pos: { x: number; y: number }): ConnectionPort => {
-    const distances: Array<{ port: ConnectionPort; distance: number }> = [
-      { port: "top", distance: Math.abs(pos.y - shape.y) },
-      { port: "right", distance: Math.abs(pos.x - (shape.x + shape.w)) },
-      { port: "bottom", distance: Math.abs(pos.y - (shape.y + shape.h)) },
-      { port: "left", distance: Math.abs(pos.x - shape.x) },
-    ];
-    distances.sort((a, b) => a.distance - b.distance);
-    return distances[0].port;
-  };
 
   const updateConnectorDrag = useCallback((
     fromId: string,
@@ -658,7 +638,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
   const handlePortDragEnd = useCallback((
     shapeId: string,
-    port: ConnectionPort,
+    _port: ConnectionPort,
     pos: { x: number; y: number },
   ) => {
     const target = getShapeAtPoint(pos, shapeId);
@@ -668,8 +648,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         id: connId,
         fromId: shapeId,
         toId: target.id,
-        fromPort: port,
-        toPort: getNearestPort(target, pos),
       };
       yjsConnectionsRef.current.set(connId, conn);
       setConnectorDrag(null);
@@ -679,7 +657,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
       const vp = viewportRef.current;
       const relX = pos.x * vp.scale + vp.x;
       const relY = pos.y * vp.scale + vp.y;
-      setShapePickerPopup({ fromId: shapeId, fromPort: port, pos, relX, relY });
+      setShapePickerPopup({ fromId: shapeId, pos, relX, relY });
       setConnectorDragTargetId(null);
       // Keep connectorDrag so the dashed arrow stays visible while popup is open
     }
@@ -692,16 +670,9 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
   const handleShapePickerSelect = useCallback((type: ShapeType) => {
     if (!shapePickerPopup) return;
-    const { fromId, fromPort, pos } = shapePickerPopup;
+    const { fromId, pos } = shapePickerPopup;
     const defs = defaultsFor(type as PlaceableShapeType);
     const newShapeId = newId();
-
-    const oppositePort = (p: ConnectionPort): ConnectionPort => {
-      if (p === "top") return "bottom";
-      if (p === "bottom") return "top";
-      if (p === "left") return "right";
-      return "left";
-    };
 
     const connId = newId();
     doc.transact(() => {
@@ -720,8 +691,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         id: connId,
         fromId,
         toId: newShapeId,
-        fromPort,
-        toPort: oppositePort(fromPort),
       });
     });
     dispatch(selectShape(newShapeId));
