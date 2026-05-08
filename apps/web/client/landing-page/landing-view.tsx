@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createCanvas } from "@/lib/api";
+import Link from "next/link";
+import { PALETTE } from "./palette";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CanvUs — Landing
@@ -10,28 +10,6 @@ import { createCanvas } from "@/lib/api";
    with lavender-blue glow accents. Plus Jakarta Sans for prose, JetBrains
    Mono for systemic labels. Glassmorphism, dot-grid, restrained motion.
    ──────────────────────────────────────────────────────────────────────── */
-
-const PALETTE = {
-  bg: "#0c1324",
-  bgDeep: "#070d1f",
-  surface: "#151b2d",
-  surfaceHi: "#191f31",
-  surfaceHigher: "#23293c",
-  borderSoft: "rgba(255,255,255,0.06)",
-  border: "rgba(255,255,255,0.10)",
-  borderStrong: "rgba(255,255,255,0.16)",
-  text: "#dce1fb",
-  textMuted: "#c2c6d8",
-  textDim: "#8c90a1",
-  textFaint: "#5a6079",
-  primary: "#b0c6ff",
-  primaryStrong: "#568dff",
-  primaryDeep: "#002d6f",
-  tertiary: "#bcc7de",
-  warm: "#ffb4ab",
-  amber: "#ffb454",
-  mint: "#7dd3a4",
-} as const;
 
 function useReveal() {
   useEffect(() => {
@@ -487,21 +465,8 @@ const CanvasPreview = () => {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 export default function LandingPageView() {
-  const router = useRouter();
   const [activeFeature, setActiveFeature] = useState(0);
-  const [creating, setCreating] = useState(false);
   useReveal();
-
-  const handleCreate = async () => {
-    if (creating) return;
-    setCreating(true);
-    try {
-      const canvas = await createCanvas("Untitled board");
-      router.push(`/canvas/${canvas.id}`);
-    } catch {
-      setCreating(false);
-    }
-  };
 
   /* keep a ticking value to subtly animate ambient elements */
   const [, setT] = useState(0);
@@ -675,11 +640,11 @@ export default function LandingPageView() {
 
           {/* CTAs */}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span className="lp-link" style={{ padding: "6px 12px" }}>Sign in</span>
-            <button className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13 }} onClick={handleCreate} disabled={creating}>
-              {creating ? "Creating…" : "Open canvas"}
+            <Link href="/sign-in" className="lp-link" style={{ padding: "6px 12px", textDecoration: "none" }}>Sign in</Link>
+            <Link href="/sign-up" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+              Open canvas
               <ArrowIcon />
-            </button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -773,10 +738,10 @@ export default function LandingPageView() {
             <div className="lp-fade-3" style={{
               display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 30,
             }}>
-              <button className="lp-btn-primary" onClick={handleCreate} disabled={creating}>
-                {creating ? "Creating…" : "Start a free board"}
+              <Link href="/sign-up" className="lp-btn-primary" style={{ textDecoration: "none" }}>
+                Start a free board
                 <ArrowIcon />
-              </button>
+              </Link>
               <button className="lp-btn-ghost">
                 <PlayIcon />
                 Watch 90-sec demo
@@ -1193,10 +1158,10 @@ export default function LandingPageView() {
             your standup ends.
           </p>
           <div className="lp-reveal lp-d3" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="lp-btn-primary" style={{ fontSize: 15, padding: "14px 28px" }} onClick={handleCreate} disabled={creating}>
-              {creating ? "Creating…" : "Open the canvas"}
+            <Link href="/sign-up" className="lp-btn-primary" style={{ fontSize: 15, padding: "14px 28px", textDecoration: "none" }}>
+              Open the canvas
               <ArrowIcon />
-            </button>
+            </Link>
             <button className="lp-btn-ghost" style={{ fontSize: 14 }}>
               Schedule a demo
             </button>

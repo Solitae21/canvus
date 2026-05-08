@@ -63,13 +63,14 @@ function Header() {
 
         {/* ── Center: navigation ── */}
         <nav className="hidden md:flex items-center gap-1">
-          <NavLink href="/canvas">Canvas</NavLink>
+          <NavLink href="/dashboard">Canvas</NavLink>
           <NavLink href="#">Community</NavLink>
         </nav>
 
         {/* ── Right: actions ── */}
         <div className="flex items-center gap-3">
-          <button
+          <Link
+            href="/sign-in"
             onMouseEnter={() => setHoveredBtn("login")}
             onMouseLeave={() => setHoveredBtn(null)}
             className="relative px-5 py-2 text-[13px] font-semibold tracking-wide
@@ -82,9 +83,9 @@ function Header() {
             {hoveredBtn === "login" && (
               <span className="absolute inset-0 rounded-full bg-primary/[0.04] animate-pulse pointer-events-none" />
             )}
-          </button>
+          </Link>
           <Link
-            href="/canvas"
+            href="/sign-up"
             onMouseEnter={() => setHoveredBtn("start")}
             onMouseLeave={() => setHoveredBtn(null)}
             className="relative px-5 py-2 text-[13px] font-semibold tracking-wide
