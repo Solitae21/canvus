@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type * as Y from "yjs";
+import type { Connection } from "@canvus/shared";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   selectShape,
@@ -9,11 +10,8 @@ import {
   setTool,
   undo,
   redo,
-  deleteConnection,
   setMultiSelection,
   copySelection,
-  addConnection,
-  removeConnectionsForShapes,
   type Shape,
   type ToolType,
 } from "@/redux/slice/canvas/canvas-slice";
@@ -32,7 +30,10 @@ const TOOL_KEYS: Record<string, ToolType> = {
   s: "sticky",
 };
 
-export function useCanvasKeyboard(yjsShapes: Y.Map<Shape>) {
+export function useCanvasKeyboard(
+  yjsShapes: Y.Map<Shape>,
+  yjsConnections: Y.Map<Connection>,
+) {
   const dispatch = useAppDispatch();
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
@@ -59,6 +60,8 @@ export function useCanvasKeyboard(yjsShapes: Y.Map<Shape>) {
   clipboardRef.current = clipboard;
   const yjsShapesRef = useRef(yjsShapes);
   yjsShapesRef.current = yjsShapes;
+  const yjsConnectionsRef = useRef(yjsConnections);
+  yjsConnectionsRef.current = yjsConnections;
 
   // Space-to-pan state
   const spaceActiveRef = useRef(false);
@@ -107,8 +110,11 @@ export function useCanvasKeyboard(yjsShapes: Y.Map<Shape>) {
           const newShapes = cb.shapes.map(s => ({ ...s, id: idMap.get(s.id)!, x: s.x + 20, y: s.y + 20 }));
           const newConns = cb.connections.map(c => ({ ...c, id: newId(), fromId: idMap.get(c.fromId)!, toId: idMap.get(c.toId)! }));
           const yjs = yjsShapesRef.current;
-          yjs.doc!.transact(() => { for (const s of newShapes) yjs.set(s.id, s); });
-          for (const c of newConns) dispatch(addConnection(c));
+          const yjsConns = yjsConnectionsRef.current;
+          yjs.doc!.transact(() => {
+            for (const s of newShapes) yjs.set(s.id, s);
+            for (const c of newConns) yjsConns.set(c.id, c);
+          });
           dispatch(setMultiSelection({ shapeIds: newShapes.map(s => s.id), connectionIds: newConns.map(c => c.id) }));
         }
         return;
@@ -153,21 +159,39 @@ export function useCanvasKeyboard(yjsShapes: Y.Map<Shape>) {
           e.preventDefault();
           const shapeIds = selectedIdsRef.current;
           const connectionIds = selectedConnectionIdsRef.current;
+          const shapeIdSet = new Set(shapeIds);
+          const connIdSet = new Set(connectionIds);
           const yjs = yjsShapesRef.current;
-          yjs.doc!.transact(() => { for (const id of shapeIds) yjs.delete(id); });
-          dispatch(removeConnectionsForShapes({ shapeIds, connectionIds }));
+          const yjsConns = yjsConnectionsRef.current;
+          yjs.doc!.transact(() => {
+            for (const id of shapeIds) yjs.delete(id);
+            for (const c of Array.from(yjsConns.values())) {
+              if (connIdSet.has(c.id) || shapeIdSet.has(c.fromId) || shapeIdSet.has(c.toId)) {
+                yjsConns.delete(c.id);
+              }
+            }
+          });
+          dispatch(setMultiSelection({ shapeIds: [], connectionIds: [] }));
           return;
         }
         if (selectedIdRef.current) {
           e.preventDefault();
           const id = selectedIdRef.current;
-          yjsShapesRef.current.delete(id);
-          dispatch(removeConnectionsForShapes({ shapeIds: [id] }));
+          const yjs = yjsShapesRef.current;
+          const yjsConns = yjsConnectionsRef.current;
+          yjs.doc!.transact(() => {
+            yjs.delete(id);
+            for (const c of Array.from(yjsConns.values())) {
+              if (c.fromId === id || c.toId === id) yjsConns.delete(c.id);
+            }
+          });
+          dispatch(selectShape(null));
           return;
         }
         if (selectedConnectionIdRef.current) {
           e.preventDefault();
-          dispatch(deleteConnection(selectedConnectionIdRef.current));
+          yjsConnectionsRef.current.delete(selectedConnectionIdRef.current);
+          dispatch(selectShape(null));
           return;
         }
       }

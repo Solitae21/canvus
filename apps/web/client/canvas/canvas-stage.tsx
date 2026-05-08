@@ -8,13 +8,13 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   selectShape,
   setTool,
-  addConnection,
   setPendingFromId,
   selectConnection,
   setMultiSelection,
-  updateConnection,
   setShapes,
+  setConnections,
   type Shape,
+  type Connection,
   type ShapeType,
   type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
@@ -23,7 +23,7 @@ import { upsertCursor, removeCursor, pruneStale } from "@/redux/slice/presence/p
 import type { CursorMovedPayload, UserLeftPayload } from "@canvus/shared";
 
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
-import { useYjs } from "./use-yjs";
+import { useYjsCanvas } from "./use-yjs";
 import { useCanvasWs } from "./use-canvas-ws";
 import CursorLayer from "./cursor-layer";
 import type { WsEnvelope } from "@/lib/ws";
@@ -56,16 +56,27 @@ export interface CanvasStageProps {
 const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const dispatch = useAppDispatch();
 
-  const { doc, shapes: yjsShapes } = useYjs(canvasId);
+  const { doc, shapes: yjsShapes, connections: yjsConnections } = useYjsCanvas();
   const yjsShapesRef = useRef(yjsShapes);
   yjsShapesRef.current = yjsShapes;
+  const yjsConnectionsRef = useRef(yjsConnections);
+  yjsConnectionsRef.current = yjsConnections;
   useEffect(() => {
+    dispatch(setShapes(Array.from(yjsShapes.values())));
     const handler = () => {
       dispatch(setShapes(Array.from(yjsShapes.values())));
     };
     yjsShapes.observe(handler);
     return () => yjsShapes.unobserve(handler);
   }, [dispatch, yjsShapes]);
+  useEffect(() => {
+    dispatch(setConnections(Array.from(yjsConnections.values())));
+    const handler = () => {
+      dispatch(setConnections(Array.from(yjsConnections.values())));
+    };
+    yjsConnections.observe(handler);
+    return () => yjsConnections.unobserve(handler);
+  }, [dispatch, yjsConnections]);
 
   const cursorMessageHandler = useCallback((envelope: WsEnvelope) => {
     if (envelope.type === "cursor:moved") {
@@ -85,7 +96,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
     return () => clearInterval(id);
   }, [dispatch]);
 
-  useCanvasKeyboard(yjsShapes);
+  useCanvasKeyboard(yjsShapes, yjsConnections);
   const shapes = useAppSelector((s) => s.canvas.shapes);
   const connections = useAppSelector((s) => s.canvas.connections);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
@@ -350,14 +361,14 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
       if (pendingFromId == null) {
         dispatch(setPendingFromId(shape.id));
       } else if (pendingFromId !== shape.id) {
-        dispatch(
-          addConnection({
-            id: newId(),
-            fromId: pendingFromId,
-            toId: shape.id,
-            ...(pendingFromPort ? { fromPort: pendingFromPort } : {}),
-          }),
-        );
+        const connId = newId();
+        const conn: Connection = {
+          id: connId,
+          fromId: pendingFromId,
+          toId: shape.id,
+          ...(pendingFromPort ? { fromPort: pendingFromPort } : {}),
+        };
+        yjsConnectionsRef.current.set(connId, conn);
         dispatch(setPendingFromId(null));
         dispatch(setTool("select"));
       }
@@ -652,15 +663,15 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   ) => {
     const target = getShapeAtPoint(pos, shapeId);
     if (target) {
-      dispatch(
-        addConnection({
-          id: newId(),
-          fromId: shapeId,
-          toId: target.id,
-          fromPort: port,
-          toPort: getNearestPort(target, pos),
-        }),
-      );
+      const connId = newId();
+      const conn: Connection = {
+        id: connId,
+        fromId: shapeId,
+        toId: target.id,
+        fromPort: port,
+        toPort: getNearestPort(target, pos),
+      };
+      yjsConnectionsRef.current.set(connId, conn);
       setConnectorDrag(null);
       setConnectorDragTargetId(null);
     } else {
@@ -692,30 +703,31 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
       return "left";
     };
 
-    yjsShapesRef.current.set(newShapeId, {
-      id: newShapeId,
-      type,
-      x: pos.x - defs.w / 2,
-      y: pos.y - defs.h / 2,
-      w: defs.w,
-      h: defs.h,
-      label: defs.label,
-      fill: defs.fill,
-      strokeColor: defs.strokeColor,
-    });
-    dispatch(
-      addConnection({
-        id: newId(),
+    const connId = newId();
+    doc.transact(() => {
+      yjsShapesRef.current.set(newShapeId, {
+        id: newShapeId,
+        type,
+        x: pos.x - defs.w / 2,
+        y: pos.y - defs.h / 2,
+        w: defs.w,
+        h: defs.h,
+        label: defs.label,
+        fill: defs.fill,
+        strokeColor: defs.strokeColor,
+      });
+      yjsConnectionsRef.current.set(connId, {
+        id: connId,
         fromId,
         toId: newShapeId,
         fromPort,
         toPort: oppositePort(fromPort),
-      }),
-    );
+      });
+    });
     dispatch(selectShape(newShapeId));
     setShapePickerPopup(null);
     setConnectorDrag(null);
-  }, [dispatch, shapePickerPopup]);
+  }, [dispatch, doc, shapePickerPopup]);
 
   const handleConnectionClick = useCallback((connectionId: string) => {
     dispatch(selectConnection(connectionId));
@@ -862,11 +874,13 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
                 }}
                 onTipDragEnd={() => {
                   if (tipDragTargetIdRef.current) {
-                    dispatch(updateConnection({
-                      id: c.id,
+                    const yjsConns = yjsConnectionsRef.current;
+                    const existing = yjsConns.get(c.id) ?? c;
+                    yjsConns.set(c.id, {
+                      ...existing,
                       toId: tipDragTargetIdRef.current,
                       toPort: undefined,
-                    }));
+                    });
                   }
                   setDraggingTip(null);
                   setTipDragTargetId(null);
@@ -1037,7 +1051,9 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
             offsetY={viewport.y}
             scale={viewport.scale}
             onCommit={(value) => {
-              dispatch(updateConnection({ id: editingConnectionId, label: value }));
+              const yjsConns = yjsConnectionsRef.current;
+              const existing = yjsConns.get(editingConnectionId) ?? conn;
+              yjsConns.set(editingConnectionId, { ...existing, label: value });
               setEditingConnectionId(null);
             }}
             onCancel={() => setEditingConnectionId(null)}

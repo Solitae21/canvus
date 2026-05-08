@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { Shape } from "@canvus/shared";
+import { createContext, createElement, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Connection, Shape } from "@canvus/shared";
 import { SocketIOProvider } from "y-socket.io";
 import * as Y from "yjs";
 
@@ -13,25 +13,29 @@ type UseYjsOptions = {
   autoConnect?: boolean;
 };
 
-type UseYjsResult = {
+type YjsCanvasValue = {
   doc: Y.Doc;
   provider: SocketIOProvider | null;
   shapes: Y.Map<Shape>;
+  connections: Y.Map<Connection>;
   status: YjsConnectionStatus;
   isConnected: boolean;
   isSynced: boolean;
 };
 
-export const useYjs = (
+const YjsCanvasContext = createContext<YjsCanvasValue | null>(null);
+
+const useYjsInternal = (
   canvasId: string,
   {
     roomName = `canvas:${canvasId}`,
     serverUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
     autoConnect = true,
   }: UseYjsOptions = {},
-): UseYjsResult => {
+): YjsCanvasValue => {
   const doc = useMemo(() => new Y.Doc({ guid: roomName }), [roomName]);
   const shapes = useMemo(() => doc.getMap<Shape>("shapes"), [doc]);
+  const connections = useMemo(() => doc.getMap<Connection>("connections"), [doc]);
   const [provider, setProvider] = useState<SocketIOProvider | null>(null);
   const [status, setStatus] = useState<YjsConnectionStatus>(
     autoConnect ? "connecting" : "disconnected",
@@ -81,8 +85,30 @@ export const useYjs = (
     doc,
     provider,
     shapes,
+    connections,
     status,
     isConnected: status === "connected",
     isSynced,
   };
+};
+
+export const YjsCanvasProvider = ({
+  canvasId,
+  children,
+  options,
+}: {
+  canvasId: string;
+  children: ReactNode;
+  options?: UseYjsOptions;
+}) => {
+  const value = useYjsInternal(canvasId, options);
+  return createElement(YjsCanvasContext.Provider, { value }, children);
+};
+
+export const useYjsCanvas = (): YjsCanvasValue => {
+  const ctx = useContext(YjsCanvasContext);
+  if (!ctx) {
+    throw new Error("useYjsCanvas must be used within a YjsCanvasProvider");
+  }
+  return ctx;
 };

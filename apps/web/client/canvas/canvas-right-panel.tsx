@@ -1,12 +1,8 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  deleteShape,
-  updateShape,
-  deleteConnection,
-  updateConnection,
-} from "@/redux/slice/canvas/canvas-slice";
+import { selectShape, selectConnection } from "@/redux/slice/canvas/canvas-slice";
+import { useYjsCanvas } from "./use-yjs";
 
 const DEFAULT_CONNECTION_COLOR = "#ffffff";
 
@@ -55,6 +51,7 @@ const ColorRow = ({
 
 const CanvasRightPanel = () => {
   const dispatch = useAppDispatch();
+  const { shapes: yjsShapes, connections: yjsConnections } = useYjsCanvas();
   const isOpen = useAppSelector((s) => s.ui.panels.right);
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
@@ -70,6 +67,10 @@ const CanvasRightPanel = () => {
   if (!isOpen || (!shape && !connection)) return null;
 
   if (connection) {
+    const updateConn = (patch: Partial<typeof connection>) => {
+      const existing = yjsConnections.get(connection.id) ?? connection;
+      yjsConnections.set(connection.id, { ...existing, ...patch });
+    };
     return (
       <div
         className="fixed right-4 top-20 w-72
@@ -90,15 +91,16 @@ const CanvasRightPanel = () => {
           <ColorRow
             label="Color"
             value={connection.color ?? DEFAULT_CONNECTION_COLOR}
-            onChange={(v) =>
-              dispatch(updateConnection({ id: connection.id, color: v }))
-            }
+            onChange={(v) => updateConn({ color: v })}
           />
         </div>
 
         <div className="px-4 pb-3 pt-2 border-t border-white/[0.06]">
           <button
-            onClick={() => dispatch(deleteConnection(connection.id))}
+            onClick={() => {
+              yjsConnections.delete(connection.id);
+              dispatch(selectConnection(null));
+            }}
             className="w-full text-xs text-red-400 hover:text-red-300
                        hover:bg-red-500/[0.08] rounded-lg py-2
                        transition-colors duration-150"
@@ -109,6 +111,11 @@ const CanvasRightPanel = () => {
       </div>
     );
   }
+
+  const updateShape = (patch: Partial<NonNullable<typeof shape>>) => {
+    const existing = yjsShapes.get(shape!.id) ?? shape!;
+    yjsShapes.set(shape!.id, { ...existing, ...patch });
+  };
 
   return (
     <div
@@ -130,20 +137,27 @@ const CanvasRightPanel = () => {
         <ColorRow
           label="Fill"
           value={shape!.fill}
-          onChange={(v) => dispatch(updateShape({ id: shape!.id, fill: v }))}
+          onChange={(v) => updateShape({ fill: v })}
         />
         <ColorRow
           label="Stroke"
           value={shape!.strokeColor}
-          onChange={(v) =>
-            dispatch(updateShape({ id: shape!.id, strokeColor: v }))
-          }
+          onChange={(v) => updateShape({ strokeColor: v })}
         />
       </div>
 
       <div className="px-4 pb-3 pt-2 border-t border-white/[0.06]">
         <button
-          onClick={() => dispatch(deleteShape(shape!.id))}
+          onClick={() => {
+            const id = shape!.id;
+            yjsShapes.doc!.transact(() => {
+              yjsShapes.delete(id);
+              for (const c of Array.from(yjsConnections.values())) {
+                if (c.fromId === id || c.toId === id) yjsConnections.delete(c.id);
+              }
+            });
+            dispatch(selectShape(null));
+          }}
           className="w-full text-xs text-red-400 hover:text-red-300
                      hover:bg-red-500/[0.08] rounded-lg py-2
                      transition-colors duration-150"
