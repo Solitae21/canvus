@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
 import type { Server as HttpServer } from 'node:http';
+import { YSocketIO } from 'y-socket.io/dist/server';
 import { REDIS_URL } from '../env.js';
 
 export let io: Server;
@@ -69,6 +70,9 @@ export async function attachSocketIO(server: HttpServer, allowedOrigin: string):
   const subClient = pubClient.duplicate();
 
   io.adapter(createAdapter(pubClient, subClient));
+
+  const ysocketio = new YSocketIO(io);
+  ysocketio.initialize();
 
   io.on('connection', async (socket) => {
     const canvasId = getQueryString(socket.handshake.query.canvasId);
