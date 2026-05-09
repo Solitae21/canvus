@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PALETTE } from "./palette";
+import { startGuestSession } from "@/lib/guest";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CanvUs — Landing
@@ -465,8 +467,14 @@ const CanvasPreview = () => {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 export default function LandingPageView() {
+  const router = useRouter();
   const [activeFeature, setActiveFeature] = useState(0);
   useReveal();
+
+  const handleGuestEntry = () => {
+    startGuestSession();
+    router.push("/dashboard");
+  };
 
   /* keep a ticking value to subtly animate ambient elements */
   const [, setT] = useState(0);
@@ -641,6 +649,20 @@ export default function LandingPageView() {
           {/* CTAs */}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <Link href="/sign-in" className="lp-link" style={{ padding: "6px 12px", textDecoration: "none" }}>Sign in</Link>
+            <button
+              type="button"
+              onClick={handleGuestEntry}
+              className="lp-link"
+              style={{
+                padding: "6px 12px",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                font: "inherit",
+              }}
+            >
+              Continue as guest
+            </button>
             <Link href="/sign-up" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
               Open canvas
               <ArrowIcon />
@@ -736,7 +758,7 @@ export default function LandingPageView() {
             </p>
 
             <div className="lp-fade-3" style={{
-              display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 30,
+              display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14,
             }}>
               <Link href="/sign-up" className="lp-btn-primary" style={{ textDecoration: "none" }}>
                 Start a free board
@@ -745,6 +767,26 @@ export default function LandingPageView() {
               <button className="lp-btn-ghost">
                 <PlayIcon />
                 Watch 90-sec demo
+              </button>
+            </div>
+
+            <div className="lp-fade-3" style={{ marginBottom: 30 }}>
+              <button
+                type="button"
+                onClick={handleGuestEntry}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  color: PALETTE.primary,
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  letterSpacing: "0.01em",
+                  font: "inherit",
+                }}
+              >
+                Continue as guest →
               </button>
             </div>
 

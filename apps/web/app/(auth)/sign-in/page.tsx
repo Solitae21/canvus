@@ -7,6 +7,7 @@ import { PALETTE } from "@/client/landing-page/palette";
 import { AuthCard } from "../auth-card";
 import { AuthField } from "../auth-field";
 import { AuthSubmit } from "../auth-submit";
+import { GuestDivider, GuestEntryButton } from "../guest-entry-link";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -95,6 +96,9 @@ export default function SignInPage() {
           Create one
         </Link>
       </p>
+
+      <GuestDivider />
+      <GuestEntryButton />
     </AuthCard>
   );
 }

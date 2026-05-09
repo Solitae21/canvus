@@ -7,6 +7,13 @@ import type { CanvasSummary } from "@canvus/shared";
 import { createCanvas, listCanvases, deleteCanvas } from "@/lib/api";
 import { AmbientBackground } from "@/client/landing-page/ambient-background";
 import { PALETTE } from "@/client/landing-page/palette";
+import { GuestBanner } from "@/client/guest/guest-banner";
+import {
+  addGuestCanvas,
+  getGuestCanvasIds,
+  isGuest,
+  removeGuestCanvas,
+} from "@/lib/guest";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,15 +24,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     listCanvases()
-      .then((cs) =>
+      .then((cs) => {
+        const scoped = isGuest()
+          ? cs.filter((c) => getGuestCanvasIds().includes(c.id))
+          : cs;
         setCanvases(
-          [...cs].sort(
+          [...scoped].sort(
             (a, b) =>
               new Date(b.updatedAt).getTime() -
               new Date(a.updatedAt).getTime(),
           ),
-        ),
-      )
+        );
+      })
       .catch((err: Error) =>
         setLoadError(err.message ?? "Failed to load canvases"),
       );
@@ -36,6 +46,7 @@ export default function DashboardPage() {
     setCreating(true);
     try {
       const canvas = await createCanvas("Untitled board");
+      if (isGuest()) addGuestCanvas(canvas.id);
       router.push(`/canvas/${canvas.id}`);
     } catch {
       setCreating(false);
@@ -47,6 +58,7 @@ export default function DashboardPage() {
     setBusyId(id);
     try {
       await deleteCanvas(id);
+      if (isGuest()) removeGuestCanvas(id);
       setCanvases((prev) => (prev ?? []).filter((c) => c.id !== id));
     } catch {
       // swallow — keep card visible
@@ -70,6 +82,8 @@ export default function DashboardPage() {
       }}
     >
       <AmbientBackground />
+
+      <GuestBanner />
 
       <DashboardHeader onCreate={handleCreate} creating={creating} />
 
