@@ -10,8 +10,12 @@ const json = async <T,>(res: Response): Promise<T> => {
   return (await res.json()) as T;
 };
 
-export const listCanvases = (): Promise<CanvasSummary[]> =>
-  fetch(`${BASE}/canvases`).then((r) => json<CanvasSummary[]>(r));
+export const listCanvases = (ids?: string[]): Promise<CanvasSummary[]> => {
+  const query = ids?.length
+    ? `?ids=${ids.map((id) => encodeURIComponent(id)).join(",")}`
+    : "";
+  return fetch(`${BASE}/canvases${query}`).then((r) => json<CanvasSummary[]>(r));
+};
 
 export const getCanvas = (id: string): Promise<Canvas> =>
   fetch(`${BASE}/canvases/${encodeURIComponent(id)}`).then((r) => json<Canvas>(r));

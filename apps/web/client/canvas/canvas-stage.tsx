@@ -18,7 +18,7 @@ import {
   type ShapeType,
   type ConnectionPort,
 } from "@/redux/slice/canvas/canvas-slice";
-import { setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
+import { addToast, setPanel, setViewport, panViewport } from "@/redux/slice/ui/ui-slice";
 import { upsertCursor, removeCursor, pruneStale } from "@/redux/slice/presence/presence-slice";
 import type { CursorMovedPayload, UserLeftPayload } from "@canvus/shared";
 
@@ -28,6 +28,7 @@ import { useCanvasWs } from "./use-canvas-ws";
 import { useCanvasExportContext } from "./canvas-export-context";
 import CursorLayer from "./cursor-layer";
 import type { WsEnvelope } from "@/lib/ws";
+import { clampCanvasLabel, isSafeImageDataUrl, isSafeImageFile } from "@/lib/canvas-security";
 import {
   defaultsFor,
   isPlaceable,
@@ -60,9 +61,12 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
   const { doc, shapes: yjsShapes, connections: yjsConnections } = useYjsCanvas();
   const yjsShapesRef = useRef(yjsShapes);
-  yjsShapesRef.current = yjsShapes;
   const yjsConnectionsRef = useRef(yjsConnections);
-  yjsConnectionsRef.current = yjsConnections;
+
+  useEffect(() => {
+    yjsShapesRef.current = yjsShapes;
+    yjsConnectionsRef.current = yjsConnections;
+  }, [yjsConnections, yjsShapes]);
   useEffect(() => {
     dispatch(setShapes(Array.from(yjsShapes.values())));
     const handler = () => {
@@ -118,7 +122,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   } | null>(null);
   const [tipDragTargetId, setTipDragTargetId] = useState<string | null>(null);
   const tipDragTargetIdRef = useRef<string | null>(null);
-  tipDragTargetIdRef.current = tipDragTargetId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [connectorDrag, setConnectorDrag] = useState<{
     fromId: string;
@@ -137,7 +140,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   // Rubber-band selection
   const [selectionRect, setSelectionRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const selectionRectRef = useRef(selectionRect);
-  selectionRectRef.current = selectionRect;
   const selectionStartRef = useRef<{ x: number; y: number } | null>(null);
   const didRubberBandRef = useRef(false);
 
@@ -150,18 +152,24 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const transformerRef = useRef<Konva.Transformer>(null);
   const prevScaleRef = useRef(viewport.scale);
   const viewportRef = useRef(viewport);
-  viewportRef.current = viewport;
   const hoverLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stable refs for selectors used in closures
   const selectedIdsRef = useRef(selectedIds);
-  selectedIdsRef.current = selectedIds;
   const shapesRef = useRef(shapes);
-  shapesRef.current = shapes;
 
   // Middle-mouse-button pan state
+  const [isMMBPanning, setIsMMBPanning] = useState(false);
   const isMMBPanningRef = useRef(false);
   const mmbLastPosRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    tipDragTargetIdRef.current = tipDragTargetId;
+    selectionRectRef.current = selectionRect;
+    viewportRef.current = viewport;
+    selectedIdsRef.current = selectedIds;
+    shapesRef.current = shapes;
+  }, [selectedIds, selectionRect, shapes, tipDragTargetId, viewport]);
 
   // Size the Stage to its container — works in fullscreen pages, sidebars, modals, etc.
   useEffect(() => {
@@ -176,9 +184,24 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   }, []);
 
   const handleImageFile = useCallback((file: File) => {
+    if (!isSafeImageFile(file)) {
+      dispatch(addToast({
+        message: "Use a PNG, JPEG, WebP, or GIF under 2.25 MB",
+        type: "error",
+      }));
+      dispatch(setTool("select"));
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const src = e.target?.result as string;
+      if (!isSafeImageDataUrl(src)) {
+        dispatch(addToast({ message: "Couldn't read that image safely", type: "error" }));
+        dispatch(setTool("select"));
+        return;
+      }
+
       const el = new window.Image();
       el.onload = () => {
         const maxW = 600;
@@ -203,7 +226,15 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         });
         dispatch(setTool("select"));
       };
+      el.onerror = () => {
+        dispatch(addToast({ message: "Couldn't load that image", type: "error" }));
+        dispatch(setTool("select"));
+      };
       el.src = src;
+    };
+    reader.onerror = () => {
+      dispatch(addToast({ message: "Couldn't read that image", type: "error" }));
+      dispatch(setTool("select"));
     };
     reader.readAsDataURL(file);
   }, [dispatch, stageSize]);
@@ -570,7 +601,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         if (existing) yjs.set(shape.id, { ...existing, x: node.x(), y: node.y() });
       }
     },
-    [dispatch, doc],
+    [doc],
   );
 
   const handleStageDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -606,6 +637,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   }, []);
 
   const handlePortClick = useCallback((shapeId: string, _port: ConnectionPort) => {
+    void _port;
     dispatch(setPendingFromId(shapeId));
     dispatch(setTool("arrow"));
   }, [dispatch]);
@@ -643,6 +675,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
     _port: ConnectionPort,
     pos: { x: number; y: number },
   ) => {
+    void _port;
     const target = getShapeAtPoint(pos, shapeId);
     if (target) {
       const connId = newId();
@@ -663,7 +696,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
       setConnectorDragTargetId(null);
       // Keep connectorDrag so the dashed arrow stays visible while popup is open
     }
-  }, [dispatch, getShapeAtPoint]);
+  }, [getShapeAtPoint]);
 
   const dismissShapePicker = useCallback(() => {
     setShapePickerPopup(null);
@@ -708,7 +741,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const handleConnectionDoubleClick = useCallback((connectionId: string) => {
     dispatch(selectConnection(connectionId));
     setEditingConnectionId(connectionId);
-  }, [dispatch]);
+  }, [dispatch, setEditingConnectionId]);
 
   const handleTransformEnd = () => {
     const tr = transformerRef.current;
@@ -734,7 +767,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const commitLabel = (value: string) => {
     if (editingId) {
       const existing = yjsShapes.get(editingId) ?? shapeMap.get(editingId);
-      if (existing) yjsShapes.set(editingId, { ...existing, label: value });
+      if (existing) yjsShapes.set(editingId, { ...existing, label: clampCanvasLabel(value) });
       setEditingId(null);
     }
   };
@@ -745,6 +778,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
     if (e.button === 1) {
       e.preventDefault();
       isMMBPanningRef.current = true;
+      setIsMMBPanning(true);
       mmbLastPosRef.current = { x: e.clientX, y: e.clientY };
     }
   };
@@ -771,6 +805,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
   const stopMMBPan = () => {
     isMMBPanningRef.current = false;
+    setIsMMBPanning(false);
   };
 
   // Suppress Konva's default context menu so right-click doesn't break things
@@ -785,7 +820,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
           "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
         backgroundSize: `${GRID_SIZE * viewport.scale}px ${GRID_SIZE * viewport.scale}px`,
         backgroundPosition: `${viewport.x + GRID_OFFSET * viewport.scale}px ${viewport.y + GRID_OFFSET * viewport.scale}px`,
-        cursor: tool === "hand" ? "grab" : isMMBPanningRef.current ? "grabbing" : (selectionRect ? "crosshair" : "default"),
+        cursor: tool === "hand" ? "grab" : isMMBPanning ? "grabbing" : (selectionRect ? "crosshair" : "default"),
       }}
       onMouseDown={handleWrapperMouseDown}
       onMouseMove={handleWrapperMouseMove}
@@ -1023,9 +1058,9 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
             offsetY={viewport.y}
             scale={viewport.scale}
             onCommit={(value) => {
-              const yjsConns = yjsConnectionsRef.current;
+              const yjsConns = yjsConnections;
               const existing = yjsConns.get(editingConnectionId) ?? conn;
-              yjsConns.set(editingConnectionId, { ...existing, label: value });
+              yjsConns.set(editingConnectionId, { ...existing, label: clampCanvasLabel(value) });
               setEditingConnectionId(null);
             }}
             onCancel={() => setEditingConnectionId(null)}

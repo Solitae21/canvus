@@ -45,23 +45,36 @@ export function useCanvasKeyboard(
 
   // Stable refs so event handlers don't go stale
   const selectedIdRef = useRef(selectedId);
-  selectedIdRef.current = selectedId;
   const selectedConnectionIdRef = useRef(selectedConnectionId);
-  selectedConnectionIdRef.current = selectedConnectionId;
   const selectedIdsRef = useRef(selectedIds);
-  selectedIdsRef.current = selectedIds;
   const selectedConnectionIdsRef = useRef(selectedConnectionIds);
-  selectedConnectionIdsRef.current = selectedConnectionIds;
   const toolRef = useRef(tool);
-  toolRef.current = tool;
   const shapesRef = useRef(shapes);
-  shapesRef.current = shapes;
   const clipboardRef = useRef(clipboard);
-  clipboardRef.current = clipboard;
   const yjsShapesRef = useRef(yjsShapes);
-  yjsShapesRef.current = yjsShapes;
   const yjsConnectionsRef = useRef(yjsConnections);
-  yjsConnectionsRef.current = yjsConnections;
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+    selectedConnectionIdRef.current = selectedConnectionId;
+    selectedIdsRef.current = selectedIds;
+    selectedConnectionIdsRef.current = selectedConnectionIds;
+    toolRef.current = tool;
+    shapesRef.current = shapes;
+    clipboardRef.current = clipboard;
+    yjsShapesRef.current = yjsShapes;
+    yjsConnectionsRef.current = yjsConnections;
+  }, [
+    clipboard,
+    selectedConnectionId,
+    selectedConnectionIds,
+    selectedId,
+    selectedIds,
+    shapes,
+    tool,
+    yjsConnections,
+    yjsShapes,
+  ]);
 
   // Space-to-pan state
   const spaceActiveRef = useRef(false);

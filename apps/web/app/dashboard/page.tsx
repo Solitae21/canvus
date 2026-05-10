@@ -11,7 +11,6 @@ import { GuestBanner } from "@/client/guest/guest-banner";
 import {
   addGuestCanvas,
   getGuestCanvasIds,
-  isGuest,
   removeGuestCanvas,
 } from "@/lib/guest";
 
@@ -23,13 +22,10 @@ export default function DashboardPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
-    listCanvases()
+    listCanvases(getGuestCanvasIds())
       .then((cs) => {
-        const scoped = isGuest()
-          ? cs.filter((c) => getGuestCanvasIds().includes(c.id))
-          : cs;
         setCanvases(
-          [...scoped].sort(
+          [...cs].sort(
             (a, b) =>
               new Date(b.updatedAt).getTime() -
               new Date(a.updatedAt).getTime(),
@@ -46,7 +42,7 @@ export default function DashboardPage() {
     setCreating(true);
     try {
       const canvas = await createCanvas("Untitled board");
-      if (isGuest()) addGuestCanvas(canvas.id);
+      addGuestCanvas(canvas.id);
       router.push(`/canvas/${canvas.id}`);
     } catch {
       setCreating(false);
@@ -58,7 +54,7 @@ export default function DashboardPage() {
     setBusyId(id);
     try {
       await deleteCanvas(id);
-      if (isGuest()) removeGuestCanvas(id);
+      removeGuestCanvas(id);
       setCanvases((prev) => (prev ?? []).filter((c) => c.id !== id));
     } catch {
       // swallow — keep card visible

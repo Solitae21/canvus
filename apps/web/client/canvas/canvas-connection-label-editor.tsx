@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { Connection } from "@/redux/slice/canvas/canvas-slice";
+import { MAX_CANVAS_LABEL_LENGTH } from "@/lib/canvas-security";
 
 export interface CanvasConnectionLabelEditorProps {
   connection: Connection;
@@ -43,6 +44,7 @@ const CanvasConnectionLabelEditor = ({
     <input
       ref={inputRef}
       defaultValue={connection.label ?? ""}
+      maxLength={MAX_CANVAS_LABEL_LENGTH}
       onBlur={(e) => onCommit(e.currentTarget.value)}
       onKeyDown={(e) => {
         if (e.key === "Enter") {

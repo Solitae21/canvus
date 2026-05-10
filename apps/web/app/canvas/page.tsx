@@ -3,13 +3,17 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createCanvas } from "@/lib/api";
+import { addGuestCanvas } from "@/lib/guest";
 
 export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
     createCanvas("Untitled board")
-      .then((canvas) => router.replace(`/canvas/${canvas.id}`))
+      .then((canvas) => {
+        addGuestCanvas(canvas.id);
+        router.replace(`/canvas/${canvas.id}`);
+      })
       .catch(() => router.replace("/"));
   }, [router]);
 

@@ -13,8 +13,10 @@ const summary = (c: Canvas): CanvasSummary => ({
   updatedAt: c.updatedAt,
 });
 
-export const list = (): CanvasSummary[] =>
-  Array.from(canvases.values()).map(summary);
+export const list = (ids?: string[]): CanvasSummary[] => {
+  const source = ids ? ids.map((id) => canvases.get(id)).filter((c): c is Canvas => Boolean(c)) : Array.from(canvases.values());
+  return source.map(summary);
+};
 
 export const get = (id: string): Canvas | undefined => canvases.get(id);
 

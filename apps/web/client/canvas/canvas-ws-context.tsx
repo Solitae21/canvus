@@ -36,7 +36,10 @@ export const CanvasWsProvider = ({
   const subscribersRef = useRef<Set<Subscriber>>(new Set());
 
   useEffect(() => {
-    const client = connectCanvasWs(canvasId, { userId: identity.userId });
+    const client = connectCanvasWs(canvasId, {
+      userId: identity.userId,
+      metadata: { name: identity.name, color: identity.color },
+    });
     wsRef.current = client;
     const unsub = client.onMessage((envelope) => {
       if (envelope.clientId === identity.userId) return;
@@ -47,7 +50,7 @@ export const CanvasWsProvider = ({
       client.close();
       wsRef.current = null;
     };
-  }, [canvasId, identity.userId]);
+  }, [canvasId, identity.color, identity.name, identity.userId]);
 
   const send = useCallback((envelope: WsEnvelope) => {
     wsRef.current?.send(envelope);

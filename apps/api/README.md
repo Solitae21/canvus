@@ -79,8 +79,10 @@ Defined in `src/env.ts` and loaded from the `.env` file.
 
 | Variable | Default | Description |
 |---|---|---|
+| `HOST` | `127.0.0.1` | The interface the HTTP + WebSocket server binds to. Use `0.0.0.0` only when you intentionally want LAN/container exposure. |
 | `PORT` | `4000` | The port the HTTP + WebSocket server listens on |
-| `ALLOWED_ORIGIN` | `http://localhost:3000` | The frontend origin allowed by CORS. Requests from any other origin will be blocked. |
+| `ALLOWED_ORIGIN` | `http://localhost:3000` | Comma-separated frontend origins allowed by CORS and WebSocket origin checks. Requests from other browser origins are blocked. |
+| `ALLOW_GLOBAL_CANVAS_LIST` | `false` | When `true`, `GET /canvases` without an `ids` query returns every canvas. Keep this disabled unless you add real auth. |
 | `REDIS_URL` | `redis://localhost:6379` | Redis connection URL for Socket.IO pub/sub, active room membership, and Redis integration tests. |
 
 ---
@@ -123,7 +125,7 @@ Before running it:
 | Method | Path | Description | Success Status |
 |---|---|---|---|
 | GET | `/health` | Liveness check | 200 |
-| GET | `/canvases` | List all canvases (summaries) | 200 |
+| GET | `/canvases?ids=<id,id>` | List requested canvas summaries | 200 |
 | POST | `/canvases` | Create a new canvas | 201 |
 | GET | `/canvases/:id` | Get one canvas (full data) | 200 |
 | PUT | `/canvases/:id` | Replace canvas shapes & connections | 200 |
@@ -144,7 +146,9 @@ Lets you quickly check that the server is running.
 
 ### GET /canvases
 
-Returns a summary list of all canvases. Does **not** include shapes or connections — just the metadata.
+Returns summary metadata for requested canvas IDs. Does **not** include shapes or connections.
+
+By default, calling `/canvases` without `ids` returns an empty list to avoid exposing every in-memory canvas ID. Set `ALLOW_GLOBAL_CANVAS_LIST=true` only for trusted development or after adding real authentication.
 
 **Response (200):**
 ```json
@@ -250,10 +254,10 @@ The API uses [Socket.IO](https://socket.io) for real-time collaboration. Multipl
 ### Connecting
 
 ```
-ws://localhost:4000/ws?canvasId=<canvasId>
+ws://localhost:4000/ws?canvasId=<canvasId>&userId=<userId>
 ```
 
-The `canvasId` query parameter is **required**. Without it, the server will immediately disconnect the client.
+The `canvasId` and `userId` query parameters are **required** and must be short URL-safe identifiers. Without them, the server will immediately disconnect the client.
 
 On connect, the client is placed into a Socket.IO "room" named after the canvas ID. This ensures messages are only sent to clients viewing the same canvas.
 
@@ -261,8 +265,8 @@ On connect, the client is placed into a Socket.IO "room" named after the canvas 
 
 | Event | Direction | Description |
 |---|---|---|
-| `message` | Client → Server | Any message the client wants to relay to other clients |
-| `message` | Server → Client | Relayed messages from other clients, or server broadcasts |
+| `message` | Client → Server | Sanitized `cursor:moved` messages only |
+| `message` | Server → Client | Sanitized cursor messages, user-left notices, or server broadcasts |
 
 ### Message Envelope Format
 
@@ -322,7 +326,7 @@ export function broadcastToCanvas(canvasId: string, envelope: unknown): void {
 
 ```typescript
 // Return a summary list of all canvases (no shapes/connections)
-list(): CanvasSummary[]
+list(ids?: string[]): CanvasSummary[]
 
 // Return one full canvas by ID, or undefined if it doesn't exist
 get(id: string): Canvas | undefined
@@ -464,6 +468,6 @@ curl -X POST http://localhost:4000/canvases/<existing-id>/duplicate \
 |---|---|---|
 | All canvas data disappears on server restart | Data is stored in memory, not a database | Expected behavior — add a database if persistence is needed |
 | Frontend gets CORS errors | `ALLOWED_ORIGIN` in `.env` doesn't match the frontend URL | Set `ALLOWED_ORIGIN=http://localhost:3000` (or wherever the frontend runs) |
-| WebSocket client disconnects immediately | `canvasId` query param is missing from the connection URL | Always connect with `?canvasId=<id>` |
+| WebSocket client disconnects immediately | `canvasId` or `userId` query param is missing or invalid | Always connect with `?canvasId=<id>&userId=<id>` |
 | `PUT /canvases/:id` returns 400 | `shapes` or `connections` is missing or not an array in the body | Always send both fields, even if they're empty arrays `[]` |
 | TypeScript errors after changing a shared type | `@canvus/shared` types changed but API wasn't updated | Update `packages/shared` first, then fix the API to match |

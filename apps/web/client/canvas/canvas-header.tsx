@@ -42,7 +42,6 @@ import {
 import { undo, redo } from "@/redux/slice/canvas/canvas-slice";
 import {
   getGuestIdentity,
-  isGuest,
   addGuestCanvas,
   removeGuestCanvas,
   type GuestIdentity,
@@ -371,7 +370,7 @@ const HeaderMenu = ({
         shapes: getShapesArr(),
         connections: getConnsArr(),
       });
-      if (isGuest()) addGuestCanvas(created.id);
+      addGuestCanvas(created.id);
       router.push(`/canvas/${created.id}`);
     } catch {
       dispatch(addToast({ message: "Couldn't duplicate canvas", type: "error" }));
@@ -391,7 +390,7 @@ const HeaderMenu = ({
     }
     try {
       await deleteCanvas(canvasId);
-      if (isGuest()) removeGuestCanvas(canvasId);
+      removeGuestCanvas(canvasId);
       router.push("/dashboard");
     } catch {
       dispatch(addToast({ message: "Couldn't delete canvas", type: "error" }));
@@ -591,6 +590,10 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     const id = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(id);
   }, []);
+
+  useEffect(() => {
+    addGuestCanvas(canvasId);
+  }, [canvasId]);
 
   // Fetch canvas name on mount
   useEffect(() => {

@@ -955,12 +955,17 @@ export default function LandingPageView() {
           gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
           gap: 14,
         }}>
-          {features.map((f, i) => (
+          {features.map((f, i) => {
+            const isActive = activeFeature === i;
+            return (
             <div
               key={i}
               className={`lp-card lp-reveal-scale lp-d${(i % 3) + 1}`}
               onMouseEnter={() => setActiveFeature(i)}
-              style={{ padding: 26 }}
+              style={{
+                padding: 26,
+                borderColor: isActive ? `${f.color}70` : undefined,
+              }}
             >
               <div style={{
                 width: 42, height: 42, borderRadius: 11,
@@ -997,7 +1002,8 @@ export default function LandingPageView() {
                 {f.desc}
               </p>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

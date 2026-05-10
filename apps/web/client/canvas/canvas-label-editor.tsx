@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { Shape } from "@/redux/slice/canvas/canvas-slice";
+import { MAX_CANVAS_LABEL_LENGTH } from "@/lib/canvas-security";
 
 export interface CanvasLabelEditorProps {
   shape: Shape;
@@ -44,6 +45,7 @@ const CanvasLabelEditor = ({
       <textarea
         ref={textareaRef}
         defaultValue={shape.label}
+        maxLength={MAX_CANVAS_LABEL_LENGTH}
         onBlur={(e) => onCommit(e.currentTarget.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
@@ -66,6 +68,7 @@ const CanvasLabelEditor = ({
     <input
       ref={inputRef}
       defaultValue={shape.label}
+      maxLength={MAX_CANVAS_LABEL_LENGTH}
       onBlur={(e) => onCommit(e.currentTarget.value)}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
