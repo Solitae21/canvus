@@ -49,6 +49,9 @@ export interface UIState {
   // ── Toasts ──
   toasts: ToastMessage[]
 
+  // ── Canvas display name (transient, mirrors server state) ──
+  canvasName: string | null
+
   // ── Misc ──
   isFullscreen: boolean
   gridVisible: boolean
@@ -88,6 +91,8 @@ const initialState: UIState = {
   },
 
   toasts: [],
+
+  canvasName: null,
 
   isFullscreen: false,
   gridVisible: true,
@@ -251,6 +256,12 @@ const uiSlice = createSlice({
       state.toasts = []
     },
 
+    // ── Canvas name ─────────────────────────────────────────────────────────
+
+    setCanvasName: (state, action: PayloadAction<string | null>) => {
+      state.canvasName = action.payload
+    },
+
     // ── Grid & canvas settings ───────────────────────────────────────────────
 
     toggleGrid: (state) => {
@@ -313,6 +324,8 @@ export const {
   addToast,
   removeToast,
   clearAllToasts,
+  // canvas name
+  setCanvasName,
   // grid
   toggleGrid,
   toggleSnapToGrid,
@@ -342,6 +355,7 @@ export const selectViewport        = (state: RootState) => state.ui.viewport
 export const selectZoom            = (state: RootState) => state.ui.viewport.scale
 export const selectShareModal      = (state: RootState) => state.ui.shareModal
 export const selectToasts          = (state: RootState) => state.ui.toasts
+export const selectCanvasName      = (state: RootState) => state.ui.canvasName
 export const selectGridVisible     = (state: RootState) => state.ui.gridVisible
 export const selectSnapToGrid      = (state: RootState) => state.ui.snapToGrid
 export const selectGridSize        = (state: RootState) => state.ui.gridSize

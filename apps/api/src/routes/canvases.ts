@@ -43,6 +43,26 @@ canvasesRouter.put('/canvases/:id', (req, res) => {
   res.json(updated);
 });
 
+canvasesRouter.patch('/canvases/:id', (req, res) => {
+  const body = req.body ?? {};
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!name) {
+    res.status(400).json({ error: 'invalid_body', detail: 'name must be a non-empty string' });
+    return;
+  }
+  const updated = store.rename(req.params.id, name);
+  if (!updated) {
+    res.status(404).json({ error: 'not_found' });
+    return;
+  }
+  broadcastToCanvas(req.params.id, {
+    type: 'canvas:renamed',
+    payload: { id: updated.id, name: updated.name, updatedAt: updated.updatedAt },
+    clientId: 'server',
+  });
+  res.json(updated);
+});
+
 canvasesRouter.delete('/canvases/:id', (req, res) => {
   const ok = store.remove(req.params.id);
   if (!ok) {

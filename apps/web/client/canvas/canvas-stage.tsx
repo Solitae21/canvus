@@ -25,6 +25,7 @@ import type { CursorMovedPayload, UserLeftPayload } from "@canvus/shared";
 import { useCanvasKeyboard } from "./use-canvas-keyboard";
 import { useYjsCanvas } from "./use-yjs";
 import { useCanvasWs } from "./use-canvas-ws";
+import { useCanvasExportContext } from "./canvas-export-context";
 import CursorLayer from "./cursor-layer";
 import type { WsEnvelope } from "@/lib/ws";
 import {
@@ -55,6 +56,7 @@ export interface CanvasStageProps {
 
 const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const dispatch = useAppDispatch();
+  const { stageRef } = useCanvasExportContext();
 
   const { doc, shapes: yjsShapes, connections: yjsConnections } = useYjsCanvas();
   const yjsShapesRef = useRef(yjsShapes);
@@ -808,6 +810,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
       {stageSize.width > 0 && stageSize.height > 0 && (
         <Stage
+          ref={stageRef}
           width={stageSize.width}
           height={stageSize.height}
           x={viewport.x}

@@ -33,6 +33,13 @@ export const saveCanvas = (
     body: JSON.stringify(doc),
   }).then((r) => json<Canvas>(r));
 
+export const renameCanvas = (id: string, name: string): Promise<Canvas> =>
+  fetch(`${BASE}/canvases/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name }),
+  }).then((r) => json<Canvas>(r));
+
 export const deleteCanvas = async (id: string): Promise<void> => {
   const res = await fetch(`${BASE}/canvases/${encodeURIComponent(id)}`, { method: "DELETE" });
   if (!res.ok) throw new Error(`api ${res.status}: ${res.statusText}`);

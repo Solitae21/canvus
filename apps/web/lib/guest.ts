@@ -1,7 +1,50 @@
 "use client";
 
+import { generateGuestName, pickColor } from "./random-name";
+
 const SESSION_KEY = "canvus.guest.session";
 const CANVASES_KEY = "canvus.guest.canvases";
+const USER_ID_KEY = "canvus.guest.userId";
+const NAME_KEY = "canvus.guest.name";
+const COLOR_KEY = "canvus.guest.color";
+
+export interface GuestIdentity {
+  userId: string;
+  name: string;
+  color: string;
+}
+
+const FALLBACK_IDENTITY: GuestIdentity = {
+  userId: "00000000-0000-0000-0000-000000000000",
+  name: "Guest",
+  color: "#60a5fa",
+};
+
+const newId = (): string =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+export const getGuestIdentity = (): GuestIdentity => {
+  if (typeof window === "undefined") return FALLBACK_IDENTITY;
+  const ls = window.localStorage;
+  let userId = ls.getItem(USER_ID_KEY);
+  let name = ls.getItem(NAME_KEY);
+  let color = ls.getItem(COLOR_KEY);
+  if (!userId) {
+    userId = newId();
+    ls.setItem(USER_ID_KEY, userId);
+  }
+  if (!name) {
+    name = generateGuestName();
+    ls.setItem(NAME_KEY, name);
+  }
+  if (!color) {
+    color = pickColor();
+    ls.setItem(COLOR_KEY, color);
+  }
+  return { userId, name, color };
+};
 
 export const isGuest = (): boolean =>
   typeof window !== "undefined" &&
@@ -16,6 +59,9 @@ export const endGuestSession = (): void => {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(SESSION_KEY);
   window.localStorage.removeItem(CANVASES_KEY);
+  window.localStorage.removeItem(USER_ID_KEY);
+  window.localStorage.removeItem(NAME_KEY);
+  window.localStorage.removeItem(COLOR_KEY);
 };
 
 export const getGuestCanvasIds = (): string[] => {

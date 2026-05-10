@@ -48,4 +48,16 @@ export const replace = (
   return updated;
 };
 
+export const rename = (id: string, name: string): Canvas | undefined => {
+  const existing = canvases.get(id);
+  if (!existing) return undefined;
+  const updated: Canvas = {
+    ...existing,
+    name,
+    updatedAt: new Date().toISOString(),
+  };
+  canvases.set(id, updated);
+  return updated;
+};
+
 export const remove = (id: string): boolean => canvases.delete(id);
