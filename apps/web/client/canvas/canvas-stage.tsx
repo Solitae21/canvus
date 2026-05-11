@@ -1031,14 +1031,13 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         />
       )}
 
-      {shapePickerPopup && (
-        <ShapePickerPopup
-          relX={shapePickerPopup.relX}
-          relY={shapePickerPopup.relY}
-          onSelect={handleShapePickerSelect}
-          onDismiss={dismissShapePicker}
-        />
-      )}
+      <ShapePickerPopup
+        open={shapePickerPopup !== null}
+        relX={shapePickerPopup?.relX ?? 0}
+        relY={shapePickerPopup?.relY ?? 0}
+        onSelect={handleShapePickerSelect}
+        onDismiss={dismissShapePicker}
+      />
 
       {editingConnectionId && (() => {
         const conn = connections.find((c) => c.id === editingConnectionId);

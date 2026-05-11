@@ -62,6 +62,7 @@ import {
 import { useCanvasWsContext } from "./canvas-ws-context";
 import { useCanvasExportContext } from "./canvas-export-context";
 import { useYjsCanvas } from "./use-yjs";
+import { usePresence } from "@/lib/use-presence";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Canvas-mode header — minimal overlay that sits on top of the canvas.
@@ -142,9 +143,18 @@ const ZoomControls = () => {
 };
 
 /* ── Share modal ── */
-const ShareModal = ({ canvasId, onClose }: { canvasId: string; onClose: () => void }) => {
+const ShareModal = ({
+  open,
+  canvasId,
+  onClose,
+}: {
+  open: boolean;
+  canvasId: string;
+  onClose: () => void;
+}) => {
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { shouldRender, isExiting } = usePresence(open, 180);
   // Safe: ShareModal only mounts after `mounted` is true (client-only)
   const shareUrl = useMemo(
     () => `${window.location.origin}/canvas/${canvasId}`,
@@ -162,14 +172,20 @@ const ShareModal = ({ canvasId, onClose }: { canvasId: string; onClose: () => vo
     setTimeout(() => setCopied(false), 2000);
   };
 
+  if (!shouldRender) return null;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+        isExiting ? "animate-fade-out" : "animate-fade-in"
+      }`}
       style={{ background: "rgba(7,13,31,0.7)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl"
+        className={`relative w-full max-w-md rounded-2xl p-6 shadow-2xl ${
+          isExiting ? "animate-modal-out" : "animate-modal-in"
+        }`}
         style={{
           background: "linear-gradient(180deg,#191f31 0%,#151b2d 100%)",
           border: "1px solid rgba(255,255,255,0.10)",
@@ -284,6 +300,7 @@ const HeaderMenu = ({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { shouldRender: renderMenu, isExiting: menuExiting } = usePresence(open, 140);
 
   const closeAll = useCallback(() => {
     setOpen(false);
@@ -410,13 +427,15 @@ const HeaderMenu = ({
         <MoreHorizontal size={16} />
       </button>
 
-      {open && (
+      {renderMenu && (
         <div
-          className="absolute right-0 top-full mt-2 w-60 p-1.5
+          className={`absolute right-0 top-full mt-2 w-60 p-1.5
                      bg-surface-container/90 backdrop-blur-[24px]
                      border border-white/[0.07] rounded-xl
                      shadow-[0_12px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)]
-                     text-[13px] text-on-surface"
+                     text-[13px] text-on-surface ${
+                       menuExiting ? "animate-dropdown-out" : "animate-dropdown-in"
+                     }`}
         >
           {deleteConfirm ? (
             <div className="p-2 space-y-2">
@@ -820,8 +839,12 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
       </div>
     </div>
 
-    {mounted && shareOpen && (
-      <ShareModal canvasId={canvasId} onClose={() => setShareOpen(false)} />
+    {mounted && (
+      <ShareModal
+        open={shareOpen}
+        canvasId={canvasId}
+        onClose={() => setShareOpen(false)}
+      />
     )}
   </>
   );

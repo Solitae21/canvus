@@ -267,18 +267,130 @@
   animation: toolbar-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Shape popover entrance ── */
-@keyframes shape-popover {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
-  }
+/* ─────────────────────────────────────────────
+   Overlay enter / exit animations
+   Shared easings:
+     out-quint  cubic-bezier(0.16, 1, 0.3, 1)  — soft enter
+     in-quint   cubic-bezier(0.7, 0, 0.84, 0)  — crisp exit
+───────────────────────────────────────────── */
+
+/* — Plain fade — */
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes overlay-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.animate-fade-in {
+  animation: overlay-fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-out {
+  animation: overlay-fade-out 0.14s cubic-bezier(0.7, 0, 0.84, 0) forwards;
 }
 
+/* — Modal dialog (centered, scale + fade) — */
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes modal-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.97); }
+}
+.animate-modal-in {
+  animation: modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-modal-out {
+  animation: modal-out 0.15s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+/* — Dropdown menu (slide down a touch + fade) — */
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dropdown-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-4px) scale(0.98); }
+}
+.animate-dropdown-in {
+  animation: dropdown-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
+}
+.animate-dropdown-out {
+  animation: dropdown-out 0.12s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  transform-origin: top right;
+}
+
+/* — Side panel (slight slide from right + fade) — */
+@keyframes side-panel-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes side-panel-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(8px); }
+}
+.animate-side-panel-in {
+  animation: side-panel-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-side-panel-out {
+  animation: side-panel-out 0.15s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+/* — Generic popover (scale + fade) — */
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes popover-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(4px) scale(0.96); }
+}
+.animate-popover-in {
+  animation: popover-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-popover-out {
+  animation: popover-out 0.12s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+/* — Toolbar shape popover (preserve centered transform) — */
+@keyframes shape-popover-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes shape-popover-out {
+  from { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
+}
+.animate-shape-popover-in {
+  animation: shape-popover-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-shape-popover-out {
+  animation: shape-popover-out 0.15s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+/* Back-compat alias for the previously-used class */
 .animate-shape-popover {
-  animation: shape-popover 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: shape-popover-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-fade-out,
+  .animate-modal-in,
+  .animate-modal-out,
+  .animate-dropdown-in,
+  .animate-dropdown-out,
+  .animate-side-panel-in,
+  .animate-side-panel-out,
+  .animate-popover-in,
+  .animate-popover-out,
+  .animate-shape-popover-in,
+  .animate-shape-popover-out,
+  .animate-shape-popover,
+  .animate-toolbar-enter {
+    animation-duration: 0.001s;
+  }
 }

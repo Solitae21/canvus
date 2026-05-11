@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setTool, ToolType } from "@/redux/slice/canvas/canvas-slice";
+import { usePresence } from "@/lib/use-presence";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Stitch-style floating toolbar – horizontal pill, bottom-center
@@ -253,6 +254,7 @@ const ShapeSelector = ({
   const [open, setOpen] = useState(false);
   const [selectedShape, setSelectedShape] = useState<FlowShape>(FLOWCHART_SHAPES[0]);
   const ref = useRef<HTMLDivElement>(null);
+  const { shouldRender: renderPopover, isExiting: popoverExiting } = usePresence(open, 160);
 
   // close on outside click
   useEffect(() => {
@@ -318,15 +320,15 @@ const ShapeSelector = ({
       </button>
 
       {/* Popover grid */}
-      {open && (
+      {renderPopover && (
         <div
-          className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2
+          className={`absolute bottom-full mb-3 left-1/2 -translate-x-1/2
                       w-[340px] p-3
                       bg-surface-container/90 backdrop-blur-[24px]
                       border border-white/[0.07]
                       rounded-2xl
                       shadow-[0_12px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)]
-                      animate-shape-popover"
+                      ${popoverExiting ? "animate-shape-popover-out" : "animate-shape-popover-in"}`}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-2.5 px-1">

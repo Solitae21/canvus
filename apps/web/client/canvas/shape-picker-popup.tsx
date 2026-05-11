@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ShapeType } from "@canvus/shared";
+import { usePresence } from "@/lib/use-presence";
 
 const SHAPE_OPTIONS: Array<{ type: ShapeType; label: string }> = [
   { type: "rect", label: "Rectangle" },
@@ -87,6 +88,7 @@ function ShapeIcon({ type }: { type: ShapeType }) {
 }
 
 interface ShapePickerPopupProps {
+  open: boolean;
   relX: number;
   relY: number;
   onSelect: (type: ShapeType) => void;
@@ -94,14 +96,23 @@ interface ShapePickerPopupProps {
 }
 
 export default function ShapePickerPopup({
+  open,
   relX,
   relY,
   onSelect,
   onDismiss,
 }: ShapePickerPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
+  const { shouldRender, isExiting } = usePresence(open, 140);
+  // Hold last position so the exit animation renders in place after the
+  // parent clears its picker state. Updated during render while `open`.
+  const [stickyPos, setStickyPos] = useState({ relX, relY });
+  if (open && (stickyPos.relX !== relX || stickyPos.relY !== relY)) {
+    setStickyPos({ relX, relY });
+  }
 
   useEffect(() => {
+    if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onDismiss();
     };
@@ -117,21 +128,25 @@ export default function ShapePickerPopup({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("pointerdown", handlePointerDown, true);
     };
-  }, [onDismiss]);
+  }, [open, onDismiss]);
+
+  if (!shouldRender) return null;
 
   // Offset so popup appears slightly below/right of release point
-  const left = relX + 12;
-  const top = relY + 12;
+  const left = stickyPos.relX + 12;
+  const top = stickyPos.relY + 12;
 
   return (
     <div
       ref={popupRef}
       className="absolute z-50 select-none"
-      style={{ left, top }}
+      style={{ left, top, transformOrigin: "top left" }}
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div
-        className="rounded-xl border border-white/10 bg-[#1a1625]/95 p-2 shadow-2xl backdrop-blur-sm"
+        className={`rounded-xl border border-white/10 bg-[#1a1625]/95 p-2 shadow-2xl backdrop-blur-sm ${
+          isExiting ? "animate-popover-out" : "animate-popover-in"
+        }`}
         style={{ minWidth: 224 }}
       >
         <p className="mb-2 px-1 text-xs font-medium text-white/40 uppercase tracking-widest">
