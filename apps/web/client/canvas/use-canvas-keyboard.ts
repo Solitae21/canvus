@@ -8,8 +8,6 @@ import {
   selectShape,
   setPendingFromId,
   setTool,
-  undo,
-  redo,
   setMultiSelection,
   copySelection,
   type Shape,
@@ -17,6 +15,7 @@ import {
 } from "@/redux/slice/canvas/canvas-slice";
 import { zoomIn, zoomOut, resetViewport } from "@/redux/slice/ui/ui-slice";
 import { newId } from "./canvas-defaults";
+import { useYjsCanvas } from "./use-yjs";
 
 const TOOL_KEYS: Record<string, ToolType> = {
   v: "select",
@@ -35,6 +34,7 @@ export function useCanvasKeyboard(
   yjsConnections: Y.Map<Connection>,
 ) {
   const dispatch = useAppDispatch();
+  const { undoManager } = useYjsCanvas();
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
   const selectedIds = useAppSelector((s) => s.canvas.selectedIds);
@@ -53,6 +53,7 @@ export function useCanvasKeyboard(
   const clipboardRef = useRef(clipboard);
   const yjsShapesRef = useRef(yjsShapes);
   const yjsConnectionsRef = useRef(yjsConnections);
+  const undoManagerRef = useRef(undoManager);
 
   useEffect(() => {
     selectedIdRef.current = selectedId;
@@ -64,6 +65,7 @@ export function useCanvasKeyboard(
     clipboardRef.current = clipboard;
     yjsShapesRef.current = yjsShapes;
     yjsConnectionsRef.current = yjsConnections;
+    undoManagerRef.current = undoManager;
   }, [
     clipboard,
     selectedConnectionId,
@@ -72,6 +74,7 @@ export function useCanvasKeyboard(
     selectedIds,
     shapes,
     tool,
+    undoManager,
     yjsConnections,
     yjsShapes,
   ]);
@@ -99,12 +102,12 @@ export function useCanvasKeyboard(
       // ── Undo / Redo ──────────────────────────────────────────────────────────
       if (ctrl && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
-        dispatch(undo());
+        undoManagerRef.current.undo();
         return;
       }
       if (ctrl && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
         e.preventDefault();
-        dispatch(redo());
+        undoManagerRef.current.redo();
         return;
       }
 

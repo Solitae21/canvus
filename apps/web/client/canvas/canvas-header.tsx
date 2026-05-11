@@ -39,7 +39,6 @@ import {
   resetViewport,
   addToast,
 } from "@/redux/slice/ui/ui-slice";
-import { undo, redo } from "@/redux/slice/canvas/canvas-slice";
 import {
   getGuestIdentity,
   addGuestCanvas,
@@ -653,12 +652,11 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     }
   }, [editingName]);
 
-  const canUndoStore = useAppSelector((s) => s.canvas.past.length > 0);
-  const canRedoStore = useAppSelector((s) => s.canvas.future.length > 0);
+  const { undoManager, canUndo: canUndoYjs, canRedo: canRedoYjs } = useYjsCanvas();
 
-  // Defer to client-only values to avoid SSR/localStorage hydration mismatch
-  const canUndo = mounted && canUndoStore;
-  const canRedo = mounted && canRedoStore;
+  // Gate on `mounted` to keep SSR markup consistent with the first client paint
+  const canUndo = mounted && canUndoYjs;
+  const canRedo = mounted && canRedoYjs;
 
   return (
   <>
@@ -754,13 +752,13 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                       shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
         >
           {/* Undo / Redo */}
-          <IconBtn label="Undo (Ctrl+Z)" onClick={() => dispatch(undo())} disabled={!canUndo}>
+          <IconBtn label="Undo (Ctrl+Z)" onClick={() => undoManager.undo()} disabled={!canUndo}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 7v6h6" />
               <path d="M3.51 15a9 9 0 1 0 .49-3.96" />
             </svg>
           </IconBtn>
-          <IconBtn label="Redo (Ctrl+Shift+Z)" onClick={() => dispatch(redo())} disabled={!canRedo}>
+          <IconBtn label="Redo (Ctrl+Shift+Z)" onClick={() => undoManager.redo()} disabled={!canRedo}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 7v6h-6" />
               <path d="M20.49 15a9 9 0 1 1-.49-3.96" />

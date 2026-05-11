@@ -10,16 +10,9 @@ export type ToolType =
   | ShapeType
   | 'pen' | 'arrow' | 'text' | 'image'
 
-interface HistoryEntry {
-  shapes: Shape[]
-  connections: Connection[]
-}
-
 interface CanvasState {
   shapes: Shape[]
   connections: Connection[]
-  past: HistoryEntry[]
-  future: HistoryEntry[]
   selectedId: string | null
   selectedConnectionId: string | null
   selectedIds: string[]
@@ -32,8 +25,6 @@ interface CanvasState {
 const initialState: CanvasState = {
   shapes: [],
   connections: [],
-  past: [],
-  future: [],
   selectedId: null,
   selectedConnectionId: null,
   selectedIds: [],
@@ -43,37 +34,24 @@ const initialState: CanvasState = {
   clipboard: null,
 }
 
-function pushHistory(state: CanvasState) {
-  state.past.push({
-    shapes: state.shapes.map(s => ({ ...s })),
-    connections: state.connections.map(c => ({ ...c })),
-  })
-  if (state.past.length > 50) state.past.shift()
-  state.future = []
-}
-
 const canvasSlice = createSlice({
   name: 'canvas',
   initialState,
   reducers: {
     addShape: (state, action: PayloadAction<Shape>) => {
-      pushHistory(state)
       state.shapes.push(action.payload)
     },
     updateShape: (state, action: PayloadAction<{ id: string } & Partial<Shape>>) => {
-      pushHistory(state)
       const shape = state.shapes.find(s => s.id === action.payload.id)
       if (shape) Object.assign(shape, action.payload)
     },
     batchUpdateShapes: (state, action: PayloadAction<Array<{ id: string; x: number; y: number }>>) => {
-      pushHistory(state)
       for (const update of action.payload) {
         const shape = state.shapes.find(s => s.id === update.id)
         if (shape) { shape.x = update.x; shape.y = update.y }
       }
     },
     deleteShape: (state, action: PayloadAction<string>) => {
-      pushHistory(state)
       const id = action.payload
       state.shapes = state.shapes.filter(s => s.id !== id)
       state.connections = state.connections.filter(c => c.fromId !== id && c.toId !== id)
@@ -83,7 +61,6 @@ const canvasSlice = createSlice({
     },
     deleteSelectedItems: (state) => {
       if (state.selectedIds.length === 0 && state.selectedConnectionIds.length === 0) return
-      pushHistory(state)
       const shapeIdSet = new Set(state.selectedIds)
       const connIdSet = new Set(state.selectedConnectionIds)
       state.shapes = state.shapes.filter(s => !shapeIdSet.has(s.id))
@@ -110,11 +87,9 @@ const canvasSlice = createSlice({
       state.tool = action.payload
     },
     addConnection: (state, action: PayloadAction<Connection>) => {
-      pushHistory(state)
       state.connections.push(action.payload)
     },
     deleteConnection: (state, action: PayloadAction<string>) => {
-      pushHistory(state)
       state.connections = state.connections.filter(c => c.id !== action.payload)
       if (state.selectedConnectionId === action.payload) state.selectedConnectionId = null
       state.selectedConnectionIds = state.selectedConnectionIds.filter(id => id !== action.payload)
@@ -126,7 +101,6 @@ const canvasSlice = createSlice({
       state.selectedConnectionIds = []
     },
     updateConnection: (state, action: PayloadAction<{ id: string } & Partial<Connection>>) => {
-      pushHistory(state)
       const conn = state.connections.find(c => c.id === action.payload.id)
       if (conn) Object.assign(conn, action.payload)
     },
@@ -146,7 +120,6 @@ const canvasSlice = createSlice({
     },
     pasteClipboard: (state) => {
       if (!state.clipboard || state.clipboard.shapes.length === 0) return
-      pushHistory(state)
       const idMap = new Map<string, string>()
       for (const s of state.clipboard.shapes) idMap.set(s.id, newId())
       const newShapes = state.clipboard.shapes.map(s => ({
@@ -168,46 +141,9 @@ const canvasSlice = createSlice({
       state.selectedId = null
       state.selectedConnectionId = null
     },
-    undo: (state) => {
-      const entry = state.past.pop()
-      if (!entry) return
-      state.future.push({
-        shapes: state.shapes.map(s => ({ ...s })),
-        connections: state.connections.map(c => ({ ...c })),
-      })
-      state.shapes = entry.shapes
-      state.connections = entry.connections
-      if (state.selectedId && !state.shapes.find(s => s.id === state.selectedId)) {
-        state.selectedId = null
-      }
-      if (state.selectedConnectionId && !state.connections.find(c => c.id === state.selectedConnectionId)) {
-        state.selectedConnectionId = null
-      }
-      state.selectedIds = state.selectedIds.filter(id => state.shapes.some(s => s.id === id))
-      state.selectedConnectionIds = state.selectedConnectionIds.filter(id => state.connections.some(c => c.id === id))
-    },
     addShapeWithConnection: (state, action: PayloadAction<{ shape: Shape; connection: Connection }>) => {
-      pushHistory(state)
       state.shapes.push(action.payload.shape)
       state.connections.push(action.payload.connection)
-    },
-    redo: (state) => {
-      const entry = state.future.pop()
-      if (!entry) return
-      state.past.push({
-        shapes: state.shapes.map(s => ({ ...s })),
-        connections: state.connections.map(c => ({ ...c })),
-      })
-      state.shapes = entry.shapes
-      state.connections = entry.connections
-      if (state.selectedId && !state.shapes.find(s => s.id === state.selectedId)) {
-        state.selectedId = null
-      }
-      if (state.selectedConnectionId && !state.connections.find(c => c.id === state.selectedConnectionId)) {
-        state.selectedConnectionId = null
-      }
-      state.selectedIds = state.selectedIds.filter(id => state.shapes.some(s => s.id === id))
-      state.selectedConnectionIds = state.selectedConnectionIds.filter(id => state.connections.some(c => c.id === id))
     },
     setShapes: (state, action: PayloadAction<Shape[]>) => {
       state.shapes = action.payload
@@ -246,8 +182,6 @@ export const {
   setPendingFromId,
   copySelection,
   pasteClipboard,
-  undo,
-  redo,
   setShapes,
   setConnections,
   removeConnectionsForShapes,
