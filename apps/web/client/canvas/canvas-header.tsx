@@ -772,13 +772,23 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
           {/* Collaborators indicator */}
           <div className="flex items-center -space-x-1.5 mx-1">
             <div
-              title={identity?.name ?? "Guest"}
-              className="w-7 h-7 rounded-full ring-2 ring-surface-container flex items-center justify-center text-[10px] font-bold text-on-primary"
+              className="group relative w-7 h-7 rounded-full ring-2 ring-surface-container
+                         flex items-center justify-center text-[10px] font-bold text-on-primary"
               style={{
                 background: identity?.color ?? "linear-gradient(135deg,#568dff,#b0c6ff)",
               }}
             >
               {identity ? getInitials(identity.name) : ""}
+              <span
+                className="pointer-events-none absolute top-full mt-1.5 left-1/2 -translate-x-1/2
+                           px-2 py-1 text-[11px] font-medium tracking-wide
+                           bg-surface-container-highest text-on-surface
+                           rounded-md shadow-lg whitespace-nowrap
+                           opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                           transition-all duration-150"
+              >
+                {identity?.name ?? "Guest"}
+              </span>
             </div>
           </div>
 
