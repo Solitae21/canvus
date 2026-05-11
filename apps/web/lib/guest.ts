@@ -20,10 +20,24 @@ const FALLBACK_IDENTITY: GuestIdentity = {
   color: "#60a5fa",
 };
 
+let cachedIdentity: GuestIdentity | null = null;
+let cachedIdentityKey: string | null = null;
+
 const newId = (): string =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const getIdentityCacheKey = ({ userId, name, color }: GuestIdentity): string =>
+  `${userId}\u0000${name}\u0000${color}`;
+
+const cacheIdentity = (identity: GuestIdentity): GuestIdentity => {
+  const key = getIdentityCacheKey(identity);
+  if (cachedIdentity && cachedIdentityKey === key) return cachedIdentity;
+  cachedIdentity = identity;
+  cachedIdentityKey = key;
+  return identity;
+};
 
 export const getGuestIdentity = (): GuestIdentity => {
   if (typeof window === "undefined") return FALLBACK_IDENTITY;
@@ -43,7 +57,7 @@ export const getGuestIdentity = (): GuestIdentity => {
     color = pickColor();
     ls.setItem(COLOR_KEY, color);
   }
-  return { userId, name, color };
+  return cacheIdentity({ userId, name, color });
 };
 
 export const isGuest = (): boolean =>
@@ -62,6 +76,8 @@ export const endGuestSession = (): void => {
   window.localStorage.removeItem(USER_ID_KEY);
   window.localStorage.removeItem(NAME_KEY);
   window.localStorage.removeItem(COLOR_KEY);
+  cachedIdentity = null;
+  cachedIdentityKey = null;
 };
 
 export const getGuestCanvasIds = (): string[] => {
