@@ -652,7 +652,7 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     }
   }, [editingName]);
 
-  const { undoManager, canUndo: canUndoYjs, canRedo: canRedoYjs } = useYjsCanvas();
+  const { undo: yjsUndo, redo: yjsRedo, canUndo: canUndoYjs, canRedo: canRedoYjs } = useYjsCanvas();
 
   // Gate on `mounted` to keep SSR markup consistent with the first client paint
   const canUndo = mounted && canUndoYjs;
@@ -752,13 +752,13 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                       shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
         >
           {/* Undo / Redo */}
-          <IconBtn label="Undo (Ctrl+Z)" onClick={() => undoManager.undo()} disabled={!canUndo}>
+          <IconBtn label="Undo (Ctrl+Z)" onClick={() => yjsUndo()} disabled={!canUndo}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 7v6h6" />
               <path d="M3.51 15a9 9 0 1 0 .49-3.96" />
             </svg>
           </IconBtn>
-          <IconBtn label="Redo (Ctrl+Shift+Z)" onClick={() => undoManager.redo()} disabled={!canRedo}>
+          <IconBtn label="Redo (Ctrl+Shift+Z)" onClick={() => yjsRedo()} disabled={!canRedo}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 7v6h-6" />
               <path d="M20.49 15a9 9 0 1 1-.49-3.96" />

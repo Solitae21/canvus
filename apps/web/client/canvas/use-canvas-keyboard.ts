@@ -34,7 +34,7 @@ export function useCanvasKeyboard(
   yjsConnections: Y.Map<Connection>,
 ) {
   const dispatch = useAppDispatch();
-  const { undoManager } = useYjsCanvas();
+  const { undo: yjsUndo, redo: yjsRedo } = useYjsCanvas();
   const selectedId = useAppSelector((s) => s.canvas.selectedId);
   const selectedConnectionId = useAppSelector((s) => s.canvas.selectedConnectionId);
   const selectedIds = useAppSelector((s) => s.canvas.selectedIds);
@@ -53,7 +53,8 @@ export function useCanvasKeyboard(
   const clipboardRef = useRef(clipboard);
   const yjsShapesRef = useRef(yjsShapes);
   const yjsConnectionsRef = useRef(yjsConnections);
-  const undoManagerRef = useRef(undoManager);
+  const yjsUndoRef = useRef(yjsUndo);
+  const yjsRedoRef = useRef(yjsRedo);
 
   useEffect(() => {
     selectedIdRef.current = selectedId;
@@ -65,7 +66,8 @@ export function useCanvasKeyboard(
     clipboardRef.current = clipboard;
     yjsShapesRef.current = yjsShapes;
     yjsConnectionsRef.current = yjsConnections;
-    undoManagerRef.current = undoManager;
+    yjsUndoRef.current = yjsUndo;
+    yjsRedoRef.current = yjsRedo;
   }, [
     clipboard,
     selectedConnectionId,
@@ -74,9 +76,10 @@ export function useCanvasKeyboard(
     selectedIds,
     shapes,
     tool,
-    undoManager,
     yjsConnections,
     yjsShapes,
+    yjsUndo,
+    yjsRedo,
   ]);
 
   // Space-to-pan state
@@ -102,12 +105,12 @@ export function useCanvasKeyboard(
       // ── Undo / Redo ──────────────────────────────────────────────────────────
       if (ctrl && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
-        undoManagerRef.current.undo();
+        yjsUndoRef.current();
         return;
       }
       if (ctrl && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
         e.preventDefault();
-        undoManagerRef.current.redo();
+        yjsRedoRef.current();
         return;
       }
 

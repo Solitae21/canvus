@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, createElement, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Connection, Shape } from "@canvus/shared";
 import { SocketIOProvider } from "y-socket.io";
 import * as Y from "yjs";
@@ -21,7 +21,8 @@ type YjsCanvasValue = {
   status: YjsConnectionStatus;
   isConnected: boolean;
   isSynced: boolean;
-  undoManager: Y.UndoManager;
+  undo: () => void;
+  redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
 };
@@ -36,13 +37,15 @@ const useYjsInternal = (
     autoConnect = true,
   }: UseYjsOptions = {},
 ): YjsCanvasValue => {
-  const doc = useMemo(() => new Y.Doc({ guid: roomName }), [roomName]);
+  // Lazy useState init runs exactly once per component lifetime, unlike
+  // useMemo which React intentionally double-invokes in dev StrictMode.
+  // Double-invocation of `new Y.Doc(...)` would leave two doc instances in
+  // flight — the discarded one still holds maps that local actions would
+  // mutate without the active UndoManager seeing them.
+  const [doc] = useState(() => new Y.Doc({ guid: roomName }));
   const shapes = useMemo(() => doc.getMap<Shape>("shapes"), [doc]);
   const connections = useMemo(() => doc.getMap<Connection>("connections"), [doc]);
-  const undoManager = useMemo(
-    () => new Y.UndoManager([shapes, connections], { captureTimeout: 500 }),
-    [shapes, connections],
-  );
+  const undoManagerRef = useRef<Y.UndoManager | null>(null);
   const [provider, setProvider] = useState<SocketIOProvider | null>(null);
   const [status, setStatus] = useState<YjsConnectionStatus>(
     autoConnect ? "connecting" : "disconnected",
@@ -52,21 +55,30 @@ const useYjsInternal = (
   const [canRedo, setCanRedo] = useState(false);
 
   useEffect(() => {
+    const um = new Y.UndoManager([shapes, connections], { captureTimeout: 500 });
+    undoManagerRef.current = um;
+
     const update = () => {
-      setCanUndo(undoManager.undoStack.length > 0);
-      setCanRedo(undoManager.redoStack.length > 0);
+      setCanUndo(um.undoStack.length > 0);
+      setCanRedo(um.redoStack.length > 0);
     };
     update();
-    undoManager.on("stack-item-added", update);
-    undoManager.on("stack-item-popped", update);
-    undoManager.on("stack-cleared", update);
+    um.on("stack-item-added", update);
+    um.on("stack-item-popped", update);
+    um.on("stack-cleared", update);
     return () => {
-      undoManager.off("stack-item-added", update);
-      undoManager.off("stack-item-popped", update);
-      undoManager.off("stack-cleared", update);
-      undoManager.destroy();
+      um.off("stack-item-added", update);
+      um.off("stack-item-popped", update);
+      um.off("stack-cleared", update);
+      um.destroy();
+      if (undoManagerRef.current === um) {
+        undoManagerRef.current = null;
+      }
     };
-  }, [undoManager]);
+  }, [shapes, connections]);
+
+  const undo = useCallback(() => undoManagerRef.current?.undo(), []);
+  const redo = useCallback(() => undoManagerRef.current?.redo(), []);
 
   useEffect(() => {
     const nextProvider = new SocketIOProvider(
@@ -103,7 +115,9 @@ const useYjsInternal = (
       nextProvider.off("status", handleStatus);
       nextProvider.off("sync", handleSync);
       nextProvider.destroy();
-      doc.destroy();
+      // Don't destroy the doc here: it's owned by useState lazy init and
+      // lives for the component's lifetime. Destroying it in a dev-StrictMode
+      // cleanup would invalidate state across the simulated remount.
     };
   }, [autoConnect, doc, roomName, serverUrl]);
 
@@ -115,7 +129,8 @@ const useYjsInternal = (
     status,
     isConnected: status === "connected",
     isSynced,
-    undoManager,
+    undo,
+    redo,
     canUndo,
     canRedo,
   };
