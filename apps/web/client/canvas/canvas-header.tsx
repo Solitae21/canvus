@@ -43,6 +43,7 @@ import {
   getGuestIdentity,
   addGuestCanvas,
   removeGuestCanvas,
+  getGuestCanvasIds,
   type GuestIdentity,
 } from "@/lib/guest";
 import { getInitials } from "@/lib/random-name";
@@ -52,7 +53,9 @@ import {
   createCanvas,
   saveCanvas,
   deleteCanvas,
+  listCanvases,
 } from "@/lib/api";
+import type { CanvasSummary } from "@canvus/shared";
 import {
   exportJson,
   exportPng,
@@ -591,6 +594,7 @@ const subscribeIdentity = (cb: () => void): (() => void) => {
 /* ── Main canvas header ── */
 const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const identity = useSyncExternalStore<GuestIdentity | null>(
@@ -603,6 +607,82 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const canvasName = useAppSelector(selectCanvasName);
   const { subscribe } = useCanvasWsContext();
+
+  // Canvas switcher (dropdown listing other guest canvases)
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [otherCanvases, setOtherCanvases] = useState<CanvasSummary[]>([]);
+  const switcherContainerRef = useRef<HTMLDivElement>(null);
+  const { shouldRender: renderSwitcher, isExiting: switcherExiting } = usePresence(
+    switcherOpen,
+    140,
+  );
+
+  const refetchOtherCanvases = useCallback(async () => {
+    const ids = getGuestCanvasIds().filter((id) => id !== canvasId);
+    if (ids.length === 0) {
+      setOtherCanvases([]);
+      return;
+    }
+    try {
+      const cs = await listCanvases(ids);
+      setOtherCanvases(
+        [...cs].sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        ),
+      );
+    } catch {
+      setOtherCanvases([]);
+    }
+  }, [canvasId]);
+
+  useEffect(() => {
+    void refetchOtherCanvases();
+    if (typeof window === "undefined") return;
+    const handler = (e: StorageEvent) => {
+      if (e.key === null || e.key === "canvus.guest.canvases") {
+        void refetchOtherCanvases();
+      }
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, [refetchOtherCanvases]);
+
+  useEffect(() => {
+    if (!switcherOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (
+        switcherContainerRef.current &&
+        !switcherContainerRef.current.contains(e.target as Node)
+      ) {
+        setSwitcherOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSwitcherOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [switcherOpen]);
+
+  const toggleSwitcher = useCallback(() => {
+    setSwitcherOpen((open) => {
+      if (!open) void refetchOtherCanvases();
+      return !open;
+    });
+  }, [refetchOtherCanvases]);
+
+  const goToCanvas = useCallback(
+    (id: string) => {
+      setSwitcherOpen(false);
+      router.push(`/canvas/${id}`);
+    },
+    [router],
+  );
 
   useEffect(() => {
     const id = setTimeout(() => setMounted(true), 0);
@@ -711,7 +791,10 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
           <div className="w-px h-5 bg-white/[0.08]" />
 
           {/* Project name */}
-          <div className="flex items-center gap-2 px-2">
+          <div
+            ref={switcherContainerRef}
+            className="relative flex items-center gap-2 px-2"
+          >
             <div className="relative w-5 h-5">
               <div className="absolute inset-0 rounded bg-primary-container/80 rotate-6 scale-90" />
               <div className="absolute inset-0 rounded bg-gradient-to-br from-primary-container to-primary" />
@@ -746,17 +829,71 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                 {canvasName ?? "Untitled project"}
               </span>
             )}
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              className="text-on-surface-variant/50"
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            {otherCanvases.length > 0 && (
+              <button
+                onClick={toggleSwitcher}
+                title="Switch canvas"
+                aria-haspopup="menu"
+                aria-expanded={switcherOpen}
+                className="flex items-center justify-center w-5 h-5 rounded
+                           text-on-surface-variant/60 hover:text-on-surface
+                           hover:bg-white/[0.06] transition-all duration-150"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className={`transition-transform duration-150 ${
+                    switcherOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+            )}
+
+            {renderSwitcher && otherCanvases.length > 0 && (
+              <div
+                role="menu"
+                className={`absolute left-0 top-full mt-2 w-64 p-1.5
+                           bg-surface-container/90 backdrop-blur-[24px]
+                           border border-white/[0.07] rounded-xl
+                           shadow-[0_12px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)]
+                           text-[13px] text-on-surface ${
+                             switcherExiting
+                               ? "animate-dropdown-out"
+                               : "animate-dropdown-in"
+                           }`}
+              >
+                <div className="px-2 pt-1 pb-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-on-surface-variant/60">
+                  Switch canvas
+                </div>
+                <div className="mx-1 mb-1 h-px bg-white/[0.06]" />
+                <div className="max-h-72 overflow-y-auto">
+                  {otherCanvases.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => goToCanvas(c.id)}
+                      role="menuitem"
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg
+                                 text-on-surface hover:bg-white/[0.06]
+                                 transition-all duration-150 text-left"
+                    >
+                      <span
+                        className="shrink-0 w-4 h-4 rounded
+                                   bg-gradient-to-br from-primary-container to-primary"
+                      />
+                      <span className="flex-1 text-[12.5px] truncate">
+                        {c.name || "Untitled"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
