@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { selectShape, selectConnection } from "@/redux/slice/canvas/canvas-slice";
 import type { Shape, Connection } from "@canvus/shared";
@@ -71,11 +71,11 @@ const CanvasRightPanel = () => {
       : undefined,
   );
 
-  const content: PanelContent | null = connection
-    ? { kind: "connection", connection }
-    : shape
-      ? { kind: "shape", shape }
-      : null;
+  const content = useMemo<PanelContent | null>(() => {
+    if (connection) return { kind: "connection", connection };
+    if (shape) return { kind: "shape", shape };
+    return null;
+  }, [connection, shape]);
 
   const visible = isOpen && content !== null;
 
