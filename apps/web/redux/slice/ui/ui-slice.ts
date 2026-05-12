@@ -18,6 +18,15 @@ export interface ToastMessage {
   duration?: number   // ms, default 3000
 }
 
+export interface ModalEntry {
+  id: string
+  /** Registry key — narrowed to ModalKey at the useModal() boundary */
+  key: string
+  /** Serializable props only; callback props live in the lib/modal/callbacks store */
+  props: Record<string, unknown>
+  status: 'open' | 'closing'
+}
+
 export interface UIState {
   // ── Panels ──
   panels: {
@@ -48,6 +57,9 @@ export interface UIState {
 
   // ── Toasts ──
   toasts: ToastMessage[]
+
+  // ── Modal stack ──
+  modals: ModalEntry[]
 
   // ── Canvas display name (transient, mirrors server state) ──
   canvasName: string | null
@@ -91,6 +103,8 @@ const initialState: UIState = {
   },
 
   toasts: [],
+
+  modals: [],
 
   canvasName: null,
 
@@ -256,6 +270,29 @@ const uiSlice = createSlice({
       state.toasts = []
     },
 
+    // ── Modal stack ─────────────────────────────────────────────────────────
+
+    pushModal: (
+      state,
+      action: PayloadAction<{ id: string; key: string; props: Record<string, unknown> }>,
+    ) => {
+      state.modals.push({
+        id: action.payload.id,
+        key: action.payload.key,
+        props: action.payload.props,
+        status: 'open',
+      })
+    },
+
+    markModalClosing: (state, action: PayloadAction<string>) => {
+      const entry = state.modals.find(m => m.id === action.payload)
+      if (entry) entry.status = 'closing'
+    },
+
+    removeModal: (state, action: PayloadAction<string>) => {
+      state.modals = state.modals.filter(m => m.id !== action.payload)
+    },
+
     // ── Canvas name ─────────────────────────────────────────────────────────
 
     setCanvasName: (state, action: PayloadAction<string | null>) => {
@@ -324,6 +361,10 @@ export const {
   addToast,
   removeToast,
   clearAllToasts,
+  // modals
+  pushModal,
+  markModalClosing,
+  removeModal,
   // canvas name
   setCanvasName,
   // grid
@@ -355,6 +396,7 @@ export const selectViewport        = (state: RootState) => state.ui.viewport
 export const selectZoom            = (state: RootState) => state.ui.viewport.scale
 export const selectShareModal      = (state: RootState) => state.ui.shareModal
 export const selectToasts          = (state: RootState) => state.ui.toasts
+export const selectModals          = (state: RootState) => state.ui.modals
 export const selectCanvasName      = (state: RootState) => state.ui.canvasName
 export const selectGridVisible     = (state: RootState) => state.ui.gridVisible
 export const selectSnapToGrid      = (state: RootState) => state.ui.snapToGrid
