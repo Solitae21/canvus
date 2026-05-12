@@ -689,7 +689,7 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                       shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
         >
           <Link
-            href="/"
+            href="/dashboard"
             className="flex items-center justify-center w-8 h-8 rounded-lg
                        hover:bg-white/[0.06] transition-colors duration-150"
           >
