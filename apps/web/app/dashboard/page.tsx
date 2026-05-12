@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [pendingDelete, setPendingDelete] = useState<CanvasSummary | null>(
     null,
   );
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     listCanvases(getGuestCanvasIds())
@@ -59,7 +60,7 @@ export default function DashboardPage() {
       await deleteCanvas(id);
       removeGuestCanvas(id);
       setCanvases((prev) => (prev ?? []).filter((c) => c.id !== id));
-      setPendingDelete(null);
+      setDialogOpen(false);
     } catch {
       // swallow — keep card visible
     } finally {
@@ -147,20 +148,25 @@ export default function DashboardPage() {
           <CanvasGrid
             canvases={canvases}
             busyId={busyId}
-            onRequestDelete={(c) => setPendingDelete(c)}
+            onRequestDelete={(c) => {
+              setPendingDelete(c);
+              setDialogOpen(true);
+            }}
           />
         )}
       </main>
 
       {pendingDelete && (
         <DeleteCanvasDialog
+          open={dialogOpen}
           canvas={pendingDelete}
           busy={busyId === pendingDelete.id}
           onCancel={() => {
             if (busyId === pendingDelete.id) return;
-            setPendingDelete(null);
+            setDialogOpen(false);
           }}
           onConfirm={() => handleDelete(pendingDelete.id)}
+          onExited={() => setPendingDelete(null)}
         />
       )}
     </div>
@@ -638,28 +644,36 @@ function ErrorState({ message }: { message: string }) {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 function DeleteCanvasDialog({
+  open,
   canvas,
   busy,
   onCancel,
   onConfirm,
+  onExited,
 }: {
+  open: boolean;
   canvas: CanvasSummary;
   busy: boolean;
   onCancel: () => void;
   onConfirm: () => void;
+  onExited: () => void;
 }) {
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !busy) onCancel();
     };
     window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [busy, onCancel]);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, busy, onCancel]);
 
   return (
     <div
@@ -675,21 +689,30 @@ function DeleteCanvasDialog({
         alignItems: "center",
         justifyContent: "center",
         padding: 20,
+        pointerEvents: open ? "auto" : "none",
       }}
     >
       <style>{`
-        @keyframes dash-dialog-fade {
+        @keyframes dash-dialog-fade-in {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
-        @keyframes dash-dialog-pop {
+        @keyframes dash-dialog-fade-out {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
+        @keyframes dash-dialog-pop-in {
           from { opacity: 0; transform: translateY(10px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+        @keyframes dash-dialog-pop-out {
+          from { opacity: 1; transform: translateY(0)    scale(1); }
+          to   { opacity: 0; transform: translateY(6px)  scale(0.97); }
         }
       `}</style>
 
       <div
-        onClick={busy ? undefined : onCancel}
+        onClick={busy || !open ? undefined : onCancel}
         style={{
           position: "absolute",
           inset: 0,
@@ -697,11 +720,18 @@ function DeleteCanvasDialog({
             "radial-gradient(ellipse at 50% 40%, rgba(7,13,31,0.55) 0%, rgba(7,13,31,0.85) 100%)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          animation: "dash-dialog-fade 220ms ease both",
+          animation: open
+            ? "dash-dialog-fade-in 220ms ease both"
+            : "dash-dialog-fade-out 200ms ease both",
         }}
       />
 
       <div
+        onAnimationEnd={(e) => {
+          if (!open && e.animationName === "dash-dialog-pop-out") {
+            onExited();
+          }
+        }}
         style={{
           position: "relative",
           width: "100%",
@@ -712,7 +742,9 @@ function DeleteCanvasDialog({
           border: `1px solid ${PALETTE.borderStrong}`,
           boxShadow:
             "0 32px 80px -20px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,180,171,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
-          animation: "dash-dialog-pop 260ms cubic-bezier(0.16,1,0.3,1) both",
+          animation: open
+            ? "dash-dialog-pop-in 260ms cubic-bezier(0.16,1,0.3,1) both"
+            : "dash-dialog-pop-out 200ms cubic-bezier(0.4,0,1,1) both",
         }}
       >
         <div
