@@ -2,20 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CanvusMark } from "@/client/brand/CanvusMark";
 
 /* ─── Canvus wordmark ─────────────────────────────────────────────────────── */
 const Wordmark = () => (
   <Link href="/" className="group flex items-center gap-2.5 select-none">
-    {/* Logo mark – two overlapping rounded squares */}
-    <div className="relative w-8 h-8">
-      <div
-        className="absolute inset-0 rounded-lg bg-primary/80 rotate-12 scale-90
-                    group-hover:rotate-6 transition-transform duration-300"
-      />
-      <div
-        className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary-container to-primary
-                    group-hover:rotate-3 transition-transform duration-300"
-      />
+    <div className="transition-transform duration-300 group-hover:-rotate-3">
+      <CanvusMark size={32} />
     </div>
     <span
       className="text-[22px] font-extrabold tracking-[-0.04em] text-on-surface

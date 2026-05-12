@@ -14,6 +14,7 @@ import {
   removeGuestCanvas,
 } from "@/lib/guest";
 import { useModal } from "@/lib/modal";
+import { CanvusMark } from "@/client/brand/CanvusMark";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -739,43 +740,5 @@ function SparkleIcon() {
 }
 
 function BrandMark() {
-  return (
-    <div style={{ position: "relative", width: 28, height: 28 }}>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 8,
-          background: PALETTE.primaryStrong,
-          transform: "rotate(8deg) scale(0.92)",
-          opacity: 0.6,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 8,
-          background: `linear-gradient(135deg, ${PALETTE.primary}, ${PALETTE.primaryStrong})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3)",
-        }}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={PALETTE.primaryDeep}
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M4 4h7v7H4zM13 13h7v7h-7z" />
-        </svg>
-      </div>
-    </div>
-  );
+  return <CanvusMark size={28} />;
 }
