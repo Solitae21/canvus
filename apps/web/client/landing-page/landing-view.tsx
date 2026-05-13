@@ -642,9 +642,11 @@ export default function LandingPageView() {
 
           {/* Links */}
           <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            {["Features", "How it works", "Changelog"].map((l) => (
-              <span key={l} className="lp-link">{l}</span>
-            ))}
+            <span className="lp-link">Features</span>
+            <Link href="/how-it-works" className="lp-link" style={{ textDecoration: "none" }}>
+              How it works
+            </Link>
+            <span className="lp-link">Changelog</span>
           </div>
 
           {/* CTAs */}
