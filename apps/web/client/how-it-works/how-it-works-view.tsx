@@ -883,7 +883,7 @@ export default function HowItWorksView() {
           </Link>
 
           <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <Link href="/#features" className="hw-link">Features</Link>
+            <Link href="/features" className="hw-link">Features</Link>
             <Link href="/how-it-works" className="hw-link" style={{ color: PALETTE.text }}>How it works</Link>
             <span className="hw-link">Changelog</span>
           </div>

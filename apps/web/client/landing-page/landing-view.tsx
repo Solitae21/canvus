@@ -642,7 +642,9 @@ export default function LandingPageView() {
 
           {/* Links */}
           <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <span className="lp-link">Features</span>
+            <Link href="/features" className="lp-link" style={{ textDecoration: "none" }}>
+              Features
+            </Link>
             <Link href="/how-it-works" className="lp-link" style={{ textDecoration: "none" }}>
               How it works
             </Link>
