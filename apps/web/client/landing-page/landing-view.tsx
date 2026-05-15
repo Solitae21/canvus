@@ -1230,9 +1230,9 @@ export default function LandingPageView() {
               color: PALETTE.text,
               marginTop: 16,
             }}>
-              From invite to insight
+              From blank board to
               <br />
-              in under sixty seconds.
+              shared decision.
             </h2>
           </div>
 
@@ -1250,9 +1250,9 @@ export default function LandingPageView() {
             }} />
 
             {[
-              { n: "01", t: "Create a board",   d: "Sign in with Google or GitHub. Name your board, pick a template, start in seconds.", c: PALETTE.primary },
-              { n: "02", t: "Invite your team", d: "Share a link. Everyone joins with their name and color. No installs. No accounts to wrangle.", c: PALETTE.primaryStrong },
-              { n: "03", t: "Build & present", d: "Drag shapes, draw connections, pin notes. Press P to project — viewers follow your cursor live.", c: PALETTE.tertiary },
+              { n: "01", t: "Open a board",     d: "Sign in with email or jump in as a guest. Name your board and start on a blank canvas — no setup, no project config.", c: PALETTE.primary },
+              { n: "02", t: "Share the link",   d: "Hit Share, copy the link, send it. Anyone who opens it joins live with their own name and cursor color.", c: PALETTE.primaryStrong },
+              { n: "03", t: "Build & present", d: "Drag from 18 shapes, draw orthogonal connections, drop sticky notes. Switch to Present mode and viewers follow your viewport.", c: PALETTE.tertiary },
             ].map((s, si) => (
               <div key={s.n} className={`lp-reveal lp-d${si + 1}`} style={{
                 display: "flex", flexDirection: "column", alignItems: "center",

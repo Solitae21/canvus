@@ -275,55 +275,59 @@ const GlobalStyles = () => (
 
 const MockCreate = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/new" />
-    <div style={{ padding: 24, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-      {[
-        { title: "Blank", c: PALETTE.primary, glyph: "▢" },
-        { title: "Flowchart", c: PALETTE.primaryStrong, glyph: "◇" },
-        { title: "Roadmap", c: PALETTE.amber, glyph: "▭" },
-      ].map((t, i) => (
-        <div
-          key={t.title}
-          style={{
-            aspectRatio: "1/1.05",
-            borderRadius: 12,
-            border: `1px solid ${i === 1 ? `${t.c}80` : PALETTE.borderSoft}`,
-            background: i === 1 ? `${t.c}14` : "rgba(7,13,31,0.5)",
-            display: "flex", flexDirection: "column",
-            justifyContent: "space-between",
-            padding: 14,
-            position: "relative",
-          }}
-        >
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            border: `1px solid ${t.c}55`,
-            background: `${t.c}1a`,
-            color: t.c, display: "flex",
-            alignItems: "center", justifyContent: "center",
-            fontSize: 16, fontWeight: 700,
-          }}>{t.glyph}</div>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: PALETTE.text }}>{t.title}</div>
-            <div className="hw-mono" style={{ fontSize: 9, color: PALETTE.textFaint, marginTop: 2, letterSpacing: "0.05em" }}>
-              {String(i + 1).padStart(2, "0")} · template
-            </div>
-          </div>
-          {i === 1 && (
-            <div style={{
-              position: "absolute", top: 8, right: 8,
-              width: 14, height: 14, borderRadius: "50%",
-              background: PALETTE.primaryStrong,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontSize: 9, fontWeight: 800,
-            }}>✓</div>
-          )}
-        </div>
-      ))}
-    </div>
-    <div style={{ padding: "0 24px 22px", display: "flex", justifyContent: "flex-end", gap: 8 }}>
-      <div style={mockGhostBtnStyle}>Cancel</div>
-      <div style={mockPrimaryBtnStyle}>Create board →</div>
+    <MockChrome url="canv.us/dashboard" />
+    <div style={{ padding: 28 }}>
+      <div className="hw-mono" style={{ fontSize: 10, color: PALETTE.textFaint, letterSpacing: "0.1em", marginBottom: 12 }}>
+        NEW BOARD
+      </div>
+      <label style={{
+        display: "block", fontSize: 11.5, fontWeight: 600,
+        color: PALETTE.textDim, marginBottom: 8, letterSpacing: "0.02em",
+      }}>
+        Board name
+      </label>
+      <div style={{
+        padding: "11px 14px",
+        background: "rgba(7,13,31,0.7)",
+        border: `1px solid ${PALETTE.primary}55`,
+        borderRadius: 10,
+        boxShadow: `0 0 0 3px ${PALETTE.primary}18`,
+        marginBottom: 18,
+        display: "flex", alignItems: "center", gap: 6,
+      }}>
+        <span style={{ fontSize: 13.5, color: PALETTE.text, fontWeight: 500 }}>
+          Q2 launch plan
+        </span>
+        <span style={{
+          width: 1, height: 14,
+          background: PALETTE.primary,
+          animation: "hw-blink 1s steps(2) infinite",
+        }} />
+      </div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 12px",
+        background: "rgba(176,198,255,0.04)",
+        border: `1px dashed ${PALETTE.borderSoft}`,
+        borderRadius: 8,
+        marginBottom: 22,
+      }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: 6,
+          border: `1px solid ${PALETTE.primary}55`,
+          background: `${PALETTE.primary}1a`,
+          color: PALETTE.primary,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 13, fontWeight: 700,
+        }}>▢</div>
+        <span className="hw-mono" style={{ fontSize: 10.5, color: PALETTE.textDim, letterSpacing: "0.04em" }}>
+          starts as a blank canvas — pan, zoom, drop shapes
+        </span>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <div style={mockGhostBtnStyle}>Cancel</div>
+        <div style={mockPrimaryBtnStyle}>Create board →</div>
+      </div>
     </div>
   </div>
 );
@@ -357,12 +361,15 @@ const MockInvite = () => (
           Copy
         </span>
       </div>
+      <div className="hw-mono" style={{ fontSize: 10, color: PALETTE.textFaint, letterSpacing: "0.1em", marginBottom: 8 }}>
+        IN THE ROOM
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {[
-          { name: "Mia Kato",     role: "owner",  status: "editing now", col: PALETTE.primary, live: true },
-          { name: "Marcus Chen",  role: "editor", status: "editing now", col: PALETTE.primaryStrong, live: true },
-          { name: "Jake Liu",     role: "guest",  status: "viewing",     col: PALETTE.warm, live: true },
-          { name: "Pending…",     role: "guest",  status: "link opened", col: PALETTE.textFaint, live: false },
+          { name: "Mia Kato",      col: PALETTE.primary },
+          { name: "Marcus Chen",   col: PALETTE.primaryStrong },
+          { name: "Jake Liu",      col: PALETTE.warm },
+          { name: "Quiet Otter",   col: PALETTE.mint },
         ].map((p) => (
           <div key={p.name} style={{
             display: "flex", alignItems: "center", gap: 10,
@@ -377,22 +384,17 @@ const MockInvite = () => (
               fontSize: 10, fontWeight: 800, color: "#0c1324",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>{p.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: PALETTE.text }}>{p.name}</div>
-              <div className="hw-mono" style={{ fontSize: 9.5, color: PALETTE.textDim, letterSpacing: "0.04em", marginTop: 1 }}>
-                {p.role}
-              </div>
+            <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: PALETTE.text }}>
+              {p.name}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {p.live && (
-                <span style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: PALETTE.mint,
-                  boxShadow: `0 0 6px ${PALETTE.mint}`,
-                }} />
-              )}
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: PALETTE.mint,
+                boxShadow: `0 0 6px ${PALETTE.mint}`,
+              }} />
               <span className="hw-mono" style={{ fontSize: 10, color: PALETTE.textDim, letterSpacing: "0.04em" }}>
-                {p.status}
+                live cursor
               </span>
             </div>
           </div>
@@ -464,15 +466,15 @@ const MockBuild = () => (
               fill="rgba(255,180,84,0.10)" stroke={PALETTE.amber} strokeWidth="1" />
         <text x="68" y="200" fill={PALETTE.amber}
               fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
-          @mia
+          Sticky
         </text>
         <text x="68" y="218" fill={PALETTE.amber}
               fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.9">
-          Need to confirm
+          Confirm API timing
         </text>
         <text x="68" y="234" fill={PALETTE.amber}
               fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.9">
-          API timing first
+          before scoping build
         </text>
 
         {/* live cursor — marcus */}
@@ -678,13 +680,13 @@ export default function HowItWorksView() {
     {
       n: "01",
       eyebrow: "Step one",
-      title: "Spin up a board",
+      title: "Open a board",
       copy:
-        "Sign in with Google or GitHub, or jump in as a guest. Pick a blank canvas or start from a flowchart, roadmap, or retro template. Boards open in under a second — no project setup, no permissions to wire.",
+        "Sign in with email or jump in as a guest. Name your board and start on a blank canvas — no project setup, no permissions to wire.",
       bullets: [
-        "Three free boards on the free plan",
-        "Templates land pre-populated with sample shapes",
-        "Auto-saves locally and to the API as you work",
+        "Guest mode: auto-generated name and cursor color, no account needed",
+        "Boards persist via the API; guest boards also keep a local copy",
+        "Changes sync as you draw — no save button to press",
       ],
       mock: <MockCreate />,
       color: PALETTE.primary,
@@ -692,13 +694,13 @@ export default function HowItWorksView() {
     {
       n: "02",
       eyebrow: "Step two",
-      title: "Pull your team in",
+      title: "Share the link",
       copy:
-        "Hit Share, copy the link, drop it in Slack. Anyone with the link joins instantly with their name and a unique cursor color — no account required for guests. Owners control editor vs. viewer access from the same panel.",
+        "Hit Share, copy the board link, send it. Anyone who opens it joins instantly with their own name and cursor color — guests don't need an account.",
       bullets: [
-        "Guest access works without an account",
-        "Role-based: owner, editor, commenter, viewer",
-        "Live presence dots show who's actually looking",
+        "One copyable link per board, no invite system to wrangle",
+        "Live cursors carry each collaborator's name and color",
+        "Connection state surfaces who's currently in the room",
       ],
       mock: <MockInvite />,
       color: PALETTE.primaryStrong,
@@ -706,13 +708,13 @@ export default function HowItWorksView() {
     {
       n: "03",
       eyebrow: "Step three",
-      title: "Build the picture together",
+      title: "Build it together",
       copy:
-        "Drag from the seventeen-shape toolkit, draw orthogonal connections, drop sticky notes, scribble freehand. Every action syncs to every viewport in under fifty milliseconds — no conflicts to resolve, no save button to press.",
+        "Drag from the eighteen-shape toolkit, draw orthogonal connections between cardinal ports, drop sticky notes, sketch freehand with the pen tool. Every change rides on Yjs — no conflicts to resolve.",
       bullets: [
-        "17 flowchart shapes, swimlanes, sticky notes, freehand ink",
-        "Snap-to-grid, multi-select, undo/redo across the room",
-        "Comments anchor to shapes — not pages",
+        "18 shape types — flowchart classics, sticky notes, images",
+        "Snap-to-grid, multi-select, copy / paste / duplicate",
+        "Yjs-powered undo/redo shared across collaborators",
       ],
       mock: <MockBuild />,
       color: PALETTE.tertiary,
@@ -720,13 +722,13 @@ export default function HowItWorksView() {
     {
       n: "04",
       eyebrow: "Step four",
-      title: "Present, decide, ship",
+      title: "Present and export",
       copy:
-        "Press P to enter Present mode. Your viewport becomes the spotlight; viewers' screens follow yours in real time. Use the laser pointer to direct attention, the timer to keep things tight, and export to PNG, SVG, or PDF when the call ends.",
+        "Switch into Present mode and your viewport becomes the spotlight; followers' canvases track yours in real time. Toggle the laser pointer to direct attention, run the shared timer to keep pace, then export when you're done.",
       bullets: [
-        "Presenter mode with timer and laser pointer",
-        "Viewers auto-follow — no screen-sharing required",
-        "One-click export to PNG, SVG, or PDF",
+        "Presenter mode with shared timer and laser pointer",
+        "Viewers follow your viewport — no screen-sharing required",
+        "Export to PNG, JPEG, PDF, or JSON",
       ],
       mock: <MockPresent />,
       color: PALETTE.warm,
@@ -736,9 +738,9 @@ export default function HowItWorksView() {
   const technicals = [
     {
       label: "Sync layer",
-      title: "CRDT under the hood",
+      title: "Yjs CRDT under the hood",
       copy:
-        "Every shape, label, and stroke is a conflict-free replicated data type. Two editors can drag the same node at the same time — both intents merge cleanly, no last-writer-wins.",
+        "Shapes and connections live in Yjs maps. Two editors moving the same node simultaneously merge cleanly through the CRDT — no last-writer-wins reconciliation.",
       color: PALETTE.primary,
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -750,9 +752,9 @@ export default function HowItWorksView() {
     },
     {
       label: "Transport",
-      title: "WebSocket envelopes",
+      title: "Socket.IO room per board",
       copy:
-        "A single persistent WebSocket per board carries typed envelopes between client and API. Joining mid-session replays the canvas state instantly; broadcasts hit every room member.",
+        "Each board opens a Socket.IO room via y-socket.io. Joining mid-session replays the full Yjs document; subsequent edits broadcast as small CRDT updates to every room member.",
       color: PALETTE.primaryStrong,
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -769,7 +771,7 @@ export default function HowItWorksView() {
       label: "State",
       title: "Local-first by design",
       copy:
-        "Canvas state lives in your browser first, then mirrors to the API. Lose your connection mid-flow and CanvUs keeps working — reconnects merge your edits back into the room without conflicts.",
+        "The Yjs document lives in your browser. Edits land locally and apply instantly; on reconnect the CRDT merges your changes back into the room without conflicts.",
       color: PALETTE.tertiary,
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -782,44 +784,50 @@ export default function HowItWorksView() {
   ];
 
   const shortcuts = [
-    { combo: ["V"],       label: "Select tool" },
-    { combo: ["R"],       label: "Rectangle" },
-    { combo: ["D"],       label: "Diamond" },
-    { combo: ["C"],       label: "Connector" },
-    { combo: ["N"],       label: "Sticky note" },
-    { combo: ["P"],       label: "Present mode" },
-    { combo: ["Space"],   label: "Pan canvas" },
-    { combo: ["⌘", "Z"],  label: "Undo" },
-    { combo: ["⌘", "⇧", "Z"], label: "Redo" },
-    { combo: ["⌘", "K"],  label: "Command menu" },
-    { combo: ["⌘", "/"],  label: "Comment thread" },
-    { combo: ["Esc"],     label: "Exit present" },
+    { combo: ["V"],            label: "Select tool" },
+    { combo: ["H"],            label: "Pan tool" },
+    { combo: ["R"],            label: "Rectangle" },
+    { combo: ["D"],            label: "Diamond" },
+    { combo: ["O"],            label: "Oval" },
+    { combo: ["A"],            label: "Arrow / connector" },
+    { combo: ["P"],            label: "Pen" },
+    { combo: ["T"],            label: "Text" },
+    { combo: ["S"],            label: "Sticky note" },
+    { combo: ["Space"],        label: "Hold to pan" },
+    { combo: ["⌘", "Z"],       label: "Undo" },
+    { combo: ["⌘", "⇧", "Z"],  label: "Redo" },
+    { combo: ["⌘", "C"],       label: "Copy selection" },
+    { combo: ["⌘", "V"],       label: "Paste" },
+    { combo: ["⌘", "D"],       label: "Duplicate" },
+    { combo: ["⌘", "0"],       label: "Reset zoom" },
+    { combo: ["Del"],          label: "Delete selection" },
+    { combo: ["Esc"],          label: "Clear selection" },
   ];
 
   const faqs = [
     {
       q: "Do guests need an account?",
-      a: "No. Anyone with the share link can join as a guest, pick a name, and start editing immediately. Owners can downgrade guest access to view-only from the share panel.",
+      a: "No. Click \"Continue as guest\" from sign-in or open a shared board link, and you're in. CanvUs gives you an auto-generated name and a cursor color that persist in your browser.",
     },
     {
       q: "How does Present mode differ from screen-sharing?",
-      a: "Screen-sharing pushes pixels; Present mode pushes viewport state. Each viewer renders the canvas locally at their own resolution, so text stays crisp and your laggy Wi-Fi doesn't blur the whole call. Viewers can still pan away to peek and re-sync with one click.",
+      a: "Screen-sharing pushes pixels; Present mode pushes viewport state. Each viewer renders the canvas locally at their own resolution, so text stays crisp regardless of bandwidth. The presenter gets a shared timer and laser pointer to keep the room aligned.",
     },
     {
       q: "What happens if I lose my connection?",
-      a: "CanvUs is local-first. Your edits keep landing on your own canvas while you're offline; when the WebSocket reconnects, the CRDT merges your changes back into the room without conflicts or 'who wins' prompts.",
+      a: "CanvUs is local-first via Yjs. Your edits keep landing on your own canvas while you're offline; once the socket reconnects, the CRDT merges your changes back into the room without conflicts or 'who wins' prompts.",
     },
     {
-      q: "Can I export a board?",
-      a: "Yes — PNG, SVG, or PDF from the share menu. SVG preserves shapes and text as editable layers; PDF is great for reviews; PNG is the quick screenshot.",
+      q: "What can I export?",
+      a: "PNG, JPEG, PDF, and JSON from the Export menu. PNG and JPEG are quick screenshots, PDF is sized to fit the canvas bounds, and JSON exports the raw shapes and connections for backup or re-import.",
     },
     {
-      q: "Is there a free tier?",
-      a: "Yes. Three boards, unlimited guests, all core features. We only charge for workspaces, SSO, and audit logs on the Team plan.",
+      q: "What shapes are available?",
+      a: "Eighteen — the standard flowchart set (rectangle, rounded rectangle, diamond, oval, parallelogram, trapezoid, hexagon, cylinder, document, predefined-process, manual-input, stored-data, internal-storage, circle, off-page, delay), plus sticky notes and image shapes.",
     },
     {
       q: "Where is my data stored?",
-      a: "Canvas state lives in your browser first and syncs to our API on every change. We don't sell data, train models on your boards, or retain deleted content past 30 days. SSO and SAML are available on Team.",
+      a: "The canvas is a Yjs document in your browser, kept in sync through the API. Guest-mode boards also persist in your browser's local storage so you don't lose work between sessions.",
     },
   ];
 
@@ -1103,9 +1111,9 @@ export default function HowItWorksView() {
               maxWidth: 540,
               justifySelf: "end",
             }}>
-              The technology under the canvas — CRDTs, WebSockets, local-first state —
-              exists so you don&apos;t have to think about it. Here&apos;s what makes
-              fifty-millisecond sync feel like zero.
+              The technology under the canvas — Yjs, Socket.IO, local-first state —
+              exists so you don&apos;t have to think about it. Here&apos;s what keeps
+              edits in sync without conflicts.
             </p>
           </div>
 
