@@ -66,6 +66,7 @@ import { useCanvasWsContext } from "./canvas-ws-context";
 import { useCanvasExportContext } from "./canvas-export-context";
 import { useYjsCanvas } from "./use-yjs";
 import { usePresence } from "@/lib/use-presence";
+import { selectRemoteCursors } from "@/redux/slice/presence/presence-slice";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Canvas-mode header — minimal overlay that sits on top of the canvas.
@@ -606,6 +607,15 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   const [nameDraft, setNameDraft] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
   const canvasName = useAppSelector(selectCanvasName);
+  const remoteCursors = useAppSelector(selectRemoteCursors);
+  const remoteUsers = useMemo(() => {
+    return Object.entries(remoteCursors)
+      .map(([userId, c]) => ({ userId, name: c.name, color: c.color }))
+      .sort((a, b) => a.userId.localeCompare(b.userId));
+  }, [remoteCursors]);
+  const MAX_VISIBLE_AVATARS = 3;
+  const visibleRemotes = remoteUsers.slice(0, MAX_VISIBLE_AVATARS);
+  const extraRemoteCount = Math.max(0, remoteUsers.length - MAX_VISIBLE_AVATARS);
   const { subscribe } = useCanvasWsContext();
 
   // Canvas switcher (dropdown listing other guest canvases)
@@ -939,11 +949,56 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                            bg-surface-container-highest text-on-surface
                            rounded-md shadow-lg whitespace-nowrap
                            opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
-                           transition-all duration-150"
+                           transition-all duration-150 z-10"
               >
-                {identity?.name ?? "Guest"}
+                {identity?.name ?? "Guest"} (you)
               </span>
             </div>
+
+            {visibleRemotes.map((user) => (
+              <div
+                key={user.userId}
+                className="group relative w-7 h-7 rounded-full ring-2 ring-surface-container
+                           flex items-center justify-center text-[10px] font-bold text-on-primary"
+                style={{ background: user.color }}
+              >
+                {getInitials(user.name)}
+                <span
+                  className="pointer-events-none absolute top-full mt-1.5 left-1/2 -translate-x-1/2
+                             px-2 py-1 text-[11px] font-medium tracking-wide
+                             bg-surface-container-highest text-on-surface
+                             rounded-md shadow-lg whitespace-nowrap
+                             opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                             transition-all duration-150 z-10"
+                >
+                  {user.name}
+                </span>
+              </div>
+            ))}
+
+            {extraRemoteCount > 0 && (
+              <div
+                className="group relative w-7 h-7 rounded-full ring-2 ring-surface-container
+                           flex items-center justify-center text-[10px] font-semibold text-on-surface
+                           bg-white/10"
+                title={`${extraRemoteCount} more`}
+              >
+                +{extraRemoteCount}
+                <span
+                  className="pointer-events-none absolute top-full mt-1.5 left-1/2 -translate-x-1/2
+                             px-2 py-1 text-[11px] font-medium tracking-wide
+                             bg-surface-container-highest text-on-surface
+                             rounded-md shadow-lg whitespace-nowrap max-w-50 truncate
+                             opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                             transition-all duration-150 z-10"
+                >
+                  {remoteUsers
+                    .slice(MAX_VISIBLE_AVATARS)
+                    .map((u) => u.name)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="w-px h-5 bg-white/[0.08] mx-0.5" />
