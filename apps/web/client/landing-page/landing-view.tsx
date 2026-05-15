@@ -1074,7 +1074,7 @@ export default function LandingPageView() {
 
             {/* Floating: live users — sits well below the window, clear of the bottom toolbar */}
             <div style={{
-              position: "absolute", bottom: -34, left: 18,
+              position: "absolute", bottom: -34, left: -28,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 14, padding: "9px 13px",
