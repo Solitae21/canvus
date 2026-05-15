@@ -1072,9 +1072,9 @@ export default function LandingPageView() {
               </div>
             </div>
 
-            {/* Floating: live users — sits fully below the window so it never collides with the bottom toolbar */}
+            {/* Floating: live users — sits well below the window, clear of the bottom toolbar */}
             <div style={{
-              position: "absolute", bottom: -28, left: 16,
+              position: "absolute", bottom: -34, left: 18,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 14, padding: "9px 13px",
@@ -1095,9 +1095,9 @@ export default function LandingPageView() {
               </span>
             </div>
 
-            {/* Floating: latency — pulled in so it's not clipped by the page's overflow-x at narrow viewports */}
+            {/* Floating: latency — pop-out chip above the window, mirrors the editing chip below */}
             <div style={{
-              position: "absolute", top: 96, right: 10,
+              position: "absolute", top: -22, right: 28,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 12,
