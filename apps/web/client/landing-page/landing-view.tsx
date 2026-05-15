@@ -262,7 +262,60 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-/* ── Animated canvas preview (themed) ─────────────────────────────────── */
+/* ── Canvas preview — mirrors the actual in-app canvas ─────────────────── */
+const CANVAS_STROKE = "#ffffff";
+const CANVAS_ARROW = "#a855f7";
+const CANVAS_SURFACE = "#151b2d";
+const STICKY_FILL = "#FEF3C7";
+const STICKY_STROKE = "#FCD34D";
+const STICKY_TEXT = "#1f2937";
+
+const RailSep = () => (
+  <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.08)", margin: "0 3px" }} />
+);
+
+const RailIcon = ({
+  d,
+  active = false,
+  size = 13,
+}: {
+  d: string | string[];
+  active?: boolean;
+  size?: number;
+}) => {
+  const paths = Array.isArray(d) ? d : [d];
+  return (
+    <div style={{
+      width: 26, height: 26, borderRadius: 7,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: active ? "rgba(176,198,255,0.14)" : "transparent",
+      color: active ? PALETTE.primary : PALETTE.textDim,
+      boxShadow: active ? "inset 0 0 0 1.5px rgba(176,198,255,0.25)" : "none",
+    }}>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        {paths.map((p, i) => <path key={i} d={p} />)}
+      </svg>
+    </div>
+  );
+};
+
+const HeaderPillIcon = ({ d, size = 13 }: { d: string | string[]; size?: number }) => {
+  const paths = Array.isArray(d) ? d : [d];
+  return (
+    <div style={{
+      width: 22, height: 22, borderRadius: 6,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: PALETTE.textDim,
+    }}>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {paths.map((p, i) => <path key={i} d={p} />)}
+      </svg>
+    </div>
+  );
+};
+
 const CanvasPreview = () => {
   return (
     <div
@@ -272,113 +325,251 @@ const CanvasPreview = () => {
         height: "100%",
         borderRadius: 14,
         overflow: "hidden",
-        background:
-          "radial-gradient(ellipse at 30% 20%, #1a2244 0%, #0c1324 55%, #070d1f 100%)",
+        background: CANVAS_SURFACE,
       }}
     >
-      {/* Dot grid */}
+      {/* Dot grid — matches CanvasStage (24px white dots @ 6% alpha, 12px offset) */}
       <svg
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          opacity: 0.6,
-        }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        aria-hidden
       >
         <defs>
           <pattern
             id="lp-canvas-dots"
-            width="22"
-            height="22"
+            width="24"
+            height="24"
             patternUnits="userSpaceOnUse"
+            x="12"
+            y="12"
           >
-            <circle cx="11" cy="11" r="0.9" fill="rgba(220,225,251,0.10)" />
+            <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#lp-canvas-dots)" />
       </svg>
 
-      {/* Flowchart */}
+      {/* ── Top header overlay (mirrors CanvasHeader: 3 floating pills) ── */}
+      <div style={{
+        position: "absolute", top: 10, left: 10, right: 10,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 8, zIndex: 10,
+      }}>
+        {/* Left: back / project */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "5px 10px 5px 6px",
+          background: "rgba(25,31,49,0.7)",
+          backdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 14,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+        }}>
+          <HeaderPillIcon d="M19 12H5M12 19l-7-7 7-7" />
+          <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.08)" }} />
+          <div style={{
+            width: 14, height: 14, borderRadius: 3,
+            background: `linear-gradient(135deg, ${PALETTE.primary}, ${PALETTE.primaryStrong})`,
+            marginLeft: 4,
+          }} />
+          <span style={{
+            fontSize: 12, fontWeight: 700, color: PALETTE.text,
+            letterSpacing: "-0.015em",
+          }}>
+            Q2 Planning
+          </span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+               stroke={PALETTE.textDim} strokeWidth="2.5"
+               strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+
+        {/* Center: zoom controls */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 0,
+          padding: "3px 4px",
+          background: "rgba(25,31,49,0.7)",
+          backdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12,
+        }}>
+          <div style={{
+            width: 20, height: 20, color: PALETTE.textDim, fontSize: 13,
+            display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 500,
+          }}>−</div>
+          <span style={{
+            width: 40, fontSize: 11, color: PALETTE.textDim, fontWeight: 600,
+            textAlign: "center", fontVariantNumeric: "tabular-nums",
+          }}>100%</span>
+          <div style={{
+            width: 20, height: 20, color: PALETTE.textDim, fontSize: 13,
+            display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 500,
+          }}>+</div>
+        </div>
+
+        {/* Right: undo/redo, avatars, Share, more */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 1,
+          padding: "5px 6px",
+          background: "rgba(25,31,49,0.7)",
+          backdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 14,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+        }}>
+          <HeaderPillIcon d={["M3 7v6h6", "M3.51 15a9 9 0 1 0 .49-3.96"]} />
+          <HeaderPillIcon d={["M21 7v6h-6", "M20.49 15a9 9 0 1 1-.49-3.96"]} />
+          <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.08)", margin: "0 3px" }} />
+          {/* Avatars */}
+          <div style={{ display: "flex", marginRight: 4 }}>
+            {([
+              ["MK", PALETTE.primary],
+              ["MC", PALETTE.primaryStrong],
+              ["JL", PALETTE.warm],
+            ] as const).map(([label, color], i) => (
+              <div key={label} style={{
+                width: 22, height: 22, borderRadius: "50%",
+                background: color,
+                color: PALETTE.primaryDeep,
+                fontSize: 9, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: `1.5px solid ${PALETTE.surfaceHi}`,
+                marginLeft: i === 0 ? 0 : -5,
+                position: "relative", zIndex: 3 - i,
+              }}>{label}</div>
+            ))}
+          </div>
+          <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.08)", margin: "0 3px" }} />
+          {/* Share button (matches bg-primary-container) */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 4,
+            padding: "4px 10px",
+            background: PALETTE.primary,
+            color: PALETTE.primaryDeep,
+            fontSize: 11, fontWeight: 700,
+            borderRadius: 9,
+            letterSpacing: "0.01em",
+          }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2.2"
+                 strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <path d="M16 6l-4-4-4 4" />
+              <path d="M12 2v13" />
+            </svg>
+            Share
+          </div>
+          <div style={{
+            width: 22, height: 22, display: "flex",
+            alignItems: "center", justifyContent: "center", color: PALETTE.textDim,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5" cy="12" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="19" cy="12" r="1.5" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Flowchart (white-stroked shapes + solid purple arrows) ── */}
       <svg
+        viewBox="0 0 600 440"
+        preserveAspectRatio="xMidYMid meet"
         style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          overflow: "visible",
+          position: "absolute", inset: 0,
+          width: "100%", height: "100%",
         }}
       >
-        {/* connectors */}
-        <line x1="50%" y1="92"  x2="50%" y2="152" stroke={PALETTE.primary} strokeWidth="1.2" strokeDasharray="3,3" opacity="0.55" />
-        <line x1="50%" y1="222" x2="50%" y2="270" stroke={PALETTE.primary} strokeWidth="1.2" strokeDasharray="3,3" opacity="0.55" />
-        <line
-          x1="50%" y1="340" x2="50%" y2="385"
-          stroke={PALETTE.primaryStrong}
-          strokeWidth="1.4"
-          strokeDasharray="4,3"
-          style={{ animation: "lp-draw 2s ease infinite", strokeDashoffset: 240 }}
-        />
+        <defs>
+          <marker
+            id="lp-flow-arrow"
+            viewBox="0 0 10 10"
+            refX="9" refY="5"
+            markerWidth="5" markerHeight="5"
+            orient="auto-start-reverse"
+          >
+            <path d="M0,0 L10,5 L0,10 z" fill={CANVAS_ARROW} />
+          </marker>
+        </defs>
 
-        {/* start */}
-        <rect x="calc(50% - 70)" y="52" width="140" height="40" rx="20"
-              fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.2" />
-        <text x="50%" y="77" textAnchor="middle" fill={PALETTE.primary}
-              fontSize="11.5" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Connectors — solid purple, orthogonal */}
+        <path d="M 300 124 L 300 168" stroke={CANVAS_ARROW}
+              strokeWidth="1.6" fill="none" markerEnd="url(#lp-flow-arrow)" />
+        <path d="M 300 248 L 300 282" stroke={CANVAS_ARROW}
+              strokeWidth="1.6" fill="none" markerEnd="url(#lp-flow-arrow)" />
+        <path
+          d="M 300 358 L 300 388"
+          stroke={CANVAS_ARROW}
+          strokeWidth="1.6"
+          fill="none"
+          markerEnd="url(#lp-flow-arrow)"
+          strokeDasharray="240"
+          style={{ animation: "lp-draw 3.2s ease-in-out infinite" }}
+        />
+        {/* Process → Sticky */}
+        <path d="M 360 208 L 416 208" stroke={CANVAS_ARROW}
+              strokeWidth="1.6" fill="none" markerEnd="url(#lp-flow-arrow)" />
+
+        {/* Start: terminal (oval) */}
+        <ellipse cx="300" cy="100" rx="68" ry="22"
+                 fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="300" y="105" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Start meeting
         </text>
 
-        {/* process */}
-        <rect x="calc(50% - 95)" y="152" width="190" height="70" rx="10"
-              fill="rgba(86,141,255,0.10)" stroke={PALETTE.primaryStrong} strokeWidth="1.2" />
-        <text x="50%" y="183" textAnchor="middle" fill={PALETTE.text}
-              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
-          Present flowchart
+        {/* Present flowchart: rectangle */}
+        <rect x="240" y="168" width="120" height="80"
+              fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="300" y="200" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
+          Present
         </text>
-        <text x="50%" y="201" textAnchor="middle" fill={PALETTE.textMuted}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
-          Edit together in real time
+        <text x="300" y="218" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
+          flowchart
         </text>
 
-        {/* decision */}
-        <polygon
-          points="calc(50%),270 calc(50% + 88),305 calc(50%),340 calc(50% - 88),305"
-          fill="rgba(188,199,222,0.08)" stroke={PALETTE.tertiary} strokeWidth="1.2"
-        />
-        <text x="50%" y="309" textAnchor="middle" fill={PALETTE.tertiary}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Decision: diamond */}
+        <polygon points="300,282 364,320 300,358 236,320"
+                 fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="300" y="324" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Approved?
         </text>
 
-        {/* end */}
-        <rect x="calc(50% - 62)" y="385" width="124" height="38" rx="19"
-              fill="rgba(125,211,164,0.08)" stroke={PALETTE.mint} strokeWidth="1.2" />
-        <text x="50%" y="409" textAnchor="middle" fill={PALETTE.mint}
-              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* End: terminal (oval) */}
+        <ellipse cx="300" cy="408" rx="56" ry="20"
+                 fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="300" y="413" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Ship it
         </text>
 
-        {/* sticky */}
-        <rect x="72%" y="155" width="132" height="84" rx="6"
-              fill="rgba(255,180,84,0.08)" stroke={PALETTE.amber} strokeWidth="1" opacity="0.95" />
-        <text x="72%" dx="14" y="178" fill={PALETTE.amber}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Sticky note (yellow, dark text — matches STICKY_FILL/STROKE) */}
+        <rect x="416" y="160" width="138" height="96" rx="6"
+              fill={STICKY_FILL} stroke={STICKY_STROKE} strokeWidth="1.5" />
+        <text x="430" y="184" fill={STICKY_TEXT}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
           Notes
         </text>
-        <text x="72%" dx="14" y="198" fill={PALETTE.amber}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
+        <text x="430" y="208" fill={STICKY_TEXT}
+              fontSize="11.5" fontFamily="var(--font-plus-jakarta-sans)">
           Review before
         </text>
-        <text x="72%" dx="14" y="214" fill={PALETTE.amber}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
+        <text x="430" y="224" fill={STICKY_TEXT}
+              fontSize="11.5" fontFamily="var(--font-plus-jakarta-sans)">
           client sign-off
         </text>
-        <line x1="72%" y1="240" x2="50%" y2="310"
-              stroke={PALETTE.amber} strokeWidth="1" strokeDasharray="3,3" opacity="0.3" />
       </svg>
 
-      {/* Cursor A */}
-      <div style={{ position: "absolute", animation: "lp-cursor-a 8s ease-in-out infinite", pointerEvents: "none", zIndex: 10 }}>
+      {/* Cursor A — mia */}
+      <div style={{
+        position: "absolute", top: "44%", left: "30%",
+        animation: "lp-cursor-a 8s ease-in-out infinite",
+        pointerEvents: "none", zIndex: 12,
+      }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill={PALETTE.primaryStrong}
              style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
           <path d="M5 3l14 9-7 1-4 7z" />
@@ -386,14 +577,19 @@ const CanvasPreview = () => {
         <div className="lp-mono" style={{
           background: PALETTE.primaryStrong, color: "#fff",
           fontSize: 10, fontWeight: 600, padding: "2px 7px",
-          borderRadius: 6, marginTop: 2, whiteSpace: "nowrap", letterSpacing: "0.02em",
+          borderRadius: 6, marginTop: 2, whiteSpace: "nowrap",
+          letterSpacing: "0.02em",
         }}>
           mia
         </div>
       </div>
 
-      {/* Cursor B */}
-      <div style={{ position: "absolute", animation: "lp-cursor-b 11s ease-in-out infinite", pointerEvents: "none", zIndex: 10 }}>
+      {/* Cursor B — jake */}
+      <div style={{
+        position: "absolute", top: "60%", left: "55%",
+        animation: "lp-cursor-b 11s ease-in-out infinite",
+        pointerEvents: "none", zIndex: 12,
+      }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill={PALETTE.warm}
              style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
           <path d="M5 3l14 9-7 1-4 7z" />
@@ -401,64 +597,70 @@ const CanvasPreview = () => {
         <div className="lp-mono" style={{
           background: PALETTE.warm, color: "#3a0d09",
           fontSize: 10, fontWeight: 700, padding: "2px 7px",
-          borderRadius: 6, marginTop: 2, whiteSpace: "nowrap", letterSpacing: "0.02em",
+          borderRadius: 6, marginTop: 2, whiteSpace: "nowrap",
+          letterSpacing: "0.02em",
         }}>
           jake
         </div>
       </div>
 
-      {/* Floating tool rail */}
+      {/* ── Bottom-center toolbar pill (mirrors apps/web/components/toolbar.tsx) ── */}
       <div style={{
-        position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-        background: "rgba(21,27,45,0.7)", border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 12, backdropFilter: "blur(12px)",
-        padding: "6px 5px", display: "flex", flexDirection: "column", gap: 4,
+        position: "absolute", left: "50%", bottom: 14,
+        transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 0,
+        padding: "5px 6px",
+        background: "rgba(25,31,49,0.85)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 14,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04)",
+        zIndex: 11,
       }}>
-        {["▢", "◇", "○", "✎", "→"].map((ic, i) => (
-          <div key={i} style={{
-            width: 26, height: 26, borderRadius: 7,
-            background: i === 0 ? "rgba(176,198,255,0.14)" : "transparent",
-            border: i === 0 ? "1px solid rgba(176,198,255,0.4)" : "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, color: i === 0 ? PALETTE.primary : PALETTE.textFaint,
-          }}>{ic}</div>
-        ))}
-      </div>
-
-      {/* Presence */}
-      <div style={{
-        position: "absolute", top: 12, right: 12,
-        display: "flex", alignItems: "center", gap: 4,
-        background: "rgba(21,27,45,0.7)", border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 10, backdropFilter: "blur(12px)", padding: "5px 10px",
-      }}>
-        {[
-          ["MK", PALETTE.primary],
-          ["MC", PALETTE.primaryStrong],
-          ["JL", PALETTE.warm],
-        ].map(([av, col]) => (
-          <div key={av as string} style={{
-            width: 22, height: 22, borderRadius: "50%",
-            background: col as string,
-            fontSize: 9, fontWeight: 700, color: "#0c1324",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            border: `1.5px solid ${PALETTE.bg}`,
-          }}>{av}</div>
-        ))}
+        {/* Cursor (active) + Hand */}
+        <RailIcon d="M5 3l14 9-7 1-4 7z" active />
+        <RailIcon d={[
+          "M18 11V6a2 2 0 0 0-4 0",
+          "M14 10V4a2 2 0 0 0-4 0v7",
+          "M10 10.5V6a2 2 0 0 0-4 0v8",
+          "M18 11a2 2 0 0 1 4 0v5a8 8 0 0 1-8 8h-2c-2.5 0-4-1-5.5-3l-3-4.5a2 2 0 0 1 3-2.5L8 15",
+        ]} />
+        <RailSep />
+        {/* Quick shapes: process / decision / terminal / I-O */}
+        <RailIcon d="M3 5h18v14H3z" />
+        <RailIcon d="M12 2l10 10-10 10L2 12z" />
+        <RailIcon d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0" />
+        <RailIcon d="M6 4h16l-4 16H2z" />
+        {/* Shape selector chevron */}
         <div style={{
-          width: 7, height: 7, borderRadius: "50%",
-          background: PALETTE.mint,
-          boxShadow: `0 0 6px ${PALETTE.mint}`, marginLeft: 4,
-        }} />
-        <span className="lp-mono" style={{ fontSize: 10, color: PALETTE.textDim, fontWeight: 600 }}>
-          3 LIVE
-        </span>
+          display: "flex", alignItems: "center",
+          padding: "0 4px", color: PALETTE.textDim,
+        }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="3"
+               strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+        <RailSep />
+        {/* Pen / Arrow / Text */}
+        <RailIcon d="M15.232 5.232l3.536 3.536M9 13l-4 4V13h4zm6-6l-6 6" />
+        <RailIcon d={["M5 12h14", "M12 5l7 7-7 7"]} />
+        <RailIcon d="M4 7V4h16v3M9 20h6M12 4v16" />
+        <RailSep />
+        {/* Sticky / Image */}
+        <RailIcon d="M5 3h14a2 2 0 0 1 2 2v14l-5 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+        <RailIcon d={[
+          "M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z",
+          "M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
+          "M21 15l-5-5L5 21",
+        ]} />
       </div>
 
-      {/* Soft glow */}
+      {/* Soft vignette */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at 50% 110%, rgba(86,141,255,0.10) 0%, transparent 65%)",
+        background: "radial-gradient(ellipse at 50% 110%, rgba(86,141,255,0.08) 0%, transparent 65%)",
         pointerEvents: "none",
       }} />
     </div>
@@ -870,17 +1072,17 @@ export default function LandingPageView() {
               </div>
             </div>
 
-            {/* Floating: live users */}
+            {/* Floating: live users — sits fully below the window so it never collides with the bottom toolbar */}
             <div style={{
-              position: "absolute", bottom: -22, left: 22,
+              position: "absolute", bottom: -28, left: 16,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 14, padding: "10px 14px",
-              display: "flex", alignItems: "center", gap: 10,
+              borderRadius: 14, padding: "9px 13px",
+              display: "flex", alignItems: "center", gap: 9,
               boxShadow: "0 10px 32px rgba(0,0,0,0.5)",
               animation: "lp-float 4s ease-in-out infinite",
             }}>
-              <div style={{ position: "relative" }}>
+              <div style={{ position: "relative", width: 9, height: 9 }}>
                 <div style={{ width: 9, height: 9, borderRadius: "50%", background: PALETTE.mint }} />
                 <div style={{
                   position: "absolute", inset: 0, borderRadius: "50%",
@@ -888,18 +1090,18 @@ export default function LandingPageView() {
                   animation: "lp-pulse 1.5s ease-out infinite",
                 }} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: PALETTE.text }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: PALETTE.text }}>
                 3 people editing
               </span>
             </div>
 
-            {/* Floating: latency */}
+            {/* Floating: latency — pulled in so it's not clipped by the page's overflow-x at narrow viewports */}
             <div style={{
-              position: "absolute", top: 70, right: -20,
+              position: "absolute", top: 96, right: 10,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 12,
-              padding: "8px 13px",
+              padding: "7px 12px",
               display: "flex", alignItems: "center", gap: 8,
               boxShadow: "0 10px 32px rgba(0,0,0,0.5)",
               animation: "lp-float 5s 1.2s ease-in-out infinite",
