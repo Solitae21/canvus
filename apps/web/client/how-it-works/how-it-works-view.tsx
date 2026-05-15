@@ -271,62 +271,113 @@ const GlobalStyles = () => (
   `}</style>
 );
 
+/* ── Canvas surface colours — mirror apps/web/client/canvas/canvas-defaults.ts ── */
+const CANVAS_SURFACE = "#151b2d";
+const CANVAS_STROKE = "#ffffff";
+const CANVAS_ARROW = "#a855f7";
+const STICKY_FILL = "#FEF3C7";
+const STICKY_STROKE = "#FCD34D";
+const STICKY_TEXT = "#1f2937";
+const BOARD_PATH = "canvus.app/canvas/4fa2c8b1";
+const BOARD_SHARE_URL = "https://canvus.app/canvas/4fa2c8b1-7e22-4b65-93da-c7d18e9a5f1c";
+
 /* ── Mock visuals for the four flow steps ────────────────────────────── */
 
 const MockCreate = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/dashboard" />
-    <div style={{ padding: 28 }}>
-      <div className="hw-mono" style={{ fontSize: 10, color: PALETTE.textFaint, letterSpacing: "0.1em", marginBottom: 12 }}>
-        NEW BOARD
-      </div>
-      <label style={{
-        display: "block", fontSize: 11.5, fontWeight: 600,
-        color: PALETTE.textDim, marginBottom: 8, letterSpacing: "0.02em",
-      }}>
-        Board name
-      </label>
+    <MockChrome url="canvus.app/dashboard" />
+    <div style={{ padding: 24 }}>
       <div style={{
-        padding: "11px 14px",
-        background: "rgba(7,13,31,0.7)",
-        border: `1px solid ${PALETTE.primary}55`,
-        borderRadius: 10,
-        boxShadow: `0 0 0 3px ${PALETTE.primary}18`,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
         marginBottom: 18,
-        display: "flex", alignItems: "center", gap: 6,
       }}>
-        <span style={{ fontSize: 13.5, color: PALETTE.text, fontWeight: 500 }}>
-          Q2 launch plan
-        </span>
-        <span style={{
-          width: 1, height: 14,
+        <div>
+          <div className="hw-mono" style={{
+            fontSize: 10, fontWeight: 600,
+            color: PALETTE.primary, letterSpacing: "0.18em",
+            textTransform: "uppercase", marginBottom: 6,
+          }}>
+            Your workspace
+          </div>
+          <div style={{
+            fontSize: 18, fontWeight: 800, color: PALETTE.text,
+            letterSpacing: "-0.02em",
+          }}>
+            Your canvases
+          </div>
+        </div>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "7px 12px",
           background: PALETTE.primary,
-          animation: "hw-blink 1s steps(2) infinite",
-        }} />
+          color: PALETTE.primaryDeep,
+          fontSize: 11.5, fontWeight: 700,
+          borderRadius: 9,
+          boxShadow: `0 0 0 3px ${PALETTE.primary}26, 0 6px 18px ${PALETTE.primaryStrong}40`,
+          animation: "hw-float 3s ease-in-out infinite",
+        }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2.6"
+               strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New canvas
+        </div>
       </div>
       <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        padding: "10px 12px",
-        background: "rgba(176,198,255,0.04)",
-        border: `1px dashed ${PALETTE.borderSoft}`,
-        borderRadius: 8,
-        marginBottom: 22,
+        display: "grid", gridTemplateColumns: "1fr 1fr",
+        gap: 10,
       }}>
-        <div style={{
-          width: 22, height: 22, borderRadius: 6,
-          border: `1px solid ${PALETTE.primary}55`,
-          background: `${PALETTE.primary}1a`,
-          color: PALETTE.primary,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 13, fontWeight: 700,
-        }}>▢</div>
-        <span className="hw-mono" style={{ fontSize: 10.5, color: PALETTE.textDim, letterSpacing: "0.04em" }}>
-          starts as a blank canvas — pan, zoom, drop shapes
-        </span>
-      </div>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <div style={mockGhostBtnStyle}>Cancel</div>
-        <div style={mockPrimaryBtnStyle}>Create board →</div>
+        {[
+          { name: "Q2 launch plan", time: "2m ago" },
+          { name: "Untitled board", time: "yesterday" },
+        ].map((c) => (
+          <div key={c.name} style={{
+            borderRadius: 10,
+            background: `linear-gradient(180deg, ${PALETTE.surfaceHi} 0%, ${PALETTE.surface} 100%)`,
+            border: `1px solid ${PALETTE.borderSoft}`,
+            overflow: "hidden",
+          }}>
+            <div style={{
+              position: "relative",
+              height: 70,
+              background: CANVAS_SURFACE,
+              overflow: "hidden",
+            }}>
+              <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+                <defs>
+                  <pattern id={`hw-thumb-${c.name}`} width="12" height="12" patternUnits="userSpaceOnUse" x="6" y="6">
+                    <circle cx="0" cy="0" r="0.6" fill="rgba(255,255,255,0.10)" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#hw-thumb-${c.name})`} />
+              </svg>
+              <svg viewBox="0 0 160 70" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+                <rect x="14" y="20" width="48" height="22" rx="3"
+                      fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.2" />
+                <line x1="62" y1="31" x2="86" y2="31" stroke={CANVAS_ARROW} strokeWidth="1.1" />
+                <polygon points="86,31 82,29 82,33" fill={CANVAS_ARROW} />
+                <ellipse cx="116" cy="31" rx="24" ry="12"
+                         fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.2" />
+              </svg>
+            </div>
+            <div style={{ padding: "8px 10px" }}>
+              <div style={{
+                fontSize: 12, fontWeight: 700, color: PALETTE.text,
+                letterSpacing: "-0.005em",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {c.name}
+              </div>
+              <div className="hw-mono" style={{
+                fontSize: 9.5, color: PALETTE.textFaint,
+                letterSpacing: "0.04em", marginTop: 2,
+              }}>
+                Updated {c.time}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   </div>
@@ -334,7 +385,7 @@ const MockCreate = () => (
 
 const MockInvite = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/board/team-q2-planning" />
+    <MockChrome url={BOARD_PATH} />
     <div style={{ padding: 22 }}>
       <div className="hw-mono" style={{ fontSize: 10, color: PALETTE.textFaint, letterSpacing: "0.1em", marginBottom: 10 }}>
         SHARE BOARD
@@ -351,7 +402,7 @@ const MockInvite = () => (
           flex: 1, fontSize: 12, color: PALETTE.text,
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         }}>
-          https://canv.us/b/team-q2-planning?invite=A4hZ
+          {BOARD_SHARE_URL}
         </span>
         <span style={{
           fontSize: 11, fontWeight: 700, color: PALETTE.primaryDeep,
@@ -406,78 +457,85 @@ const MockInvite = () => (
 
 const MockBuild = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/b/team-q2-planning" />
+    <MockChrome url={BOARD_PATH} />
     <div style={{
       position: "relative",
       height: 280,
-      background:
-        "radial-gradient(ellipse at 30% 20%, #1a2244 0%, #0c1324 55%, #070d1f 100%)",
+      background: CANVAS_SURFACE,
       overflow: "hidden",
     }}>
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.55 }}>
+      {/* Dot grid — 24px white dots @ 6% alpha, mirrors CanvasStage */}
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
         <defs>
-          <pattern id="hw-build-dots" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="10" cy="10" r="0.8" fill="rgba(220,225,251,0.1)" />
+          <pattern id="hw-build-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
+            <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#hw-build-dots)" />
       </svg>
 
       <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}>
-        {/* shape A */}
-        <rect x="36" y="60" width="120" height="42" rx="8"
-              fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.2" />
-        <text x="96" y="86" textAnchor="middle" fill={PALETTE.primary}
-              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        <defs>
+          <marker id="hw-build-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill={CANVAS_ARROW} />
+          </marker>
+        </defs>
+
+        {/* Research — process rectangle */}
+        <rect x="36" y="58" width="120" height="46"
+              fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="96" y="86" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Research
         </text>
 
-        {/* shape B */}
-        <polygon
-          points="240,60 296,80 240,100 184,80"
-          fill="rgba(188,199,222,0.08)" stroke={PALETTE.tertiary} strokeWidth="1.2"
-        />
-        <text x="240" y="84" textAnchor="middle" fill={PALETTE.tertiary}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Scope? — decision diamond */}
+        <polygon points="240,58 296,81 240,104 184,81"
+                 fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="240" y="86" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="12" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Scope?
         </text>
 
-        {/* shape C */}
-        <rect x="320" y="60" width="120" height="42" rx="8"
-              fill="rgba(125,211,164,0.08)" stroke={PALETTE.mint} strokeWidth="1.2" />
-        <text x="380" y="86" textAnchor="middle" fill={PALETTE.mint}
-              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Build — process rectangle */}
+        <rect x="320" y="58" width="120" height="46"
+              fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="380" y="86" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Build
         </text>
 
-        {/* animated link A→B (being drawn) */}
+        {/* Connector Research → Scope (being drawn, animated dashes) */}
         <line
-          x1="156" y1="81" x2="184" y2="80"
-          stroke={PALETTE.primaryStrong} strokeWidth="1.5"
+          x1="156" y1="81" x2="184" y2="81"
+          stroke={CANVAS_ARROW} strokeWidth="1.6"
           strokeDasharray="4,3"
+          markerEnd="url(#hw-build-arrow)"
           style={{ animation: "hw-dash 1.4s linear infinite" }}
         />
-        {/* link B→C (solid) */}
-        <line x1="296" y1="80" x2="320" y2="80"
-              stroke={PALETTE.tertiary} strokeWidth="1.2" opacity="0.7" />
+        {/* Connector Scope → Build */}
+        <line x1="296" y1="81" x2="320" y2="81"
+              stroke={CANVAS_ARROW} strokeWidth="1.6"
+              markerEnd="url(#hw-build-arrow)" />
 
-        {/* sticky note */}
-        <rect x="56" y="178" width="124" height="74" rx="4"
-              fill="rgba(255,180,84,0.10)" stroke={PALETTE.amber} strokeWidth="1" />
-        <text x="68" y="200" fill={PALETTE.amber}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
-          Sticky
+        {/* Sticky note — matches STICKY_FILL/STROKE/TEXT */}
+        <rect x="56" y="178" width="138" height="78" rx="6"
+              fill={STICKY_FILL} stroke={STICKY_STROKE} strokeWidth="1.5" />
+        <text x="70" y="200" fill={STICKY_TEXT}
+              fontSize="12" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+          @mia
         </text>
-        <text x="68" y="218" fill={PALETTE.amber}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.9">
+        <text x="70" y="220" fill={STICKY_TEXT}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)">
           Confirm API timing
         </text>
-        <text x="68" y="234" fill={PALETTE.amber}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.9">
+        <text x="70" y="236" fill={STICKY_TEXT}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)">
           before scoping build
         </text>
 
-        {/* live cursor — marcus */}
+        {/* Live cursor — marcus */}
         <g transform="translate(178, 78)">
           <path d="M0 0l11 7-5.5 0.8L2.5 14z" fill={PALETTE.primaryStrong} />
         </g>
@@ -490,21 +548,41 @@ const MockBuild = () => (
         </g>
       </svg>
 
-      {/* tool rail */}
+      {/* Bottom toolbar pill — mirrors apps/web/components/toolbar.tsx */}
       <div style={{
-        position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
-        background: "rgba(21,27,45,0.7)", border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 10, backdropFilter: "blur(12px)",
-        padding: "5px 4px", display: "flex", flexDirection: "column", gap: 3,
+        position: "absolute", left: "50%", bottom: 12,
+        transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 2,
+        padding: "5px 6px",
+        background: "rgba(25,31,49,0.85)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 12,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
       }}>
-        {["▢", "◇", "○", "✎", "→"].map((ic, i) => (
+        {[
+          { d: "M5 3l14 9-7 1-4 7z", active: true },
+          { d: ["M18 11V6a2 2 0 0 0-4 0", "M14 10V4a2 2 0 0 0-4 0v7", "M10 10.5V6a2 2 0 0 0-4 0v8", "M18 11a2 2 0 0 1 4 0v5a8 8 0 0 1-8 8h-2c-2.5 0-4-1-5.5-3l-3-4.5a2 2 0 0 1 3-2.5L8 15"] },
+          { d: "M3 5h18v14H3z" },
+          { d: "M12 2l10 10-10 10L2 12z" },
+          { d: "M15.232 5.232l3.536 3.536M9 13l-4 4V13h4zm6-6l-6 6" },
+          { d: ["M5 12h14", "M12 5l7 7-7 7"] },
+          { d: "M5 3h14a2 2 0 0 1 2 2v14l-5 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" },
+        ].map((ic, i) => (
           <div key={i} style={{
             width: 22, height: 22, borderRadius: 6,
-            background: i === 4 ? "rgba(176,198,255,0.14)" : "transparent",
-            border: i === 4 ? "1px solid rgba(176,198,255,0.4)" : "none",
+            background: ic.active ? PALETTE.primary : "transparent",
+            color: ic.active ? PALETTE.primaryDeep : PALETTE.textDim,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, color: i === 4 ? PALETTE.primary : PALETTE.textFaint,
-          }}>{ic}</div>
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="1.6"
+                 strokeLinecap="round" strokeLinejoin="round">
+              {Array.isArray(ic.d)
+                ? ic.d.map((p, j) => <path key={j} d={p} />)
+                : <path d={ic.d} />}
+            </svg>
+          </div>
         ))}
       </div>
     </div>
@@ -513,14 +591,23 @@ const MockBuild = () => (
 
 const MockPresent = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/b/team-q2-planning · PRESENT" />
+    <MockChrome url={`${BOARD_PATH} · PRESENT`} />
     <div style={{
       position: "relative",
       height: 280,
-      background:
-        "radial-gradient(ellipse at 50% 50%, #1a2244 0%, #0a1020 100%)",
+      background: CANVAS_SURFACE,
       overflow: "hidden",
     }}>
+      {/* Dot grid — matches CanvasStage */}
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+        <defs>
+          <pattern id="hw-present-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
+            <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#hw-present-dots)" />
+      </svg>
+
       {/* spotlight ring */}
       <div style={{
         position: "absolute",
@@ -530,16 +617,15 @@ const MockPresent = () => (
         boxShadow: `0 0 0 9999px rgba(7,13,31,0.55), 0 0 30px ${PALETTE.primaryStrong}30`,
       }} />
 
-      {/* center shape */}
+      {/* center shape — white-stroked rectangle, matches canvas defaults */}
       <div style={{
         position: "absolute", top: "50%", left: "50%",
         transform: "translate(-50%, -50%)",
         padding: "16px 28px",
-        borderRadius: 12,
-        background: "rgba(176,198,255,0.12)",
-        border: `1.5px solid ${PALETTE.primary}`,
-        color: PALETTE.text,
-        fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em",
+        background: "transparent",
+        border: `2px solid ${CANVAS_STROKE}`,
+        color: CANVAS_STROKE,
+        fontWeight: 500, fontSize: 16, letterSpacing: "-0.01em",
         boxShadow: `0 0 60px ${PALETTE.primaryStrong}40`,
       }}>
         Q2 launch plan
@@ -615,23 +701,6 @@ const mockShellStyle: React.CSSProperties = {
   background: PALETTE.surface,
   boxShadow:
     "0 24px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(176,198,255,0.10), inset 0 1px 0 rgba(255,255,255,0.05)",
-};
-
-const mockPrimaryBtnStyle: React.CSSProperties = {
-  padding: "8px 14px",
-  background: PALETTE.primary,
-  color: PALETTE.primaryDeep,
-  borderRadius: 8,
-  fontSize: 12, fontWeight: 700,
-};
-
-const mockGhostBtnStyle: React.CSSProperties = {
-  padding: "8px 14px",
-  background: "transparent",
-  color: PALETTE.textDim,
-  borderRadius: 8,
-  border: `1px solid ${PALETTE.border}`,
-  fontSize: 12, fontWeight: 600,
 };
 
 function MockChrome({ url }: { url: string }) {

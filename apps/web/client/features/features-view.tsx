@@ -262,6 +262,15 @@ const GlobalStyles = () => (
 /* Mock visuals                                                            */
 /* ──────────────────────────────────────────────────────────────────────── */
 
+/* Canvas surface colours — mirror apps/web/client/canvas/canvas-defaults.ts */
+const CANVAS_SURFACE = "#151b2d";
+const CANVAS_STROKE = "#ffffff";
+const CANVAS_ARROW = "#a855f7";
+const STICKY_FILL = "#FEF3C7";
+const STICKY_STROKE = "#FCD34D";
+const STICKY_TEXT = "#1f2937";
+const BOARD_PATH = "canvus.app/canvas/8b3f7a92";
+
 function MockChrome({ url }: { url: string }) {
   return (
     <div style={{
@@ -306,84 +315,93 @@ const mockShellStyle: React.CSSProperties = {
 /* Spotlight: live co-editing in a board */
 const SpotlightCollab = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/b/sprint-planning · 4 LIVE" />
+    <MockChrome url={`${BOARD_PATH} · 4 LIVE`} />
     <div style={{
       position: "relative", height: 340,
-      background: "radial-gradient(ellipse at 30% 20%, #1a2244 0%, #0c1324 55%, #070d1f 100%)",
+      background: CANVAS_SURFACE,
       overflow: "hidden",
     }}>
-      {/* Dot grid */}
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.55 }}>
+      {/* Dot grid — 24px white dots @ 6% alpha, mirrors CanvasStage */}
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
         <defs>
-          <pattern id="ft-spot-dots" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="10" cy="10" r="0.8" fill="rgba(220,225,251,0.1)" />
+          <pattern id="ft-spot-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
+            <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#ft-spot-dots)" />
       </svg>
 
       <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}>
-        {/* boxes */}
-        <rect x="40" y="56" width="130" height="46" rx="8"
-              fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.2" />
-        <text x="105" y="84" textAnchor="middle" fill={PALETTE.primary}
-              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        <defs>
+          <marker id="ft-collab-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill={CANVAS_ARROW} />
+          </marker>
+        </defs>
+
+        {/* Discovery — process rectangle */}
+        <rect x="40" y="56" width="130" height="46"
+              fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="105" y="84" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Discovery
         </text>
 
-        <polygon
-          points="250,56 312,79 250,102 188,79"
-          fill="rgba(188,199,222,0.08)" stroke={PALETTE.tertiary} strokeWidth="1.2"
-        />
-        <text x="250" y="83" textAnchor="middle" fill={PALETTE.tertiary}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Ship Q2? — decision diamond */}
+        <polygon points="250,56 312,79 250,102 188,79"
+                 fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="250" y="83" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="12" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Ship Q2?
         </text>
 
-        <rect x="340" y="56" width="130" height="46" rx="8"
-              fill="rgba(125,211,164,0.08)" stroke={PALETTE.mint} strokeWidth="1.2" />
-        <text x="405" y="84" textAnchor="middle" fill={PALETTE.mint}
-              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* Beta launch — process rectangle */}
+        <rect x="340" y="56" width="130" height="46"
+              fill="transparent" stroke={CANVAS_STROKE} strokeWidth="2" />
+        <text x="405" y="84" textAnchor="middle" fill={CANVAS_STROKE}
+              fontSize="13" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="500">
           Beta launch
         </text>
 
-        {/* connectors */}
+        {/* connectors — purple, mirrors canvas arrow */}
         <line x1="170" y1="79" x2="188" y2="79"
-              stroke={PALETTE.primary} strokeWidth="1.4" opacity="0.7" />
+              stroke={CANVAS_ARROW} strokeWidth="1.6"
+              markerEnd="url(#ft-collab-arrow)" />
         <line x1="312" y1="79" x2="340" y2="79"
-              stroke={PALETTE.primaryStrong} strokeWidth="1.5"
+              stroke={CANVAS_ARROW} strokeWidth="1.6"
               strokeDasharray="4,3"
+              markerEnd="url(#ft-collab-arrow)"
               style={{ animation: "ft-dash 1.4s linear infinite" }} />
 
-        {/* sticky 1 */}
-        <rect x="60" y="180" width="138" height="80" rx="4"
-              fill="rgba(255,180,84,0.10)" stroke={PALETTE.amber} strokeWidth="1" />
-        <text x="74" y="202" fill={PALETTE.amber}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        {/* sticky 1 — matches STICKY_FILL/STROKE/TEXT */}
+        <rect x="60" y="180" width="138" height="80" rx="6"
+              fill={STICKY_FILL} stroke={STICKY_STROKE} strokeWidth="1.5" />
+        <text x="74" y="202" fill={STICKY_TEXT}
+              fontSize="12" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
           @mia · 2m
         </text>
-        <text x="74" y="222" fill={PALETTE.amber}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.9">
+        <text x="74" y="222" fill={STICKY_TEXT}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)">
           Confirm scope with
         </text>
-        <text x="74" y="238" fill={PALETTE.amber}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.9">
+        <text x="74" y="238" fill={STICKY_TEXT}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)">
           design before Friday.
         </text>
 
         {/* sticky 2 */}
-        <rect x="232" y="200" width="132" height="64" rx="4"
-              fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1" />
-        <text x="246" y="222" fill={PALETTE.primary}
-              fontSize="10" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
+        <rect x="232" y="200" width="132" height="64" rx="6"
+              fill={STICKY_FILL} stroke={STICKY_STROKE} strokeWidth="1.5" />
+        <text x="246" y="222" fill={STICKY_TEXT}
+              fontSize="12" fontFamily="var(--font-plus-jakarta-sans)" fontWeight="700">
           decision
         </text>
-        <text x="246" y="240" fill={PALETTE.primary}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
+        <text x="246" y="240" fill={STICKY_TEXT}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)">
           Cut scope to MVP,
         </text>
-        <text x="246" y="254" fill={PALETTE.primary}
-              fontSize="9.5" fontFamily="var(--font-plus-jakarta-sans)" opacity="0.85">
+        <text x="246" y="254" fill={STICKY_TEXT}
+              fontSize="11" fontFamily="var(--font-plus-jakarta-sans)">
           add polish later.
         </text>
 
@@ -485,48 +503,48 @@ const SpotlightCollab = () => (
 /* Spotlight: 17-shape toolkit */
 const SpotlightShapes = () => {
   const shapes: Array<{ name: string; render: React.ReactNode }> = [
-    { name: "rect", render: <rect x="6" y="14" width="56" height="36" rx="2" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "rounded", render: <rect x="6" y="14" width="56" height="36" rx="9" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "diamond", render: <polygon points="34,10 60,32 34,54 8,32" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "oval", render: <ellipse cx="34" cy="32" rx="26" ry="18" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "parallelogram", render: <polygon points="14,14 62,14 54,50 6,50" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "trapezoid", render: <polygon points="14,14 54,14 62,50 6,50" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "hexagon", render: <polygon points="20,14 48,14 62,32 48,50 20,50 6,32" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
+    { name: "rect", render: <rect x="6" y="14" width="56" height="36" rx="2" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "rounded", render: <rect x="6" y="14" width="56" height="36" rx="9" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "diamond", render: <polygon points="34,10 60,32 34,54 8,32" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "oval", render: <ellipse cx="34" cy="32" rx="26" ry="18" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "parallelogram", render: <polygon points="14,14 62,14 54,50 6,50" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "trapezoid", render: <polygon points="14,14 54,14 62,50 6,50" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "hexagon", render: <polygon points="20,14 48,14 62,32 48,50 20,50 6,32" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
     { name: "cylinder", render: (
         <>
-          <path d="M6 18 a28 6 0 0 1 56 0 v28 a28 6 0 0 1 -56 0z" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" />
-          <ellipse cx="34" cy="18" rx="28" ry="6" fill="none" stroke={PALETTE.primary} strokeWidth="1.3" />
+          <path d="M6 18 a28 6 0 0 1 56 0 v28 a28 6 0 0 1 -56 0z" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" />
+          <ellipse cx="34" cy="18" rx="28" ry="6" fill="none" stroke={CANVAS_STROKE} strokeWidth="1.3" />
         </>
       ) },
-    { name: "document", render: <path d="M6 14 H62 V46 Q48 56 34 46 Q20 36 6 46 Z" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
+    { name: "document", render: <path d="M6 14 H62 V46 Q48 56 34 46 Q20 36 6 46 Z" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
     { name: "process", render: (
         <>
-          <rect x="6" y="14" width="56" height="36" rx="2" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" />
-          <line x1="14" y1="14" x2="14" y2="50" stroke={PALETTE.primary} strokeWidth="1.3" />
-          <line x1="54" y1="14" x2="54" y2="50" stroke={PALETTE.primary} strokeWidth="1.3" />
+          <rect x="6" y="14" width="56" height="36" rx="2" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" />
+          <line x1="14" y1="14" x2="14" y2="50" stroke={CANVAS_STROKE} strokeWidth="1.3" />
+          <line x1="54" y1="14" x2="54" y2="50" stroke={CANVAS_STROKE} strokeWidth="1.3" />
         </>
       ) },
-    { name: "manual-input", render: <polygon points="6,22 62,14 62,50 6,50" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "stored-data", render: <path d="M6 32 q6 -22 28 -18 q22 4 28 18 q-6 22 -28 18 q-22 -4 -28 -18z" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
+    { name: "manual-input", render: <polygon points="6,22 62,14 62,50 6,50" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "stored-data", render: <path d="M6 32 q6 -22 28 -18 q22 4 28 18 q-6 22 -28 18 q-22 -4 -28 -18z" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
     { name: "internal-storage", render: (
         <>
-          <rect x="6" y="14" width="56" height="36" rx="2" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" />
-          <line x1="6" y1="22" x2="62" y2="22" stroke={PALETTE.primary} strokeWidth="1.3" />
-          <line x1="14" y1="14" x2="14" y2="50" stroke={PALETTE.primary} strokeWidth="1.3" />
+          <rect x="6" y="14" width="56" height="36" rx="2" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" />
+          <line x1="6" y1="22" x2="62" y2="22" stroke={CANVAS_STROKE} strokeWidth="1.3" />
+          <line x1="14" y1="14" x2="14" y2="50" stroke={CANVAS_STROKE} strokeWidth="1.3" />
         </>
       ) },
-    { name: "circle", render: <circle cx="34" cy="32" r="20" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "off-page", render: <path d="M6 14 H62 V42 L34 54 L6 42 Z" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "delay", render: <path d="M6 14 H50 a18 18 0 0 1 0 36 H6 Z" fill="rgba(176,198,255,0.10)" stroke={PALETTE.primary} strokeWidth="1.3" /> },
-    { name: "sticky", render: <rect x="8" y="12" width="52" height="40" rx="2" fill="rgba(255,180,84,0.12)" stroke={PALETTE.amber} strokeWidth="1.3" /> },
+    { name: "circle", render: <circle cx="34" cy="32" r="20" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "off-page", render: <path d="M6 14 H62 V42 L34 54 L6 42 Z" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "delay", render: <path d="M6 14 H50 a18 18 0 0 1 0 36 H6 Z" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
+    { name: "sticky", render: <rect x="8" y="12" width="52" height="40" rx="2" fill={STICKY_FILL} stroke={STICKY_STROKE} strokeWidth="1.3" /> },
   ];
 
   return (
     <div style={mockShellStyle}>
-      <MockChrome url="canv.us · toolkit" />
+      <MockChrome url={`${BOARD_PATH} · toolkit`} />
       <div style={{
         padding: 16,
-        background: "radial-gradient(ellipse at 50% 20%, #1a2244 0%, #0c1324 60%, #070d1f 100%)",
+        background: CANVAS_SURFACE,
         display: "grid",
         gridTemplateColumns: "repeat(6, 1fr)",
         gap: 8,
@@ -567,12 +585,22 @@ const SpotlightShapes = () => {
 /* Spotlight: present mode */
 const SpotlightPresent = () => (
   <div style={mockShellStyle}>
-    <MockChrome url="canv.us/b/roadmap · PRESENT" />
+    <MockChrome url={`${BOARD_PATH} · PRESENT`} />
     <div style={{
       position: "relative", height: 320,
-      background: "radial-gradient(ellipse at 50% 50%, #1a2244 0%, #0a1020 100%)",
+      background: CANVAS_SURFACE,
       overflow: "hidden",
     }}>
+      {/* Dot grid — matches CanvasStage */}
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+        <defs>
+          <pattern id="ft-present-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
+            <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#ft-present-dots)" />
+      </svg>
+
       <div style={{
         position: "absolute",
         inset: "10% 16%",
@@ -585,11 +613,10 @@ const SpotlightPresent = () => (
         position: "absolute", top: "50%", left: "50%",
         transform: "translate(-50%, -50%)",
         padding: "20px 32px",
-        borderRadius: 14,
-        background: "rgba(176,198,255,0.12)",
-        border: `1.5px solid ${PALETTE.primary}`,
-        color: PALETTE.text,
-        fontWeight: 700, fontSize: 18, letterSpacing: "-0.01em",
+        background: "transparent",
+        border: `2px solid ${CANVAS_STROKE}`,
+        color: CANVAS_STROKE,
+        fontWeight: 500, fontSize: 18, letterSpacing: "-0.01em",
         boxShadow: `0 0 60px ${PALETTE.primaryStrong}40`,
         textAlign: "center",
       }}>
