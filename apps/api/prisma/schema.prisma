@@ -11,3 +11,71 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum BoardRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String?
+  avatarUrl     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  ownedBoards   Board[]       @relation("BoardOwner")
+  memberships   BoardMember[]
+  snapshots     BoardSnapshot[] @relation("SnapshotAuthor")
+}
+
+model Board {
+  id          String          @id @default(cuid())
+  name        String
+  ownerId     String
+  owner       User            @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  shapes      Json            @default("[]")
+  connections Json            @default("[]")
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  members     BoardMember[]
+  snapshots   BoardSnapshot[]
+
+  @@index([ownerId])
+  @@index([updatedAt])
+}
+
+model BoardMember {
+  id        String    @id @default(cuid())
+  boardId   String
+  userId    String
+  role      BoardRole @default(EDITOR)
+  invitedAt DateTime  @default(now())
+  joinedAt  DateTime?
+
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@index([userId])
+}
+
+model BoardSnapshot {
+  id          String   @id @default(cuid())
+  boardId     String
+  authorId    String?
+  label       String?
+  shapes      Json
+  connections Json
+  createdAt   DateTime @default(now())
+
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author      User?    @relation("SnapshotAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([boardId, createdAt])
+}
