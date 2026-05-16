@@ -11,6 +11,21 @@ const normalizeName = (value: unknown): string => {
   return trimmed.length > 0 ? trimmed : "Untitled board";
 };
 
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const boards = await prisma.board.findMany({
+    where: { ownerId: session.user.id },
+    select: { id: true, name: true, createdAt: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return NextResponse.json(boards);
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {

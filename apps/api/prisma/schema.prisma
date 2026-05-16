@@ -114,6 +114,7 @@ model BoardSnapshot {
   label       String?
   shapes      Json
   connections Json
+  state       Bytes
   createdAt   DateTime @default(now())
 
   board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)

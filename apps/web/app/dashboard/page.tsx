@@ -2,68 +2,49 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import type { CanvasSummary } from "@canvus/shared";
-import { createCanvas, listCanvases, deleteCanvas } from "@/lib/api";
+import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+import {
+  useGetBoardsQuery,
+  useCreateBoardMutation,
+  type BoardListItem,
+} from "@/redux/api/boardsApi";
 import { AmbientBackground } from "@/client/landing-page/ambient-background";
 import { PALETTE } from "@/client/landing-page/palette";
-import { GuestBanner } from "@/client/guest/guest-banner";
-import {
-  addGuestCanvas,
-  getGuestCanvasIds,
-  removeGuestCanvas,
-} from "@/lib/guest";
-import { useModal } from "@/lib/modal";
 import { CanvusMark } from "@/client/brand/CanvusMark";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const modal = useModal();
-  const [canvases, setCanvases] = useState<CanvasSummary[] | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id;
 
-  useEffect(() => {
-    listCanvases(getGuestCanvasIds())
-      .then((cs) => {
-        setCanvases(
-          [...cs].sort(
-            (a, b) =>
-              new Date(b.updatedAt).getTime() -
-              new Date(a.updatedAt).getTime(),
-          ),
-        );
-      })
-      .catch((err: Error) =>
-        setLoadError(err.message ?? "Failed to load canvases"),
-      );
-  }, []);
+  const { data: boards, isFetching, error } = useGetBoardsQuery(undefined, {
+    skip: !userId,
+  });
+  const [createBoard, { isLoading: creating }] = useCreateBoardMutation();
 
   const handleCreate = async () => {
     if (creating) return;
-    setCreating(true);
     try {
-      const canvas = await createCanvas("Untitled board");
-      addGuestCanvas(canvas.id);
-      router.push(`/canvas/${canvas.id}`);
+      const board = await createBoard({ name: "Untitled board" }).unwrap();
+      router.push(`/board/${board.id}`);
     } catch {
-      setCreating(false);
+      // RTK Query keeps the error; intentionally swallow here so the UI
+      // doesn't blow up — the button re-enables once isLoading flips back.
     }
   };
 
-  const requestDelete = (canvas: CanvasSummary) => {
-    modal.open("deleteCanvas", {
-      canvas,
-      onConfirm: async () => {
-        await deleteCanvas(canvas.id);
-        removeGuestCanvas(canvas.id);
-        setCanvases((prev) => (prev ?? []).filter((c) => c.id !== canvas.id));
-      },
-    });
-  };
-
-  const isLoading = canvases === null && !loadError;
-  const isEmpty = canvases !== null && canvases.length === 0;
+  const authLoading = status === "loading";
+  const signedOut = !authLoading && !userId;
+  const listLoading = !!userId && isFetching && !boards;
+  const isEmpty = !!boards && boards.length === 0;
+  const loadError = error
+    ? "error" in error
+      ? String(error.error)
+      : "data" in error && error.data && typeof error.data === "object" && "error" in error.data
+        ? String((error.data as { error: unknown }).error)
+        : "Failed to load boards"
+    : null;
 
   return (
     <div
@@ -78,9 +59,11 @@ export default function DashboardPage() {
     >
       <AmbientBackground />
 
-      <GuestBanner />
-
-      <DashboardHeader onCreate={handleCreate} creating={creating} />
+      <DashboardHeader
+        onCreate={handleCreate}
+        creating={creating}
+        canCreate={!!userId}
+      />
 
       <main
         style={{
@@ -115,7 +98,7 @@ export default function DashboardPage() {
               lineHeight: 1.05,
             }}
           >
-            Your canvases
+            Your boards
           </h1>
           <p
             style={{
@@ -124,22 +107,28 @@ export default function DashboardPage() {
               margin: "8px 0 0",
             }}
           >
-            {isLoading
+            {authLoading || listLoading
               ? "Loading boards…"
-              : isEmpty
-                ? "Nothing here yet — let’s start your first board."
-                : `${canvases?.length} board${canvases?.length === 1 ? "" : "s"} in your workspace.`}
+              : signedOut
+                ? "Sign in to see your boards."
+                : isEmpty
+                  ? "Nothing here yet — let’s start your first board."
+                  : `${boards?.length} board${boards?.length === 1 ? "" : "s"} in your workspace.`}
           </p>
         </div>
 
         {loadError && <ErrorState message={loadError} />}
 
-        {!loadError && isLoading && <SkeletonGrid />}
+        {!loadError && signedOut && <SignInPrompt />}
 
-        {!loadError && isEmpty && <EmptyState onCreate={handleCreate} creating={creating} />}
+        {!loadError && (authLoading || listLoading) && <SkeletonGrid />}
 
-        {!loadError && canvases && canvases.length > 0 && (
-          <CanvasGrid canvases={canvases} onRequestDelete={requestDelete} />
+        {!loadError && !signedOut && isEmpty && (
+          <EmptyState onCreate={handleCreate} creating={creating} />
+        )}
+
+        {!loadError && boards && boards.length > 0 && (
+          <BoardGrid boards={boards} />
         )}
       </main>
     </div>
@@ -151,9 +140,11 @@ export default function DashboardPage() {
 function DashboardHeader({
   onCreate,
   creating,
+  canCreate,
 }: {
   onCreate: () => void;
   creating: boolean;
+  canCreate: boolean;
 }) {
   return (
     <header
@@ -212,23 +203,19 @@ function DashboardHeader({
           >
             Home
           </Link>
-          <PrimaryButton compact onClick={onCreate} disabled={creating}>
-            <PlusIcon />
-            {creating ? "Creating…" : "New canvas"}
-          </PrimaryButton>
+          {canCreate && (
+            <PrimaryButton compact onClick={onCreate} disabled={creating}>
+              <PlusIcon />
+              {creating ? "Creating…" : "New board"}
+            </PrimaryButton>
+          )}
         </div>
       </div>
     </header>
   );
 }
 
-function CanvasGrid({
-  canvases,
-  onRequestDelete,
-}: {
-  canvases: CanvasSummary[];
-  onRequestDelete: (canvas: CanvasSummary) => void;
-}) {
+function BoardGrid({ boards }: { boards: BoardListItem[] }) {
   return (
     <ul
       style={{
@@ -240,29 +227,16 @@ function CanvasGrid({
         gap: 18,
       }}
     >
-      {canvases.map((c, i) => (
-        <CanvasCard
-          key={c.id}
-          canvas={c}
-          index={i}
-          onRequestDelete={() => onRequestDelete(c)}
-        />
+      {boards.map((b, i) => (
+        <BoardCard key={b.id} board={b} index={i} />
       ))}
     </ul>
   );
 }
 
-function CanvasCard({
-  canvas,
-  index,
-  onRequestDelete,
-}: {
-  canvas: CanvasSummary;
-  index: number;
-  onRequestDelete: () => void;
-}) {
+function BoardCard({ board, index }: { board: BoardListItem; index: number }) {
   const [hover, setHover] = useState(false);
-  const updated = useRelativeTime(canvas.updatedAt);
+  const updated = useRelativeTime(board.updatedAt);
 
   return (
     <li
@@ -294,7 +268,7 @@ function CanvasCard({
         }}
       >
         <Link
-          href={`/canvas/${canvas.id}`}
+          href={`/board/${board.id}`}
           style={{
             display: "block",
             textDecoration: "none",
@@ -314,7 +288,7 @@ function CanvasCard({
                 textOverflow: "ellipsis",
               }}
             >
-              {canvas.name || "Untitled board"}
+              {board.name || "Untitled board"}
             </div>
             <div
               style={{
@@ -330,43 +304,6 @@ function CanvasCard({
             </div>
           </div>
         </Link>
-
-        <button
-          type="button"
-          aria-label="Delete canvas"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRequestDelete();
-          }}
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            width: 32,
-            height: 32,
-            display: hover ? "inline-flex" : "none",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(12,19,36,0.7)",
-            border: `1px solid ${PALETTE.border}`,
-            color: PALETTE.textDim,
-            borderRadius: 8,
-            cursor: "pointer",
-            backdropFilter: "blur(8px)",
-            transition: "color 160ms ease, border-color 160ms ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = PALETTE.warm;
-            e.currentTarget.style.borderColor = "rgba(255,180,171,0.4)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = PALETTE.textDim;
-            e.currentTarget.style.borderColor = PALETTE.border;
-          }}
-        >
-          <TrashIcon />
-        </button>
       </div>
     </li>
   );
@@ -555,7 +492,7 @@ function EmptyState({
             letterSpacing: "-0.02em",
           }}
         >
-          No canvases yet
+          No boards yet
         </h2>
         <p
           style={{
@@ -571,8 +508,86 @@ function EmptyState({
         </p>
         <PrimaryButton onClick={onCreate} disabled={creating}>
           <PlusIcon />
-          {creating ? "Creating…" : "Create your first canvas"}
+          {creating ? "Creating…" : "Create your first board"}
         </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+function SignInPrompt() {
+  return (
+    <div
+      style={{
+        position: "relative",
+        padding: "72px 32px",
+        textAlign: "center",
+        borderRadius: 20,
+        border: `1px solid ${PALETTE.borderSoft}`,
+        background: `linear-gradient(180deg, ${PALETTE.surfaceHi} 0%, ${PALETTE.surface} 100%)`,
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ position: "relative" }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            background: "rgba(176,198,255,0.10)",
+            border: "1px solid rgba(176,198,255,0.25)",
+            color: PALETTE.primary,
+            marginBottom: 18,
+          }}
+        >
+          <SparkleIcon />
+        </div>
+        <h2
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Sign in to see your boards
+        </h2>
+        <p
+          style={{
+            fontSize: 14.5,
+            color: PALETTE.textMuted,
+            margin: "10px auto 24px",
+            maxWidth: 380,
+            lineHeight: 1.55,
+          }}
+        >
+          Your workspace is saved to your account. Sign in to open, share, and
+          continue collaborating on your boards.
+        </p>
+        <Link
+          href="/sign-in"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "12px 22px",
+            fontSize: 14,
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            color: PALETTE.primaryDeep,
+            background: PALETTE.primary,
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 12,
+            textDecoration: "none",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 0 rgba(0,0,0,0.4)",
+          }}
+        >
+          Sign in
+        </Link>
       </div>
     </div>
   );
@@ -591,18 +606,7 @@ function ErrorState({ message }: { message: string }) {
         lineHeight: 1.5,
       }}
     >
-      Couldn’t load your canvases — {message}. Make sure the API is running
-      at{" "}
-      <code
-        style={{
-          fontFamily:
-            "var(--font-jetbrains-mono), ui-monospace, monospace",
-          fontSize: 12.5,
-        }}
-      >
-        {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}
-      </code>
-      .
+      Couldn’t load your boards — {message}.
     </div>
   );
 }
@@ -701,23 +705,6 @@ function PlusIcon() {
       strokeLinejoin="round"
     >
       <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
     </svg>
   );
 }
