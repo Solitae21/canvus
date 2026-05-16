@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/redux/client-components/store-provider";
+import { SessionProvider } from "@/components/session-provider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -30,9 +31,11 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <StoreProvider>
-          {children}
-        </StoreProvider>
+        <SessionProvider>
+          <StoreProvider>
+            {children}
+          </StoreProvider>
+        </SessionProvider>
       </body>
     </html>
   );
