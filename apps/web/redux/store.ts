@@ -3,6 +3,7 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import canvasReducer from '@/redux/slice/canvas/canvas-slice';
 import uiReducer from '@/redux/slice/ui/ui-slice';
 import presenceReducer from '@/redux/slice/presence/presence-slice';
+import chatReducer from '@/redux/slice/chat/chat-slice';
 import { boardsApi } from '@/redux/api/boardsApi';
 
 export const store = configureStore({
@@ -10,6 +11,7 @@ export const store = configureStore({
         canvas: canvasReducer,
         ui: uiReducer,
         presence: presenceReducer,
+        chat: chatReducer,
         [boardsApi.reducerPath]: boardsApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>

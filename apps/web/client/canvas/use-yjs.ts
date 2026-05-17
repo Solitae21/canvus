@@ -1,9 +1,12 @@
 "use client";
 
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Connection, Shape } from "@canvus/shared";
+import type { ChatMessage, Connection, Shape } from "@canvus/shared";
 import { SocketIOProvider } from "y-socket.io";
 import * as Y from "yjs";
+import { useAppDispatch } from "@/redux/hooks";
+import { setMessages } from "@/redux/slice/chat/chat-slice";
+import { getGuestIdentity } from "@/lib/guest";
 
 type YjsConnectionStatus = "disconnected" | "connecting" | "connected";
 
@@ -18,6 +21,8 @@ type YjsCanvasValue = {
   provider: SocketIOProvider | null;
   shapes: Y.Map<Shape>;
   connections: Y.Map<Connection>;
+  chat: Y.Array<ChatMessage>;
+  appendChatMessage: (text: string) => void;
   status: YjsConnectionStatus;
   isConnected: boolean;
   isSynced: boolean;
@@ -42,9 +47,11 @@ const useYjsInternal = (
   // Double-invocation of `new Y.Doc(...)` would leave two doc instances in
   // flight — the discarded one still holds maps that local actions would
   // mutate without the active UndoManager seeing them.
+  const dispatch = useAppDispatch();
   const [doc] = useState(() => new Y.Doc({ guid: roomName }));
   const shapes = useMemo(() => doc.getMap<Shape>("shapes"), [doc]);
   const connections = useMemo(() => doc.getMap<Connection>("connections"), [doc]);
+  const chat = useMemo(() => doc.getArray<ChatMessage>("chat"), [doc]);
   const undoManagerRef = useRef<Y.UndoManager | null>(null);
   const [provider, setProvider] = useState<SocketIOProvider | null>(null);
   const [status, setStatus] = useState<YjsConnectionStatus>(
@@ -79,6 +86,37 @@ const useYjsInternal = (
 
   const undo = useCallback(() => undoManagerRef.current?.undo(), []);
   const redo = useCallback(() => undoManagerRef.current?.redo(), []);
+
+  useEffect(() => {
+    const sync = () => {
+      dispatch(setMessages(chat.toArray()));
+    };
+    sync();
+    chat.observe(sync);
+    return () => chat.unobserve(sync);
+  }, [chat, dispatch]);
+
+  const appendChatMessage = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const identity = getGuestIdentity();
+      const message: ChatMessage = {
+        id: typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        senderId: identity.userId,
+        senderName: identity.name,
+        senderColor: identity.color,
+        text: trimmed.slice(0, 1000),
+        timestamp: Date.now(),
+      };
+      doc.transact(() => {
+        chat.push([message]);
+      });
+    },
+    [chat, doc],
+  );
 
   useEffect(() => {
     const nextProvider = new SocketIOProvider(
@@ -126,6 +164,8 @@ const useYjsInternal = (
     provider,
     shapes,
     connections,
+    chat,
+    appendChatMessage,
     status,
     isConnected: status === "connected",
     isSynced,

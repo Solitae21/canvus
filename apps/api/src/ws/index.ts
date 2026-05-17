@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
 import type { Server as HttpServer } from 'node:http';
-import type { CursorMovedPayload } from '@canvus/shared';
+import type { CursorMovedPayload, PresenterViewportPayload } from '@canvus/shared';
 import { YSocketIO } from 'y-socket.io/dist/server';
 import { ALLOWED_ORIGINS, REDIS_URL, isAllowedOrigin } from '../env.js';
 import {
@@ -104,8 +104,49 @@ const parseCursorMessage = (
     color: isSafeColor(payload.color) ? payload.color : metadata.color ?? DEFAULT_CURSOR_COLOR,
   };
 
+  if (payload.laser === true) {
+    normalizedPayload.laser = true;
+  }
+
   return {
     type: 'cursor:moved',
+    payload: normalizedPayload,
+    clientId: userId,
+  };
+};
+
+const MIN_VIEWPORT_SCALE = 0.1;
+const MAX_VIEWPORT_SCALE = 4;
+const MAX_VIEWPORT_COORDINATE = 1_000_000;
+
+const parseViewportMessage = (
+  envelope: unknown,
+  userId: string,
+): ClientEnvelope | null => {
+  if (!isRecord(envelope) || envelope.type !== 'presenter:viewport' || !isRecord(envelope.payload)) {
+    return null;
+  }
+
+  const { x, y, scale } = envelope.payload;
+  if (
+    typeof x !== 'number' ||
+    typeof y !== 'number' ||
+    typeof scale !== 'number' ||
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(scale) ||
+    Math.abs(x) > MAX_VIEWPORT_COORDINATE ||
+    Math.abs(y) > MAX_VIEWPORT_COORDINATE ||
+    scale < MIN_VIEWPORT_SCALE ||
+    scale > MAX_VIEWPORT_SCALE
+  ) {
+    return null;
+  }
+
+  const normalizedPayload: PresenterViewportPayload = { userId, x, y, scale };
+
+  return {
+    type: 'presenter:viewport',
     payload: normalizedPayload,
     clientId: userId,
   };
@@ -198,8 +239,15 @@ export async function attachSocketIO(server: HttpServer): Promise<void> {
 
     socket.on('message', (envelope: unknown) => {
       if (!allowMessage()) return;
-      const sanitized = parseCursorMessage(envelope, userId, metadata);
-      if (sanitized) socket.to(canvasId).emit('message', sanitized);
+      const cursorMsg = parseCursorMessage(envelope, userId, metadata);
+      if (cursorMsg) {
+        socket.to(canvasId).emit('message', cursorMsg);
+        return;
+      }
+      const viewportMsg = parseViewportMessage(envelope, userId);
+      if (viewportMsg) {
+        socket.to(canvasId).emit('message', viewportMsg);
+      }
     });
 
     socket.on('disconnect', () => {

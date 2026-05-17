@@ -2,6 +2,7 @@ import CanvasStage from "@/client/canvas/canvas-stage";
 import Toolbar from "@/components/toolbar";
 import CanvasHeader from "@/client/canvas/canvas-header";
 import CanvasRightPanel from "@/client/canvas/canvas-right-panel";
+import PresentModeShell from "@/client/canvas/present-mode-shell";
 import { YjsCanvasProvider } from "@/client/canvas/use-yjs";
 import { CanvasWsProvider } from "@/client/canvas/canvas-ws-context";
 import { CanvasExportProvider } from "@/client/canvas/canvas-export-context";
@@ -22,6 +23,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               </div>
               <CanvasRightPanel />
               <Toolbar />
+              <PresentModeShell />
             </div>
           </div>
         </CanvasExportProvider>

@@ -25,6 +25,8 @@ import {
   FileText,
   FileJson,
   MoreHorizontal,
+  Presentation,
+  MessageCircle,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -38,6 +40,11 @@ import {
   toggleSnapToGrid,
   resetViewport,
   addToast,
+  startPresenting,
+  startFollowing,
+  togglePanel,
+  selectPresentMode,
+  selectIsPanelOpen,
 } from "@/redux/slice/ui/ui-slice";
 import {
   getGuestIdentity,
@@ -767,6 +774,12 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   const canUndo = mounted && canUndoYjs;
   const canRedo = mounted && canRedoYjs;
 
+  const presentMode = useAppSelector(selectPresentMode);
+  const chatOpen = useAppSelector(selectIsPanelOpen("chat"));
+
+  // Followers get a clean canvas — hide the entire header overlay
+  if (presentMode.active && !presentMode.isPresenter) return null;
+
   return (
   <>
     <div className="absolute top-0 inset-x-0 z-40 pointer-events-none">
@@ -956,10 +969,13 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
             </div>
 
             {visibleRemotes.map((user) => (
-              <div
+              <button
                 key={user.userId}
+                onClick={() => dispatch(startFollowing(user.userId))}
+                title={`Follow ${user.name}`}
                 className="group relative w-7 h-7 rounded-full ring-2 ring-surface-container
-                           flex items-center justify-center text-[10px] font-bold text-on-primary"
+                           flex items-center justify-center text-[10px] font-bold text-on-primary
+                           hover:scale-110 transition-transform duration-150"
                 style={{ background: user.color }}
               >
                 {getInitials(user.name)}
@@ -971,9 +987,9 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                              opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
                              transition-all duration-150 z-10"
                 >
-                  {user.name}
+                  Follow {user.name}
                 </span>
-              </div>
+              </button>
             ))}
 
             {extraRemoteCount > 0 && (
@@ -1000,6 +1016,27 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
               </div>
             )}
           </div>
+
+          <div className="w-px h-5 bg-white/[0.08] mx-0.5" />
+
+          {/* Chat toggle */}
+          <IconBtn
+            label={chatOpen ? "Hide chat" : "Open chat"}
+            onClick={() => dispatch(togglePanel("chat"))}
+            className={chatOpen ? "text-on-surface bg-white/[0.06]" : ""}
+          >
+            <MessageCircle size={16} />
+          </IconBtn>
+
+          {/* Present mode */}
+          <IconBtn
+            label={presentMode.active ? "Presenting" : "Start presenting"}
+            onClick={() => dispatch(startPresenting())}
+            disabled={presentMode.active}
+            className={presentMode.active ? "text-primary" : ""}
+          >
+            <Presentation size={16} />
+          </IconBtn>
 
           <div className="w-px h-5 bg-white/[0.08] mx-0.5" />
 
