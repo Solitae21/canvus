@@ -28,9 +28,10 @@ export default function AuthLayout({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "24px 28px",
+          padding: "clamp(16px, 4vw, 24px) clamp(16px, 5vw, 28px)",
           maxWidth: 1200,
           margin: "0 auto",
+          gap: 12,
         }}
       >
         <Link
@@ -91,7 +92,7 @@ export default function AuthLayout({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "32px 20px 80px",
+          padding: "clamp(20px, 5vw, 32px) clamp(14px, 4vw, 20px) clamp(48px, 10vw, 80px)",
           minHeight: "calc(100vh - 88px)",
         }}
       >

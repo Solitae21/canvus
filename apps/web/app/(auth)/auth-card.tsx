@@ -42,7 +42,7 @@ export function AuthCard({
       <div
         style={{
           position: "relative",
-          padding: "34px 32px 30px",
+          padding: "clamp(26px, 6vw, 34px) clamp(20px, 6vw, 32px) clamp(22px, 5vw, 30px)",
           background: `linear-gradient(180deg, ${PALETTE.surfaceHi} 0%, ${PALETTE.surface} 100%)`,
           border: `1px solid ${PALETTE.border}`,
           borderRadius: 20,

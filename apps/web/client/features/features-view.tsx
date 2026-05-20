@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PALETTE } from "@/client/landing-page/palette";
 import { startGuestSession } from "@/lib/guest";
 import { CanvusMark } from "@/client/brand/CanvusMark";
+import { useIsCompact, useIsMobile } from "@/lib/use-media-query";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CanvUs — Features
@@ -502,6 +503,7 @@ const SpotlightCollab = () => (
 
 /* Spotlight: 17-shape toolkit */
 const SpotlightShapes = () => {
+  const isMobile = useIsMobile();
   const shapes: Array<{ name: string; render: React.ReactNode }> = [
     { name: "rect", render: <rect x="6" y="14" width="56" height="36" rx="2" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
     { name: "rounded", render: <rect x="6" y="14" width="56" height="36" rx="9" fill="transparent" stroke={CANVAS_STROKE} strokeWidth="1.3" /> },
@@ -543,11 +545,11 @@ const SpotlightShapes = () => {
     <div style={mockShellStyle}>
       <MockChrome url={`${BOARD_PATH} · toolkit`} />
       <div style={{
-        padding: 16,
+        padding: isMobile ? 12 : 16,
         background: CANVAS_SURFACE,
         display: "grid",
-        gridTemplateColumns: "repeat(6, 1fr)",
-        gap: 8,
+        gridTemplateColumns: isMobile ? "repeat(4, 1fr)" : "repeat(6, 1fr)",
+        gap: isMobile ? 6 : 8,
       }}>
         {shapes.map((s, i) => (
           <div key={s.name} style={{
@@ -704,6 +706,9 @@ const SpotlightPresent = () => (
 export default function FeaturesView() {
   const router = useRouter();
   const [spotlight, setSpotlight] = useState<"collab" | "shapes" | "present">("collab");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isCompact = useIsCompact();
+  const isMobile = useIsMobile();
   useReveal();
 
   const handleGuestEntry = () => {
@@ -949,7 +954,7 @@ export default function FeaturesView() {
       </div>
 
       {/* NAV */}
-      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: isMobile ? "0 10px" : "0 16px" }}>
         <div
           style={{
             maxWidth: 1180, margin: "0 auto",
@@ -957,58 +962,127 @@ export default function FeaturesView() {
             background: "rgba(21,27,45,0.55)",
             backdropFilter: "blur(24px)",
             border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 18,
-            padding: "10px 12px 10px 16px",
+            borderRadius: isMobile ? 14 : 18,
+            padding: isMobile ? "8px 8px 8px 14px" : "10px 12px 10px 16px",
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <CanvusMark size={28} />
-            <span style={{ fontSize: 16, fontWeight: 800, color: PALETTE.text, letterSpacing: "-0.02em" }}>
+            <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800, color: PALETTE.text, letterSpacing: "-0.02em" }}>
               CanvUs
             </span>
-            <span className="ft-mono" style={{
-              fontSize: 9.5, fontWeight: 600, color: PALETTE.primary,
-              padding: "2px 6px",
-              border: "1px solid rgba(176,198,255,0.25)",
-              borderRadius: 5, letterSpacing: "0.08em", marginLeft: 2,
-            }}>
-              BETA
-            </span>
+            {!isMobile && (
+              <span className="ft-mono" style={{
+                fontSize: 9.5, fontWeight: 600, color: PALETTE.primary,
+                padding: "2px 6px",
+                border: "1px solid rgba(176,198,255,0.25)",
+                borderRadius: 5, letterSpacing: "0.08em", marginLeft: 2,
+              }}>
+                BETA
+              </span>
+            )}
           </Link>
 
-          <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <Link href="/features" className="ft-link" style={{ color: PALETTE.text }}>Features</Link>
-            <Link href="/how-it-works" className="ft-link">How it works</Link>
-            <span className="ft-link">Changelog</span>
-          </div>
+          {!isCompact && (
+            <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
+              <Link href="/features" className="ft-link" style={{ color: PALETTE.text }}>Features</Link>
+              <Link href="/how-it-works" className="ft-link">How it works</Link>
+              <span className="ft-link">Changelog</span>
+            </div>
+          )}
 
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Link href="/sign-in" className="ft-link" style={{ padding: "6px 12px" }}>Sign in</Link>
+          {!isCompact && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Link href="/sign-in" className="ft-link" style={{ padding: "6px 12px" }}>Sign in</Link>
+              <button
+                type="button"
+                onClick={handleGuestEntry}
+                className="ft-link"
+                style={{
+                  padding: "6px 12px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                Continue as guest
+              </button>
+              <Link href="/sign-up" className="ft-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                Open canvas
+                <ArrowIcon />
+              </Link>
+            </div>
+          )}
+
+          {isCompact && (
             <button
               type="button"
-              onClick={handleGuestEntry}
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+              data-open={mobileNavOpen}
+              onClick={() => setMobileNavOpen((v) => !v)}
+              className="mobile-menu-btn"
+            >
+              <span className="mobile-menu-btn-bars"><span /></span>
+            </button>
+          )}
+        </div>
+
+        {isCompact && mobileNavOpen && (
+          <div
+            className="mobile-menu-sheet"
+            style={{
+              maxWidth: 1180,
+              margin: "10px auto 0",
+              background: "rgba(21,27,45,0.92)",
+              backdropFilter: "blur(28px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: "14px 14px 16px",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <Link href="/features" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", color: PALETTE.text, fontSize: 15 }}>Features</Link>
+            <Link href="/how-it-works" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>How it works</Link>
+            <span className="ft-link" style={{ padding: "12px 10px", fontSize: 15 }}>Changelog</span>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
+            <Link href="/sign-in" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
+            <button
+              type="button"
+              onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
               className="ft-link"
               style={{
-                padding: "6px 12px",
+                padding: "12px 10px",
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
                 font: "inherit",
+                textAlign: "left",
+                fontSize: 15,
               }}
             >
               Continue as guest
             </button>
-            <Link href="/sign-up" className="ft-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+            <Link
+              href="/sign-up"
+              className="ft-btn-primary"
+              onClick={() => setMobileNavOpen(false)}
+              style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
+            >
               Open canvas
               <ArrowIcon />
             </Link>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* HERO */}
-      <section style={{ position: "relative", zIndex: 1, paddingTop: 148, paddingBottom: 64 }}>
+      <section style={{ position: "relative", zIndex: 1, paddingTop: isCompact ? 116 : 148, paddingBottom: isCompact ? 40 : 64 }}>
         <div className="ft-dots" style={{
           position: "absolute", inset: 0,
           maskImage: "radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%)",
@@ -1017,7 +1091,7 @@ export default function FeaturesView() {
         }} />
 
         <div style={{
-          maxWidth: 880, margin: "0 auto", padding: "0 24px",
+          maxWidth: 880, margin: "0 auto", padding: isMobile ? "0 18px" : "0 24px",
           position: "relative", textAlign: "center",
         }}>
           <div className="ft-fade ft-chip" style={{ marginBottom: 22 }}>
@@ -1070,12 +1144,15 @@ export default function FeaturesView() {
       {/* PILLARS — 6 capability cards */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "60px 24px 40px",
+        padding: isCompact ? "40px 18px 24px" : "60px 24px 40px",
         maxWidth: 1180, margin: "0 auto",
       }}>
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1.4fr",
-          gap: 60, marginBottom: 56, alignItems: "end",
+          display: "grid",
+          gridTemplateColumns: isCompact ? "1fr" : "1fr 1.4fr",
+          gap: isCompact ? 20 : 60,
+          marginBottom: isCompact ? 36 : 56,
+          alignItems: isCompact ? "start" : "end",
         }}>
           <div>
             <div className="ft-eyebrow ft-reveal">The six pillars</div>
@@ -1097,7 +1174,7 @@ export default function FeaturesView() {
             color: PALETTE.textMuted,
             lineHeight: 1.65,
             maxWidth: 540,
-            justifySelf: "end",
+            justifySelf: isCompact ? "start" : "end",
           }}>
             CanvUs isn&apos;t a kitchen-sink whiteboard. Every feature exists because
             it removes a specific friction from how teams actually meet, present, and decide.
@@ -1177,7 +1254,7 @@ export default function FeaturesView() {
       {/* SPOTLIGHT — tabbed deep-dive */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "100px 24px",
+        padding: isCompact ? "64px 18px" : "100px 24px",
         background: `linear-gradient(180deg, transparent 0%, ${PALETTE.bgDeep} 50%, transparent 100%)`,
       }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
@@ -1228,8 +1305,8 @@ export default function FeaturesView() {
             className="ft-reveal ft-d1"
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1.05fr",
-              gap: 56,
+              gridTemplateColumns: isCompact ? "1fr" : "1fr 1.05fr",
+              gap: isCompact ? 32 : 56,
               alignItems: "center",
             }}
           >
@@ -1298,7 +1375,7 @@ export default function FeaturesView() {
       {/* DETAIL GRID — granular capability index */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "100px 24px 60px",
+        padding: isCompact ? "64px 18px 40px" : "100px 24px 60px",
         maxWidth: 1180, margin: "0 auto",
       }}>
         <div style={{ marginBottom: 48 }}>
@@ -1367,12 +1444,15 @@ export default function FeaturesView() {
       {/* SPECS — performance metrics */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "60px 24px 80px",
+        padding: isCompact ? "40px 18px 56px" : "60px 24px 80px",
         maxWidth: 1180, margin: "0 auto",
       }}>
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1.4fr",
-          gap: 60, marginBottom: 40, alignItems: "end",
+          display: "grid",
+          gridTemplateColumns: isCompact ? "1fr" : "1fr 1.4fr",
+          gap: isCompact ? 16 : 60,
+          marginBottom: isCompact ? 28 : 40,
+          alignItems: isCompact ? "start" : "end",
         }}>
           <div>
             <div className="ft-eyebrow ft-reveal">By the numbers</div>
@@ -1392,7 +1472,7 @@ export default function FeaturesView() {
             color: PALETTE.textMuted,
             lineHeight: 1.7,
             maxWidth: 540,
-            justifySelf: "end",
+            justifySelf: isCompact ? "start" : "end",
           }}>
             We measure CanvUs the way you experience it: median latency, undo depth,
             shape count, zoom range. Numbers that show up in real meetings.
@@ -1402,13 +1482,15 @@ export default function FeaturesView() {
         <div className="ft-card ft-reveal" style={{ padding: 8 }}>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))",
           }}>
             {specs.map((s, i) => (
               <div key={s.metric} style={{
-                padding: 22,
-                borderRight: (i + 1) % 3 !== 0 ? `1px solid ${PALETTE.borderSoft}` : undefined,
-                borderBottom: i < specs.length - 3 ? `1px solid ${PALETTE.borderSoft}` : undefined,
+                padding: isMobile ? 18 : 22,
+                borderRight: !isMobile && (i + 1) % 3 !== 0 ? `1px solid ${PALETTE.borderSoft}` : undefined,
+                borderBottom: isMobile
+                  ? (i < specs.length - 1 ? `1px solid ${PALETTE.borderSoft}` : undefined)
+                  : (i < specs.length - 3 ? `1px solid ${PALETTE.borderSoft}` : undefined),
               }}>
                 <div className="ft-mono" style={{
                   fontSize: 10, fontWeight: 700,
@@ -1444,7 +1526,7 @@ export default function FeaturesView() {
       {/* COMPARISON */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "60px 24px 80px",
+        padding: isCompact ? "40px 18px 56px" : "60px 24px 80px",
         maxWidth: 1080, margin: "0 auto",
       }}>
         <div style={{ marginBottom: 36, textAlign: "center" }}>
@@ -1464,11 +1546,12 @@ export default function FeaturesView() {
         <div className="ft-card ft-reveal" style={{ overflow: "hidden" }}>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "1.5fr 1fr 1fr",
-            padding: "16px 22px",
+            gridTemplateColumns: isMobile ? "1.4fr 1fr 1fr" : "1.5fr 1fr 1fr",
+            padding: isMobile ? "12px 14px" : "16px 22px",
             background: PALETTE.surfaceHi,
             borderBottom: `1px solid ${PALETTE.borderSoft}`,
             alignItems: "center",
+            gap: isMobile ? 8 : 0,
           }}>
             <div className="ft-mono" style={{
               fontSize: 11, fontWeight: 700,
@@ -1497,10 +1580,11 @@ export default function FeaturesView() {
           {compareRows.map((row, i) => (
             <div key={row.feature} style={{
               display: "grid",
-              gridTemplateColumns: "1.5fr 1fr 1fr",
-              padding: "16px 22px",
+              gridTemplateColumns: isMobile ? "1.4fr 1fr 1fr" : "1.5fr 1fr 1fr",
+              padding: isMobile ? "14px 14px" : "16px 22px",
               borderBottom: i < compareRows.length - 1 ? `1px solid ${PALETTE.borderSoft}` : undefined,
               alignItems: "center",
+              gap: isMobile ? 8 : 0,
             }}>
               <div style={{
                 fontSize: 14, color: PALETTE.text, fontWeight: 500,
@@ -1571,7 +1655,7 @@ export default function FeaturesView() {
       {/* CTA */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "100px 24px 120px",
+        padding: isCompact ? "64px 18px 80px" : "100px 24px 120px",
         textAlign: "center", overflow: "hidden",
       }}>
         <div style={{
@@ -1583,7 +1667,8 @@ export default function FeaturesView() {
           position: "absolute",
           left: "50%", top: "50%",
           transform: "translate(-50%,-50%)",
-          width: 600, height: 600,
+          width: isMobile ? 360 : isCompact ? 480 : 600,
+          height: isMobile ? 360 : isCompact ? 480 : 600,
           borderRadius: "50%",
           border: `1px dashed ${PALETTE.borderSoft}`,
           animation: "ft-orbit 60s linear infinite",
@@ -1633,12 +1718,16 @@ export default function FeaturesView() {
       <footer style={{
         position: "relative", zIndex: 1,
         borderTop: `1px solid ${PALETTE.borderSoft}`,
-        padding: "44px 24px 30px",
+        padding: isCompact ? "32px 18px 24px" : "44px 24px 30px",
       }}>
         <div style={{
           maxWidth: 1180, margin: "0 auto",
-          display: "flex", justifyContent: "space-between",
-          alignItems: "center", flexWrap: "wrap", gap: 16,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          justifyContent: "space-between",
+          alignItems: isMobile ? "flex-start" : "center",
+          flexWrap: "wrap",
+          gap: isMobile ? 14 : 16,
         }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <CanvusMark size={24} />

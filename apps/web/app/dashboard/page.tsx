@@ -12,11 +12,13 @@ import {
 import { AmbientBackground } from "@/client/landing-page/ambient-background";
 import { PALETTE } from "@/client/landing-page/palette";
 import { CanvusMark } from "@/client/brand/CanvusMark";
+import { useIsMobile } from "@/lib/use-media-query";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const userId = session?.user?.id;
+  const isMobile = useIsMobile();
 
   const { data: boards, isFetching, error } = useGetBoardsQuery(undefined, {
     skip: !userId,
@@ -63,6 +65,7 @@ export default function DashboardPage() {
         onCreate={handleCreate}
         creating={creating}
         canCreate={!!userId}
+        isMobile={isMobile}
       />
 
       <main
@@ -71,7 +74,7 @@ export default function DashboardPage() {
           zIndex: 1,
           maxWidth: 1180,
           margin: "0 auto",
-          padding: "32px 28px 80px",
+          padding: isMobile ? "24px 18px 64px" : "32px 28px 80px",
         }}
       >
         <div style={{ marginBottom: 36, position: "relative" }}>
@@ -210,10 +213,12 @@ function DashboardHeader({
   onCreate,
   creating,
   canCreate,
+  isMobile,
 }: {
   onCreate: () => void;
   creating: boolean;
   canCreate: boolean;
+  isMobile: boolean;
 }) {
   return (
     <header
@@ -230,11 +235,11 @@ function DashboardHeader({
         style={{
           maxWidth: 1180,
           margin: "0 auto",
-          padding: "14px 28px",
+          padding: isMobile ? "12px 16px" : "14px 28px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 16,
+          gap: isMobile ? 10 : 16,
         }}
       >
         <Link
@@ -250,7 +255,7 @@ function DashboardHeader({
           <BrandMark />
           <span
             style={{
-              fontSize: 16,
+              fontSize: isMobile ? 15 : 16,
               fontWeight: 800,
               letterSpacing: "-0.02em",
             }}
@@ -259,23 +264,25 @@ function DashboardHeader({
           </span>
         </Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link
-            href="/"
-            style={{
-              fontSize: 13,
-              fontWeight: 500,
-              color: PALETTE.textDim,
-              textDecoration: "none",
-              padding: "6px 12px",
-            }}
-          >
-            Home
-          </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 10 }}>
+          {!isMobile && (
+            <Link
+              href="/"
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: PALETTE.textDim,
+                textDecoration: "none",
+                padding: "6px 12px",
+              }}
+            >
+              Home
+            </Link>
+          )}
           {canCreate && (
             <PrimaryButton compact onClick={onCreate} disabled={creating}>
               <PlusIcon />
-              {creating ? "Creating…" : "New board"}
+              {creating ? "Creating…" : isMobile ? "New" : "New board"}
             </PrimaryButton>
           )}
         </div>
@@ -292,8 +299,8 @@ function BoardGrid({ boards }: { boards: BoardListItem[] }) {
         margin: 0,
         padding: 0,
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: 18,
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
+        gap: 14,
       }}
     >
       {boards.map((b, i) => (
@@ -570,8 +577,8 @@ function SkeletonGrid() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: 18,
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
+        gap: 14,
       }}
     >
       <style>{`
@@ -608,7 +615,7 @@ function EmptyState({
     <div
       style={{
         position: "relative",
-        padding: "72px 32px",
+        padding: "clamp(40px, 8vw, 72px) clamp(20px, 5vw, 32px)",
         textAlign: "center",
         borderRadius: 20,
         border: `1px solid ${PALETTE.borderSoft}`,
@@ -697,7 +704,7 @@ function SignInPrompt() {
     <div
       style={{
         position: "relative",
-        padding: "72px 32px",
+        padding: "clamp(40px, 8vw, 72px) clamp(20px, 5vw, 32px)",
         textAlign: "center",
         borderRadius: 20,
         border: `1px solid ${PALETTE.borderSoft}`,

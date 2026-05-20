@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PALETTE } from "./palette";
 import { startGuestSession } from "@/lib/guest";
 import { CanvusMark } from "@/client/brand/CanvusMark";
+import { useIsCompact, useIsMobile } from "@/lib/use-media-query";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CanvUs — Landing
@@ -672,6 +673,9 @@ const CanvasPreview = () => {
 export default function LandingPageView() {
   const router = useRouter();
   const [activeFeature, setActiveFeature] = useState(0);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isCompact = useIsCompact();
+  const isMobile = useIsMobile();
   useReveal();
 
   const handleGuestEntry = () => {
@@ -807,7 +811,7 @@ export default function LandingPageView() {
       </div>
 
       {/* ── NAV ──────────────────────────────────────────────────────── */}
-      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: isMobile ? "0 10px" : "0 16px" }}>
         <div
           style={{
             maxWidth: 1180, margin: "0 auto",
@@ -815,73 +819,174 @@ export default function LandingPageView() {
             background: "rgba(21,27,45,0.55)",
             backdropFilter: "blur(24px)",
             border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 18,
-            padding: "10px 12px 10px 16px",
+            borderRadius: isMobile ? 14 : 18,
+            padding: isMobile ? "8px 8px 8px 14px" : "10px 12px 10px 16px",
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
           {/* Logo */}
-          <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <Logo />
             <span style={{
-              fontSize: 16, fontWeight: 800, color: PALETTE.text,
+              fontSize: isMobile ? 15 : 16, fontWeight: 800, color: PALETTE.text,
               letterSpacing: "-0.02em",
             }}>
               CanvUs
             </span>
-            <span className="lp-mono" style={{
-              fontSize: 9.5, fontWeight: 600,
-              color: PALETTE.primary,
-              padding: "2px 6px",
-              border: "1px solid rgba(176,198,255,0.25)",
-              borderRadius: 5,
-              letterSpacing: "0.08em",
-              marginLeft: 2,
-            }}>
-              BETA
-            </span>
-          </a>
+            {!isMobile && (
+              <span className="lp-mono" style={{
+                fontSize: 9.5, fontWeight: 600,
+                color: PALETTE.primary,
+                padding: "2px 6px",
+                border: "1px solid rgba(176,198,255,0.25)",
+                borderRadius: 5,
+                letterSpacing: "0.08em",
+                marginLeft: 2,
+              }}>
+                BETA
+              </span>
+            )}
+          </Link>
 
-          {/* Links */}
-          <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <Link href="/features" className="lp-link" style={{ textDecoration: "none" }}>
-              Features
-            </Link>
-            <Link href="/how-it-works" className="lp-link" style={{ textDecoration: "none" }}>
-              How it works
-            </Link>
-            <span className="lp-link">Changelog</span>
-          </div>
+          {/* Desktop links */}
+          {!isCompact && (
+            <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
+              <Link href="/features" className="lp-link" style={{ textDecoration: "none" }}>
+                Features
+              </Link>
+              <Link href="/how-it-works" className="lp-link" style={{ textDecoration: "none" }}>
+                How it works
+              </Link>
+              <span className="lp-link">Changelog</span>
+            </div>
+          )}
 
-          {/* CTAs */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Link href="/sign-in" className="lp-link" style={{ padding: "6px 12px", textDecoration: "none" }}>Sign in</Link>
+          {/* Desktop CTAs */}
+          {!isCompact && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Link href="/sign-in" className="lp-link" style={{ padding: "6px 12px", textDecoration: "none" }}>Sign in</Link>
+              <button
+                type="button"
+                onClick={handleGuestEntry}
+                className="lp-link"
+                style={{
+                  padding: "6px 12px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                Continue as guest
+              </button>
+              <Link href="/sign-up" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                Open canvas
+                <ArrowIcon />
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile hamburger */}
+          {isCompact && (
             <button
               type="button"
-              onClick={handleGuestEntry}
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+              data-open={mobileNavOpen}
+              onClick={() => setMobileNavOpen((v) => !v)}
+              className="mobile-menu-btn"
+            >
+              <span className="mobile-menu-btn-bars"><span /></span>
+            </button>
+          )}
+        </div>
+
+        {/* Mobile menu sheet */}
+        {isCompact && mobileNavOpen && (
+          <div
+            className="mobile-menu-sheet"
+            style={{
+              maxWidth: 1180,
+              margin: "10px auto 0",
+              background: "rgba(21,27,45,0.92)",
+              backdropFilter: "blur(28px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: "14px 14px 16px",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <Link
+              href="/features"
+              className="lp-link"
+              onClick={() => setMobileNavOpen(false)}
+              style={{ padding: "12px 10px", textDecoration: "none", fontSize: 15 }}
+            >
+              Features
+            </Link>
+            <Link
+              href="/how-it-works"
+              className="lp-link"
+              onClick={() => setMobileNavOpen(false)}
+              style={{ padding: "12px 10px", textDecoration: "none", fontSize: 15 }}
+            >
+              How it works
+            </Link>
+            <span className="lp-link" style={{ padding: "12px 10px", fontSize: 15 }}>
+              Changelog
+            </span>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
+            <Link
+              href="/sign-in"
+              className="lp-link"
+              onClick={() => setMobileNavOpen(false)}
+              style={{ padding: "12px 10px", textDecoration: "none", fontSize: 15 }}
+            >
+              Sign in
+            </Link>
+            <button
+              type="button"
+              onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
               className="lp-link"
               style={{
-                padding: "6px 12px",
+                padding: "12px 10px",
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
                 font: "inherit",
+                textAlign: "left",
+                fontSize: 15,
               }}
             >
               Continue as guest
             </button>
-            <Link href="/sign-up" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+            <Link
+              href="/sign-up"
+              className="lp-btn-primary"
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                padding: "12px 18px",
+                fontSize: 14,
+                textDecoration: "none",
+                marginTop: 8,
+                justifyContent: "center",
+              }}
+            >
               Open canvas
               <ArrowIcon />
             </Link>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
-        paddingTop: 132, paddingBottom: 64,
+        paddingTop: isCompact ? 108 : 132,
+        paddingBottom: isCompact ? 40 : 64,
       }}>
         {/* Hero dot grid */}
         <div className="lp-dots" style={{
@@ -892,8 +997,11 @@ export default function LandingPageView() {
         }} />
 
         <div style={{
-          maxWidth: 1180, margin: "0 auto", padding: "0 24px",
-          display: "grid", gridTemplateColumns: "1fr 1.05fr", gap: 56,
+          maxWidth: 1180, margin: "0 auto",
+          padding: isMobile ? "0 18px" : "0 24px",
+          display: "grid",
+          gridTemplateColumns: isCompact ? "1fr" : "1fr 1.05fr",
+          gap: isCompact ? 40 : 56,
           alignItems: "center", position: "relative",
         }}>
           {/* Copy */}
@@ -1032,7 +1140,7 @@ export default function LandingPageView() {
               border: "1px solid rgba(255,255,255,0.1)",
               boxShadow:
                 "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(176,198,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
-              height: 480,
+              height: isMobile ? 360 : isCompact ? 420 : 480,
               background: PALETTE.surface,
             }}>
               {/* Chrome */}
@@ -1076,7 +1184,9 @@ export default function LandingPageView() {
 
             {/* Floating: live users — sits well below the window, clear of the bottom toolbar */}
             <div style={{
-              position: "absolute", bottom: -34, left: -28,
+              position: "absolute",
+              bottom: isMobile ? -24 : -34,
+              left: isMobile ? 8 : -28,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 14, padding: "9px 13px",
@@ -1099,7 +1209,9 @@ export default function LandingPageView() {
 
             {/* Floating: latency — pop-out chip above the window, mirrors the editing chip below */}
             <div style={{
-              position: "absolute", top: -22, right: 28,
+              position: "absolute",
+              top: -22,
+              right: isMobile ? 10 : 28,
               background: PALETTE.surfaceHi,
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 12,
@@ -1124,12 +1236,15 @@ export default function LandingPageView() {
       {/* ── FEATURES ─────────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "120px 24px 80px",
+        padding: isCompact ? "72px 18px 56px" : "120px 24px 80px",
         maxWidth: 1180, margin: "0 auto",
       }}>
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1.4fr",
-          gap: 60, marginBottom: 56, alignItems: "end",
+          display: "grid",
+          gridTemplateColumns: isCompact ? "1fr" : "1fr 1.4fr",
+          gap: isCompact ? 20 : 60,
+          marginBottom: isCompact ? 36 : 56,
+          alignItems: isCompact ? "start" : "end",
         }}>
           <div>
             <div className="lp-eyebrow lp-reveal">Capabilities</div>
@@ -1151,7 +1266,7 @@ export default function LandingPageView() {
             color: PALETTE.textMuted,
             lineHeight: 1.65,
             maxWidth: 540,
-            justifySelf: "end",
+            justifySelf: isCompact ? "start" : "end",
           }}>
             Not another whiteboard with a shape library bolted on.
             CanvUs is built around how teams actually meet, present, and decide.
@@ -1219,11 +1334,11 @@ export default function LandingPageView() {
       {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "80px 24px",
+        padding: isCompact ? "56px 18px" : "80px 24px",
         background: `linear-gradient(180deg, transparent 0%, ${PALETTE.bgDeep} 50%, transparent 100%)`,
       }}>
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
+          <div style={{ textAlign: "center", marginBottom: isCompact ? 36 : 60 }}>
             <div className="lp-eyebrow lp-reveal" style={{ justifyContent: "center" }}>How it works</div>
             <h2 className="lp-reveal lp-d1" style={{
               fontSize: "clamp(28px, 3.6vw, 42px)",
@@ -1239,17 +1354,21 @@ export default function LandingPageView() {
           </div>
 
           <div style={{
-            display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20, position: "relative",
+            display: "grid",
+            gridTemplateColumns: isCompact ? "1fr" : "repeat(3, 1fr)",
+            gap: isCompact ? 36 : 20,
+            position: "relative",
           }}>
-            {/* Connector line */}
-            <div className="lp-reveal-line" style={{
-              position: "absolute",
-              top: 24, left: "16%", right: "16%",
-              height: 1,
-              background: `linear-gradient(90deg, ${PALETTE.primary}, ${PALETTE.primaryStrong}, ${PALETTE.tertiary})`,
-              opacity: 0.4,
-            }} />
+            {/* Connector line — horizontal on desktop only */}
+            {!isCompact && (
+              <div className="lp-reveal-line" style={{
+                position: "absolute",
+                top: 24, left: "16%", right: "16%",
+                height: 1,
+                background: `linear-gradient(90deg, ${PALETTE.primary}, ${PALETTE.primaryStrong}, ${PALETTE.tertiary})`,
+                opacity: 0.4,
+              }} />
+            )}
 
             {[
               { n: "01", t: "Open a board",     d: "Sign in with email or jump in as a guest. Name your board and start on a blank canvas — no setup, no project config.", c: PALETTE.primary },
@@ -1297,10 +1416,10 @@ export default function LandingPageView() {
       {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "100px 24px",
+        padding: isCompact ? "64px 18px" : "100px 24px",
         maxWidth: 1180, margin: "0 auto",
       }}>
-        <div style={{ marginBottom: 48 }}>
+        <div style={{ marginBottom: isCompact ? 32 : 48 }}>
           <div className="lp-eyebrow lp-reveal">Voices</div>
           <h2 className="lp-reveal lp-d1" style={{
             fontSize: "clamp(28px, 3.6vw, 42px)",
@@ -1363,7 +1482,7 @@ export default function LandingPageView() {
       {/* ── BIG CTA ──────────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "120px 24px",
+        padding: isCompact ? "72px 18px" : "120px 24px",
         textAlign: "center",
         overflow: "hidden",
       }}>
@@ -1378,7 +1497,8 @@ export default function LandingPageView() {
           position: "absolute",
           left: "50%", top: "50%",
           transform: "translate(-50%,-50%)",
-          width: 600, height: 600,
+          width: isMobile ? 360 : isCompact ? 480 : 600,
+          height: isMobile ? 360 : isCompact ? 480 : 600,
           borderRadius: "50%",
           border: `1px dashed ${PALETTE.borderSoft}`,
           animation: "lp-orbit 60s linear infinite",
@@ -1430,12 +1550,18 @@ export default function LandingPageView() {
       <footer style={{
         position: "relative", zIndex: 1,
         borderTop: `1px solid ${PALETTE.borderSoft}`,
-        padding: "48px 24px 32px",
+        padding: isCompact ? "40px 18px 28px" : "48px 24px 32px",
       }}>
         <div style={{
           maxWidth: 1180, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
-          gap: 40, marginBottom: 36,
+          display: "grid",
+          gridTemplateColumns: isMobile
+            ? "1fr"
+            : isCompact
+              ? "1fr 1fr"
+              : "1.4fr 1fr 1fr 1fr",
+          gap: isCompact ? 28 : 40,
+          marginBottom: isCompact ? 28 : 36,
         }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>

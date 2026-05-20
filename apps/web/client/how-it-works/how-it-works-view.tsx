@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { PALETTE } from "@/client/landing-page/palette";
 import { startGuestSession } from "@/lib/guest";
 import { CanvusMark } from "@/client/brand/CanvusMark";
+import { useIsCompact, useIsMobile } from "@/lib/use-media-query";
+import { useState } from "react";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CanvUs — How it works
@@ -738,6 +740,9 @@ function MockChrome({ url }: { url: string }) {
 
 export default function HowItWorksView() {
   const router = useRouter();
+  const isCompact = useIsCompact();
+  const isMobile = useIsMobile();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   useReveal();
 
   const handleGuestEntry = () => {
@@ -931,7 +936,7 @@ export default function HowItWorksView() {
       </div>
 
       {/* NAV */}
-      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: 14, left: 0, right: 0, zIndex: 100, padding: isMobile ? "0 10px" : "0 16px" }}>
         <div
           style={{
             maxWidth: 1180, margin: "0 auto",
@@ -939,58 +944,127 @@ export default function HowItWorksView() {
             background: "rgba(21,27,45,0.55)",
             backdropFilter: "blur(24px)",
             border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 18,
-            padding: "10px 12px 10px 16px",
+            borderRadius: isMobile ? 14 : 18,
+            padding: isMobile ? "8px 8px 8px 14px" : "10px 12px 10px 16px",
             boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <CanvusMark size={28} />
-            <span style={{ fontSize: 16, fontWeight: 800, color: PALETTE.text, letterSpacing: "-0.02em" }}>
+            <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800, color: PALETTE.text, letterSpacing: "-0.02em" }}>
               CanvUs
             </span>
-            <span className="hw-mono" style={{
-              fontSize: 9.5, fontWeight: 600, color: PALETTE.primary,
-              padding: "2px 6px",
-              border: "1px solid rgba(176,198,255,0.25)",
-              borderRadius: 5, letterSpacing: "0.08em", marginLeft: 2,
-            }}>
-              BETA
-            </span>
+            {!isMobile && (
+              <span className="hw-mono" style={{
+                fontSize: 9.5, fontWeight: 600, color: PALETTE.primary,
+                padding: "2px 6px",
+                border: "1px solid rgba(176,198,255,0.25)",
+                borderRadius: 5, letterSpacing: "0.08em", marginLeft: 2,
+              }}>
+                BETA
+              </span>
+            )}
           </Link>
 
-          <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <Link href="/features" className="hw-link">Features</Link>
-            <Link href="/how-it-works" className="hw-link" style={{ color: PALETTE.text }}>How it works</Link>
-            <span className="hw-link">Changelog</span>
-          </div>
+          {!isCompact && (
+            <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
+              <Link href="/features" className="hw-link">Features</Link>
+              <Link href="/how-it-works" className="hw-link" style={{ color: PALETTE.text }}>How it works</Link>
+              <span className="hw-link">Changelog</span>
+            </div>
+          )}
 
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Link href="/sign-in" className="hw-link" style={{ padding: "6px 12px" }}>Sign in</Link>
+          {!isCompact && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Link href="/sign-in" className="hw-link" style={{ padding: "6px 12px" }}>Sign in</Link>
+              <button
+                type="button"
+                onClick={handleGuestEntry}
+                className="hw-link"
+                style={{
+                  padding: "6px 12px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                Continue as guest
+              </button>
+              <Link href="/sign-up" className="hw-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                Open canvas
+                <ArrowIcon />
+              </Link>
+            </div>
+          )}
+
+          {isCompact && (
             <button
               type="button"
-              onClick={handleGuestEntry}
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+              data-open={mobileNavOpen}
+              onClick={() => setMobileNavOpen((v) => !v)}
+              className="mobile-menu-btn"
+            >
+              <span className="mobile-menu-btn-bars"><span /></span>
+            </button>
+          )}
+        </div>
+
+        {isCompact && mobileNavOpen && (
+          <div
+            className="mobile-menu-sheet"
+            style={{
+              maxWidth: 1180,
+              margin: "10px auto 0",
+              background: "rgba(21,27,45,0.92)",
+              backdropFilter: "blur(28px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: "14px 14px 16px",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <Link href="/features" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Features</Link>
+            <Link href="/how-it-works" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", color: PALETTE.text, fontSize: 15 }}>How it works</Link>
+            <span className="hw-link" style={{ padding: "12px 10px", fontSize: 15 }}>Changelog</span>
+            <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
+            <Link href="/sign-in" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
+            <button
+              type="button"
+              onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
               className="hw-link"
               style={{
-                padding: "6px 12px",
+                padding: "12px 10px",
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
                 font: "inherit",
+                textAlign: "left",
+                fontSize: 15,
               }}
             >
               Continue as guest
             </button>
-            <Link href="/sign-up" className="hw-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+            <Link
+              href="/sign-up"
+              className="hw-btn-primary"
+              onClick={() => setMobileNavOpen(false)}
+              style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
+            >
               Open canvas
               <ArrowIcon />
             </Link>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* HERO */}
-      <section style={{ position: "relative", zIndex: 1, paddingTop: 148, paddingBottom: 48 }}>
+      <section style={{ position: "relative", zIndex: 1, paddingTop: isCompact ? 116 : 148, paddingBottom: isCompact ? 32 : 48 }}>
         <div className="hw-dots" style={{
           position: "absolute", inset: 0,
           maskImage: "radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%)",
@@ -999,7 +1073,7 @@ export default function HowItWorksView() {
         }} />
 
         <div style={{
-          maxWidth: 880, margin: "0 auto", padding: "0 24px",
+          maxWidth: 880, margin: "0 auto", padding: isMobile ? "0 18px" : "0 24px",
           position: "relative", textAlign: "center",
         }}>
           <div className="hw-fade hw-chip" style={{ marginBottom: 22 }}>
@@ -1050,9 +1124,9 @@ export default function HowItWorksView() {
       </section>
 
       {/* THE FLOW — 4 steps */}
-      <section style={{ position: "relative", zIndex: 1, padding: "60px 24px 40px" }}>
+      <section style={{ position: "relative", zIndex: 1, padding: isCompact ? "40px 18px 24px" : "60px 24px 40px" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <div style={{ textAlign: "center", marginBottom: isCompact ? 40 : 64 }}>
             <div className="hw-eyebrow hw-reveal" style={{ justifyContent: "center" }}>The flow</div>
             <h2 className="hw-reveal hw-d1" style={{
               fontSize: "clamp(28px, 3.4vw, 40px)",
@@ -1066,17 +1140,17 @@ export default function HowItWorksView() {
             </h2>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 80 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: isCompact ? 56 : 80 }}>
             {steps.map((s, i) => {
-              const reverse = i % 2 === 1;
+              const reverse = !isCompact && i % 2 === 1;
               return (
                 <div
                   key={s.n}
                   className="hw-reveal hw-d1"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1.05fr",
-                    gap: 56,
+                    gridTemplateColumns: isCompact ? "1fr" : "1fr 1.05fr",
+                    gap: isCompact ? 28 : 56,
                     alignItems: "center",
                     direction: reverse ? "rtl" : "ltr",
                   }}
@@ -1151,13 +1225,16 @@ export default function HowItWorksView() {
       {/* UNDER THE HOOD */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "100px 24px",
+        padding: isCompact ? "64px 18px" : "100px 24px",
         background: `linear-gradient(180deg, transparent 0%, ${PALETTE.bgDeep} 50%, transparent 100%)`,
       }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
           <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1.4fr",
-            gap: 60, marginBottom: 48, alignItems: "end",
+            display: "grid",
+            gridTemplateColumns: isCompact ? "1fr" : "1fr 1.4fr",
+            gap: isCompact ? 20 : 60,
+            marginBottom: isCompact ? 32 : 48,
+            alignItems: isCompact ? "start" : "end",
           }}>
             <div>
               <div className="hw-eyebrow hw-reveal">Under the hood</div>
@@ -1178,7 +1255,7 @@ export default function HowItWorksView() {
               color: PALETTE.textMuted,
               lineHeight: 1.7,
               maxWidth: 540,
-              justifySelf: "end",
+              justifySelf: isCompact ? "start" : "end",
             }}>
               The technology under the canvas — Yjs, Socket.IO, local-first state —
               exists so you don&apos;t have to think about it. Here&apos;s what keeps
@@ -1233,7 +1310,7 @@ export default function HowItWorksView() {
       </section>
 
       {/* SHORTCUTS */}
-      <section style={{ position: "relative", zIndex: 1, padding: "60px 24px 100px" }}>
+      <section style={{ position: "relative", zIndex: 1, padding: isCompact ? "40px 18px 64px" : "60px 24px 100px" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
           <div style={{ marginBottom: 40 }}>
             <div className="hw-eyebrow hw-reveal">Speed of thought</div>
@@ -1280,7 +1357,7 @@ export default function HowItWorksView() {
       </section>
 
       {/* FAQ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "60px 24px 100px" }}>
+      <section style={{ position: "relative", zIndex: 1, padding: isCompact ? "40px 18px 64px" : "60px 24px 100px" }}>
         <div style={{ maxWidth: 880, margin: "0 auto" }}>
           <div style={{ marginBottom: 40, textAlign: "center" }}>
             <div className="hw-eyebrow hw-reveal" style={{ justifyContent: "center" }}>
@@ -1318,7 +1395,7 @@ export default function HowItWorksView() {
       {/* CTA */}
       <section style={{
         position: "relative", zIndex: 1,
-        padding: "100px 24px 120px",
+        padding: isCompact ? "64px 18px 80px" : "100px 24px 120px",
         textAlign: "center", overflow: "hidden",
       }}>
         <div style={{
@@ -1330,7 +1407,8 @@ export default function HowItWorksView() {
           position: "absolute",
           left: "50%", top: "50%",
           transform: "translate(-50%,-50%)",
-          width: 600, height: 600,
+          width: isMobile ? 360 : isCompact ? 480 : 600,
+          height: isMobile ? 360 : isCompact ? 480 : 600,
           borderRadius: "50%",
           border: `1px dashed ${PALETTE.borderSoft}`,
           animation: "hw-orbit 60s linear infinite",
@@ -1379,12 +1457,16 @@ export default function HowItWorksView() {
       <footer style={{
         position: "relative", zIndex: 1,
         borderTop: `1px solid ${PALETTE.borderSoft}`,
-        padding: "44px 24px 30px",
+        padding: isCompact ? "32px 18px 24px" : "44px 24px 30px",
       }}>
         <div style={{
           maxWidth: 1180, margin: "0 auto",
-          display: "flex", justifyContent: "space-between",
-          alignItems: "center", flexWrap: "wrap", gap: 16,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          justifyContent: "space-between",
+          alignItems: isMobile ? "flex-start" : "center",
+          flexWrap: "wrap",
+          gap: isMobile ? 14 : 16,
         }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <CanvusMark size={24} />
