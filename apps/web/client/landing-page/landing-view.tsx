@@ -936,6 +936,8 @@ export default function LandingPageView() {
                 <span className="lp-grad" style={{
                   fontStyle: "italic",
                   display: "inline-block",
+                  paddingRight: "0.12em",
+                  paddingBottom: "0.08em",
                   animation: "lp-word-up 0.6s 0.58s cubic-bezier(0.16,1,0.3,1) both",
                 }}>
                   actually
@@ -1400,7 +1402,7 @@ export default function LandingPageView() {
             Your next idea
             <br />
             starts on a{" "}
-            <span className="lp-grad" style={{ fontStyle: "italic" }}>blank board.</span>
+            <span className="lp-grad" style={{ fontStyle: "italic", display: "inline-block", paddingRight: "0.12em", paddingBottom: "0.08em" }}>blank board.</span>
           </h2>
           <p className="lp-reveal lp-d2" style={{
             fontSize: 17,
