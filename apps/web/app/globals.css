@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-plus-jakarta-sans);
   --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-fraunces);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -99,6 +100,17 @@
 
   /* ── Background extended ── */
   --color-on-background: var(--on-background);
+
+  /* ── Drafting Atelier accents ──
+     Warm copper/amber, mint pivot, vellum cream, ink ridge —
+     paired against the cool navy base to create real complementary contrast. */
+  --color-copper: var(--copper);
+  --color-copper-soft: var(--copper-soft);
+  --color-copper-glow: var(--copper-glow);
+  --color-mint: var(--mint);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-ridge: var(--ridge);
 }
 
 /* ─────────────────────────────────────────────
@@ -194,6 +206,20 @@
   --on-error-container:        #ffdad6;
 
   --on-background:             #dce1fb;
+
+  /* ── Drafting Atelier accent values ──
+     Copper = warm pencil mark, used sparingly for active/draft emphasis.
+     Mint   = approval / live / "go" states.
+     Cream  = paper-warm highlights for editorial moments.
+     Ink    = saturated brand ink for dimensional press states.
+     Ridge  = sharper alt-border for refined separators. */
+  --copper:       #e4a572;
+  --copper-soft:  rgba(228, 165, 114, 0.14);
+  --copper-glow:  rgba(228, 165, 114, 0.55);
+  --mint:         #7dd3a4;
+  --cream:        #f4ecd8;
+  --ink:          #0a1024;
+  --ridge:        rgba(255, 255, 255, 0.085);
 }
 
 /* .dark mirrors :root — this palette is dark-first */
@@ -249,6 +275,228 @@
     radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: 12px 12px;
+}
+
+/* ─────────────────────────────────────────────
+   Drafting Atelier — atmosphere, textures, type
+───────────────────────────────────────────── */
+
+/* — Editorial display type. Use sparingly: hero numerals, brand moments. — */
+.font-display {
+  font-family: var(--font-fraunces), "Fraunces", ui-serif, Georgia, serif;
+  font-feature-settings: "ss01", "salt", "liga";
+  letter-spacing: -0.025em;
+}
+.font-display-italic {
+  font-family: var(--font-fraunces), "Fraunces", ui-serif, Georgia, serif;
+  font-style: italic;
+  font-feature-settings: "ss01", "salt", "liga";
+}
+
+/* — Vellum noise. A grain layer that sells "physical material" without
+     pulling focus. Apply as ::before pseudo via .vellum, or as a layer. — */
+.vellum {
+  position: relative;
+  isolation: isolate;
+}
+.vellum::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.45;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* — Blueprint rule. Horizontal hairline + faint draft micro-tick texture. — */
+.rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ridge) 18%, var(--ridge) 82%, transparent);
+}
+.rule-strong {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(176,198,255,0.28), transparent);
+}
+
+/* — Corner ticks. Draft-paper crop marks used on panels and cards. — */
+.atelier-corners {
+  position: relative;
+}
+.atelier-corners::before,
+.atelier-corners::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border-color: rgba(176, 198, 255, 0.35);
+}
+.atelier-corners::before {
+  top: 6px; left: 6px;
+  border-top: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+  color: rgba(176, 198, 255, 0.35);
+}
+.atelier-corners::after {
+  bottom: 6px; right: 6px;
+  border-bottom: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  color: rgba(176, 198, 255, 0.35);
+}
+
+/* — Keycap. Monospaced shortcut chip with subtle depth. — */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(220, 225, 251, 0.78);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom-color: rgba(0, 0, 0, 0.45);
+  border-radius: 5px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* — Mono caps. The "drafting label" used across panels. — */
+.mono-caps {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(194, 198, 216, 0.72);
+}
+.mono-caps::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 1px;
+  background: rgba(176, 198, 255, 0.45);
+  vertical-align: middle;
+  margin-right: 8px;
+  margin-bottom: 2px;
+}
+
+/* — Copper chip. Pencil-mark accent for "draft" / pending states. — */
+.chip-copper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 7px;
+  background: var(--copper-soft);
+  border: 1px solid rgba(228, 165, 114, 0.32);
+  border-radius: 999px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+.chip-copper::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--copper);
+  box-shadow: 0 0 8px var(--copper-glow);
+}
+
+/* — Schematic reveal. Subtle "drafting line draws across" entrance. — */
+@keyframes schematic-in {
+  0%   { opacity: 0; transform: translateY(6px); clip-path: inset(0 100% 0 0); }
+  60%  { opacity: 1; clip-path: inset(0 0 0 0); }
+  100% { opacity: 1; transform: translateY(0); clip-path: inset(0 0 0 0); }
+}
+.animate-schematic-in {
+  animation: schematic-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* — Pencil sweep. Used for hairline reveals (rules, dividers). — */
+@keyframes pencil-sweep {
+  from { transform: scaleX(0); transform-origin: left center; }
+  to   { transform: scaleX(1); transform-origin: left center; }
+}
+.animate-pencil-sweep {
+  animation: pencil-sweep 0.7s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* — Float ambient. Slow, organic drift for floating chips. — */
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.animate-drift { animation: drift 5.5s ease-in-out infinite; }
+
+/* — Live dot. Soft mint pulse to signal real-time/healthy. — */
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(125, 211, 164, 0.55); }
+  100% { box-shadow: 0 0 0 8px rgba(125, 211, 164, 0); }
+}
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mint);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+
+/* — Hairline focus ring. Engineering-feeling focus state. — */
+.focus-hairline:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px rgba(12, 19, 36, 1),
+    0 0 0 2px rgba(176, 198, 255, 0.55);
+}
+
+/* — Tactile button surface. Used to add depth & press response. — */
+.tactile {
+  position: relative;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 200ms ease, color 160ms ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+}
+.tactile:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(176, 198, 255, 0.16);
+}
+.tactile:active { transform: translateY(0.5px); }
+
+/* — Subtle scan-line texture for premium surfaces. — */
+.scanlines {
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* — Drafting paper. Combines vellum noise + subtle dot grid + warm tone. — */
+.drafting-paper {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(176, 198, 255, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(228, 165, 114, 0.06) 0%, transparent 50%),
+    var(--surface);
 }
 
 /* ── Toolbar entrance animation ── */

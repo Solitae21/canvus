@@ -786,10 +786,12 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
       <div className="mx-3 mt-3 flex items-center justify-between pointer-events-auto">
         {/* ── Left cluster ── */}
         <div
-          className="flex items-center gap-2 px-2.5 py-1.5
+          className="relative flex items-center gap-2 px-2.5 py-1.5
                       bg-surface-container/70 backdrop-blur-[24px]
                       border border-white/[0.07] rounded-2xl
-                      shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
+                      shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]
+                      before:content-[''] before:absolute before:-top-px before:left-3 before:right-3
+                      before:h-px before:bg-linear-to-r before:from-transparent before:via-white/15 before:to-transparent"
         >
           <Link
             href="/dashboard"
@@ -818,9 +820,24 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
             ref={switcherContainerRef}
             className="relative flex items-center gap-2 px-2"
           >
-            <div className="relative w-5 h-5">
-              <div className="absolute inset-0 rounded bg-primary-container/80 rotate-6 scale-90" />
-              <div className="absolute inset-0 rounded bg-gradient-to-br from-primary-container to-primary" />
+            {/* Blueprint stamp — copper shadow plate behind an ink-blue tile,
+                evoking a layered draft mark.  */}
+            <div className="relative w-5 h-5 shrink-0">
+              <div
+                aria-hidden
+                className="absolute inset-0 rounded-[5px] rotate-[8deg] scale-90"
+                style={{ background: "var(--copper-soft)", border: "1px solid rgba(228,165,114,0.4)" }}
+              />
+              <div className="absolute inset-0 rounded-[5px] bg-linear-to-br from-primary-fixed-dim to-primary-container shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_4px_rgba(0,0,0,0.35)]" />
+              {/* Drafting corner tick */}
+              <div
+                aria-hidden
+                className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5"
+                style={{
+                  borderTop: "1px solid rgba(244,236,216,0.65)",
+                  borderLeft: "1px solid rgba(244,236,216,0.65)",
+                }}
+              />
             </div>
             {editingName ? (
               <input
@@ -907,7 +924,7 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
                     >
                       <span
                         className="shrink-0 w-4 h-4 rounded
-                                   bg-gradient-to-br from-primary-container to-primary"
+                                   bg-linear-to-br from-primary-container to-primary"
                       />
                       <span className="flex-1 text-[12.5px] truncate">
                         {c.name || "Untitled"}
@@ -925,10 +942,12 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
 
         {/* ── Right cluster ── */}
         <div
-          className="flex items-center gap-1 px-2 py-1.5
+          className="relative flex items-center gap-1 px-2 py-1.5
                       bg-surface-container/70 backdrop-blur-[24px]
                       border border-white/[0.07] rounded-2xl
-                      shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
+                      shadow-[0_4px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]
+                      before:content-[''] before:absolute before:-top-px before:left-3 before:right-3
+                      before:h-px before:bg-linear-to-r before:from-transparent before:via-white/15 before:to-transparent"
         >
           {/* Undo / Redo */}
           <IconBtn label="Undo (Ctrl+Z)" onClick={() => yjsUndo()} disabled={!canUndo}>
@@ -1040,15 +1059,18 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
 
           <div className="w-px h-5 bg-white/[0.08] mx-0.5" />
 
-          {/* Share button */}
+          {/* Share button — tactile, with inset highlight & soft ink shadow */}
           <button
             onClick={() => setShareOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5
-                       bg-primary-container text-on-primary
+            className="group flex items-center gap-1.5 px-3.5 py-1.5
+                       bg-primary-fixed-dim text-on-primary-fixed
                        text-[12px] font-semibold tracking-wide
-                       rounded-xl
-                       hover:brightness-110 hover:shadow-[0_0_16px_rgba(86,141,255,0.3)]
-                       active:scale-[0.97] transition-all duration-150"
+                       rounded-xl border border-white/15
+                       shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_1px_0_rgba(0,0,0,0.4),0_4px_12px_rgba(86,141,255,0.0)]
+                       hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_20px_rgba(86,141,255,0.35)]
+                       hover:bg-primary
+                       active:translate-y-[0.5px] active:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_rgba(86,141,255,0.25)]
+                       transition-[box-shadow,background,transform] duration-200"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />

@@ -74,47 +74,116 @@ export default function DashboardPage() {
           padding: "32px 28px 80px",
         }}
       >
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 36, position: "relative" }}>
+          {/* Eyebrow — mono-caps with copper indicator */}
           <div
             style={{
               fontFamily:
                 "var(--font-jetbrains-mono), ui-monospace, monospace",
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: 600,
-              letterSpacing: "0.18em",
+              letterSpacing: "0.22em",
               textTransform: "uppercase",
-              color: PALETTE.primary,
-              marginBottom: 10,
+              color: "rgba(194, 198, 216, 0.7)",
+              marginBottom: 14,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
             }}
           >
-            Your workspace
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: 22,
+                height: 1,
+                background: "#e4a572",
+                boxShadow: "0 0 6px rgba(228,165,114,0.55)",
+              }}
+            />
+            <span>Workspace · Draft Atelier</span>
           </div>
+
+          {/* Hero — editorial serif italic accent on "boards" */}
           <h1
             style={{
-              fontSize: 34,
-              fontWeight: 800,
-              letterSpacing: "-0.025em",
+              fontSize: "clamp(38px, 4.6vw, 56px)",
+              fontWeight: 700,
+              letterSpacing: "-0.035em",
               margin: 0,
-              lineHeight: 1.05,
+              lineHeight: 0.98,
+              color: PALETTE.text,
+              fontFamily:
+                "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
             }}
           >
-            Your boards
+            Your{" "}
+            <span
+              style={{
+                fontFamily:
+                  "var(--font-fraunces), ui-serif, Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 500,
+                letterSpacing: "-0.04em",
+                background:
+                  "linear-gradient(92deg, #dce1fb 0%, #b0c6ff 45%, #e4a572 95%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              boards
+            </span>
           </h1>
-          <p
+
+          {/* Subhead row — copy + drafting count chip */}
+          <div
             style={{
-              fontSize: 14.5,
-              color: PALETTE.textMuted,
-              margin: "8px 0 0",
+              marginTop: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              flexWrap: "wrap",
             }}
           >
-            {authLoading || listLoading
-              ? "Loading boards…"
-              : signedOut
-                ? "Sign in to see your boards."
-                : isEmpty
-                  ? "Nothing here yet — let’s start your first board."
-                  : `${boards?.length} board${boards?.length === 1 ? "" : "s"} in your workspace.`}
-          </p>
+            <p
+              style={{
+                fontSize: 15,
+                color: PALETTE.textMuted,
+                margin: 0,
+                lineHeight: 1.5,
+                maxWidth: 480,
+              }}
+            >
+              {authLoading || listLoading
+                ? "Loading boards…"
+                : signedOut
+                  ? "Sign in to see your boards."
+                  : isEmpty
+                    ? "Nothing here yet — let's start your first board."
+                    : `${boards?.length} board${boards?.length === 1 ? "" : "s"} in your workspace.`}
+            </p>
+            {boards && boards.length > 0 && (
+              <span
+                style={{
+                  fontFamily:
+                    "var(--font-jetbrains-mono), ui-monospace, monospace",
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "#e4a572",
+                  padding: "4px 9px",
+                  background: "rgba(228, 165, 114, 0.10)",
+                  border: "1px solid rgba(228, 165, 114, 0.28)",
+                  borderRadius: 999,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {String(boards.length).padStart(2, "0")} · active
+              </span>
+            )}
+          </div>
         </div>
 
         {loadError && <ErrorState message={loadError} />}
@@ -276,31 +345,127 @@ function BoardCard({ board, index }: { board: BoardListItem; index: number }) {
           }}
         >
           <CardThumb />
-          <div style={{ padding: "16px 18px 18px" }}>
+
+          {/* Drafting corner ticks on the card itself */}
+          {hover && (
+            <>
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  top: 7,
+                  left: 7,
+                  width: 8,
+                  height: 8,
+                  borderTop: "1px solid rgba(228,165,114,0.7)",
+                  borderLeft: "1px solid rgba(228,165,114,0.7)",
+                  pointerEvents: "none",
+                  zIndex: 2,
+                }}
+              />
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  top: 7,
+                  right: 7,
+                  width: 8,
+                  height: 8,
+                  borderTop: "1px solid rgba(228,165,114,0.7)",
+                  borderRight: "1px solid rgba(228,165,114,0.7)",
+                  pointerEvents: "none",
+                  zIndex: 2,
+                }}
+              />
+            </>
+          )}
+
+          <div style={{ padding: "14px 18px 16px" }}>
             <div
               style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: PALETTE.text,
-                letterSpacing: "-0.01em",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 8,
               }}
             >
-              {board.name || "Untitled board"}
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-block",
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: PALETTE.mint,
+                  boxShadow: `0 0 6px ${PALETTE.mint}`,
+                  flexShrink: 0,
+                }}
+              />
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: PALETTE.text,
+                  letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  flex: 1,
+                }}
+              >
+                {board.name || "Untitled board"}
+              </div>
             </div>
             <div
               style={{
-                fontFamily:
-                  "var(--font-jetbrains-mono), ui-monospace, monospace",
-                fontSize: 11,
-                color: PALETTE.textDim,
-                letterSpacing: "0.04em",
-                marginTop: 6,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
               }}
             >
-              Updated {updated}
+              <span
+                style={{
+                  fontFamily:
+                    "var(--font-jetbrains-mono), ui-monospace, monospace",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "rgba(194,198,216,0.55)",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Mod · {updated}
+              </span>
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  fontFamily:
+                    "var(--font-jetbrains-mono), ui-monospace, monospace",
+                  fontSize: 10,
+                  color: hover
+                    ? "rgba(228,165,114,0.9)"
+                    : "rgba(176,198,255,0.55)",
+                  letterSpacing: "0.1em",
+                  transform: hover ? "translateX(2px)" : "translateX(0)",
+                  transition: "transform 220ms ease, color 220ms ease",
+                }}
+              >
+                {hover ? "OPEN" : "—"}{" "}
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ marginLeft: 4 }}
+                >
+                  <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+              </span>
             </div>
           </div>
         </Link>
@@ -486,13 +651,25 @@ function EmptyState({
         </div>
         <h2
           style={{
-            fontSize: 22,
-            fontWeight: 700,
+            fontSize: 28,
+            fontWeight: 600,
             margin: 0,
-            letterSpacing: "-0.02em",
+            letterSpacing: "-0.03em",
+            lineHeight: 1.05,
           }}
         >
-          No boards yet
+          No boards{" "}
+          <span
+            style={{
+              fontFamily: "var(--font-fraunces), ui-serif, Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 500,
+              color: "#e4a572",
+              letterSpacing: "-0.035em",
+            }}
+          >
+            yet.
+          </span>
         </h2>
         <p
           style={{
@@ -547,13 +724,25 @@ function SignInPrompt() {
         </div>
         <h2
           style={{
-            fontSize: 22,
-            fontWeight: 700,
+            fontSize: 28,
+            fontWeight: 600,
             margin: 0,
-            letterSpacing: "-0.02em",
+            letterSpacing: "-0.03em",
+            lineHeight: 1.05,
           }}
         >
-          Sign in to see your boards
+          Sign in to see{" "}
+          <span
+            style={{
+              fontFamily: "var(--font-fraunces), ui-serif, Georgia, serif",
+              fontStyle: "italic",
+              fontWeight: 500,
+              color: PALETTE.primary,
+              letterSpacing: "-0.035em",
+            }}
+          >
+            your boards.
+          </span>
         </h2>
         <p
           style={{

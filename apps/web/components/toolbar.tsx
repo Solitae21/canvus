@@ -195,9 +195,12 @@ const EXTRAS: Tool[] = [
   },
 ];
 
-/* ── Separator ── */
+/* ── Separator ── drafting-style vertical hairline */
 const Sep = () => (
-  <div className="w-px h-6 bg-white/[0.08] mx-0.5 shrink-0" />
+  <div
+    className="w-px h-5 mx-1 shrink-0 bg-linear-to-b
+               from-transparent via-white/[0.14] to-transparent"
+  />
 );
 
 /* ── Single tool button ── */
@@ -225,20 +228,28 @@ const ToolButton = ({
     `}
   >
     <Icon d={tool.icon} />
+    {active && (
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 h-px w-4
+                   bg-copper shadow-[0_0_6px_var(--copper-glow)]"
+      />
+    )}
     {/* Tooltip */}
     <span
-      className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2
-                  px-2.5 py-1 text-[11px] font-medium tracking-wide
+      className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2
+                  inline-flex items-center gap-1.5
+                  px-2.5 py-1.5 text-[11px] font-medium tracking-wide
                   bg-surface-container-highest text-on-surface
-                  rounded-md shadow-lg
+                  rounded-md
+                  shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]
+                  border border-white/10
                   opacity-0 scale-95 translate-y-1
                   group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0
                   transition-all duration-150 whitespace-nowrap"
     >
       {tool.label}
-      {tool.shortcut && (
-        <span className="ml-1.5 text-on-surface-variant/60">{tool.shortcut}</span>
-      )}
+      {tool.shortcut && <span className="keycap">{tool.shortcut}</span>}
     </span>
   </button>
 );
@@ -330,13 +341,15 @@ const ShapeSelector = ({
                       shadow-[0_12px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)]
                       ${popoverExiting ? "animate-shape-popover-out" : "animate-shape-popover-in"}`}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-2.5 px-1">
-            <span className="text-[12px] font-semibold tracking-wide text-on-surface-variant uppercase">
-              Flowchart Shapes
-            </span>
-            <span className="text-[11px] text-on-surface-variant/50">
-              {FLOWCHART_SHAPES.length} shapes
+          {/* Header — editorial mono-caps label, copper count chip */}
+          <div className="flex items-center justify-between mb-3 px-1">
+            <span className="mono-caps">Flowchart Shapes</span>
+            <span
+              className="font-mono text-[10px] font-semibold tracking-wider
+                         text-copper/90 px-1.5 py-0.5 rounded
+                         bg-copper/10 border border-copper/25"
+            >
+              {String(FLOWCHART_SHAPES.length).padStart(2, "0")}
             </span>
           </div>
 
@@ -418,11 +431,13 @@ const Toolbar = () => {
   return (
     <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
       <div
-        className="flex items-center gap-0.5 px-2 py-1.5
-                    bg-surface-container/80 backdrop-blur-[24px]
+        className="relative flex items-center gap-0.5 px-2 py-1.5
+                    bg-surface-container/80 backdrop-blur-xl
                     border border-white/[0.07]
                     rounded-2xl
-                    shadow-[0_8px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.04)]
+                    shadow-[0_12px_48px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.04),inset_0_1px_0_rgba(255,255,255,0.05)]
+                    before:content-[''] before:absolute before:-top-px before:left-6 before:right-6
+                    before:h-px before:bg-linear-to-r before:from-transparent before:via-white/18 before:to-transparent
                     pointer-events-auto animate-toolbar-enter"
       >
         {renderGroup(TOOLS)}
