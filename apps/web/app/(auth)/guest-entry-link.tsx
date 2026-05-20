@@ -49,7 +49,7 @@ export function GuestEntryButton() {
 
   const onClick = () => {
     startGuestSession();
-    router.push("/dashboard");
+    router.push("/canvas");
   };
 
   return (

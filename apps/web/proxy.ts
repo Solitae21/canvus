@@ -7,7 +7,7 @@ export const proxy = auth((req) => {
   const isAuthed = !!req.auth;
   const { pathname } = req.nextUrl;
 
-  const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/canvas");
+  const isProtected = pathname.startsWith("/dashboard");
   if (isProtected && !isAuthed) {
     const url = new URL("/sign-in", req.nextUrl);
     url.searchParams.set("callbackUrl", pathname);
@@ -21,5 +21,5 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/canvas/:path*", "/sign-in", "/sign-up"],
+  matcher: ["/dashboard/:path*", "/sign-in", "/sign-up"],
 };
