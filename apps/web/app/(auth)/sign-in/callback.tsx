@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { GoogleSignIn } from "../google-sign-in";
+import { CredentialsForm } from "../credentials-form";
 
 export function SignInCallback() {
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") ?? "/dashboard";
-  return <GoogleSignIn label="Continue with Google" callbackUrl={callbackUrl} />;
+  return <CredentialsForm mode="sign-in" callbackUrl={callbackUrl} />;
 }

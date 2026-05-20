@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import { PALETTE } from "@/client/landing-page/palette";
 import { startGuestSession } from "@/lib/guest";
 
-export function GuestDivider() {
+export function GuestDivider({ marginTop = 14 }: { marginTop?: number } = {}) {
   return (
     <div
       style={{
-        marginTop: 14,
+        marginTop,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
