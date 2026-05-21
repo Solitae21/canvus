@@ -1439,7 +1439,7 @@ export default function HowItWorksView() {
             margin: "0 auto 32px",
             lineHeight: 1.6,
           }}>
-            Free forever. Three boards on the house. No credit card asked.
+            CanvUs is free to use. A few boards to start, no card needed.
           </p>
           <div className="hw-reveal hw-d3" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/sign-up" className="hw-btn-primary" style={{ fontSize: 15, padding: "14px 28px", textDecoration: "none" }}>

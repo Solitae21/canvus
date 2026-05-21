@@ -1110,7 +1110,7 @@ export default function LandingPageView() {
             <div className="lp-fade-4" style={{
               display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap",
             }}>
-              {["No credit card", "Up to 3 boards free", "Unlimited guests"].map((t) => (
+              {["Free to use", "A few boards to start", "Guests always welcome"].map((t) => (
                 <div key={t} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <CheckIcon color={PALETTE.primary} />
                   <span style={{ fontSize: 13, color: PALETTE.textDim, fontWeight: 500 }}>

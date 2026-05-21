@@ -8,7 +8,7 @@ export default function SignUpPage() {
     <AuthCard
       eyebrow="Create account"
       title="Start your first board"
-      subtitle="Free forever. No credit card. Up to 3 boards on us."
+      subtitle="CanvUs is free to use — spin up a few boards and make something."
     >
       <CredentialsForm mode="sign-up" />
 
