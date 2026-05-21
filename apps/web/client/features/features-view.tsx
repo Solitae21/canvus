@@ -784,7 +784,7 @@ export default function FeaturesView() {
       title: "Org-grade controls",
       desc: "Bring CanvUs into your company without bringing in chaos. SSO, roles, audit logs, and per-board access live in one panel.",
       bullets: [
-        "Google · GitHub · SAML SSO on Team",
+        "GitHub · SAML SSO on Team",
         "Roles: owner, editor, commenter, viewer",
         "Audit logs and retention controls",
       ],
