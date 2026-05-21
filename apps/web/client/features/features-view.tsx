@@ -782,9 +782,9 @@ export default function FeaturesView() {
       icon: <PathIcon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
       label: "Workspaces",
       title: "Org-grade controls",
-      desc: "Bring CanvUs into your company without bringing in chaos. SSO, roles, audit logs, and per-board access live in one panel.",
+      desc: "Bring CanvUs into your company without bringing in chaos. Roles, audit logs, and per-board access live in one panel.",
       bullets: [
-        "GitHub · SAML SSO on Team",
+        "Email & password, or continue as guest",
         "Roles: owner, editor, commenter, viewer",
         "Audit logs and retention controls",
       ],
