@@ -1,5 +1,4 @@
 import type { NextAuthConfig } from "next-auth";
-import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@canvus/api/db";
@@ -14,7 +13,6 @@ const normalizeEmail = (value: unknown): string | null => {
 
 export const authConfig = {
   providers: [
-    Google,
     Credentials({
       name: "Email",
       credentials: {
