@@ -16,7 +16,9 @@ const parseOrigins = (value: string): string[] =>
 
 export const NODE_ENV = process.env.NODE_ENV ?? "development";
 export const PORT = parsePort(process.env.PORT, 4000);
-export const HOST = process.env.HOST ?? "127.0.0.1";
+// Default to localhost in dev; bind to all interfaces in production so
+// container/PaaS port scanners (e.g. Render) can detect the open port.
+export const HOST = process.env.HOST ?? (NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "http://localhost:3000";
 export const ALLOWED_ORIGINS = parseOrigins(ALLOWED_ORIGIN);
 export const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";

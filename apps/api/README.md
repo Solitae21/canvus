@@ -108,7 +108,7 @@ Defined in `src/env.ts` and loaded from `.env` via `dotenv`.
 | Variable | Default | Description |
 |---|---|---|
 | `NODE_ENV` | `development` | Standard Node environment flag. Logged at startup. |
-| `HOST` | `127.0.0.1` | Interface the HTTP + WebSocket server binds to. Use `0.0.0.0` only when you intentionally want LAN/container exposure. |
+| `HOST` | `127.0.0.1` (dev) / `0.0.0.0` (production) | Interface the HTTP + WebSocket server binds to. Defaults to `0.0.0.0` when `NODE_ENV=production` so container/PaaS port scanners (e.g. Render) can detect the open port. Override explicitly to lock it down. |
 | `PORT` | `4000` | Port the HTTP + WebSocket server listens on. |
 | `ALLOWED_ORIGIN` | `http://localhost:3000` | Comma-separated frontend origins allowed by the origin guard, CORS, and Socket.IO origin checks. Use `*` to allow any origin (not recommended). |
 | `ALLOW_GLOBAL_CANVAS_LIST` | `false` | When `true`, `GET /canvases` without an `ids` query returns every in-memory canvas. Keep disabled outside trusted dev. |
