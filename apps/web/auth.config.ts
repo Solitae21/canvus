@@ -46,10 +46,16 @@ export const authConfig = {
       },
     }),
   ],
+  // In production AUTH_SECRET (or NEXTAUTH_SECRET) MUST be set in the environment
+  // — e.g. on Vercel. Leaving it undefined here makes Auth.js fail loudly with a
+  // Configuration error rather than silently signing with a guessable key.
   secret:
     process.env.AUTH_SECRET ??
     process.env.NEXTAUTH_SECRET ??
     (process.env.NODE_ENV === "production" ? undefined : developmentSecret),
+  // Trust the deployment host (Vercel, custom domains, proxies) so Auth.js can
+  // resolve callback URLs without a separately-configured AUTH_URL.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/sign-in",

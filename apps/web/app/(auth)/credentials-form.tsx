@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Check } from "lucide-react";
 import { PALETTE } from "@/client/landing-page/palette";
+import { useToast } from "@/components/toast/toast-provider";
+
+/** Maps an Auth.js sign-in error code to a human message. */
+function signInErrorMessage(code: string | undefined, isSignUp: boolean): string {
+  switch (code) {
+    case "CredentialsSignin":
+      return "Wrong email or password.";
+    case "Configuration":
+      return "Sign-in is temporarily unavailable. Please try again shortly.";
+    default:
+      return isSignUp
+        ? "Account created, but sign-in failed. Try signing in."
+        : "Wrong email or password.";
+  }
+}
 
 type Mode = "sign-in" | "sign-up";
 
@@ -55,6 +70,7 @@ export function CredentialsForm({
   callbackUrl?: string;
 }) {
   const router = useRouter();
+  const { error: toastError, success: toastSuccess } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,11 +94,15 @@ export function CredentialsForm({
 
     if (isSignUp) {
       if (!allRulesMet) {
-        setError("Your password doesn't meet all the requirements yet.");
+        const message = "Your password doesn't meet all the requirements yet.";
+        setError(message);
+        toastError(message);
         return;
       }
       if (!passwordsMatch) {
-        setError("Passwords don't match.");
+        const message = "Passwords don't match.";
+        setError(message);
+        toastError(message);
         return;
       }
     }
@@ -101,7 +121,9 @@ export function CredentialsForm({
           const data = (await res.json().catch(() => null)) as {
             error?: string;
           } | null;
-          setError(data?.error ?? "Could not create your account.");
+          const message = data?.error ?? "Could not create your account.";
+          setError(message);
+          toastError(message, { title: "Sign-up failed" });
           setSubmitting(false);
           return;
         }
@@ -114,19 +136,22 @@ export function CredentialsForm({
       });
 
       if (!result || result.error) {
-        setError(
-          isSignUp
-            ? "Account created, but sign-in failed. Try again."
-            : "Wrong email or password.",
-        );
+        const message = signInErrorMessage(result?.error, isSignUp);
+        setError(message);
+        toastError(message, { title: isSignUp ? "Sign-up failed" : "Sign-in failed" });
         setSubmitting(false);
         return;
       }
 
+      toastSuccess(
+        isSignUp ? "Account created — welcome to CanvUs!" : "Signed in. Welcome back!",
+      );
       router.push(callbackUrl);
       router.refresh();
     } catch {
-      setError("Something went wrong. Try again.");
+      const message = "Something went wrong. Please try again.";
+      setError(message);
+      toastError(message);
       setSubmitting(false);
     }
   };

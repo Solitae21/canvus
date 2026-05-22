@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/redux/client-components/store-provider";
 import { SessionProvider } from "@/components/session-provider";
+import { ToastProvider } from "@/components/toast/toast-provider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -41,11 +42,13 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${fraunces.variable} antialiased`}
       >
-        <SessionProvider>
-          <StoreProvider>
-            {children}
-          </StoreProvider>
-        </SessionProvider>
+        <ToastProvider>
+          <SessionProvider>
+            <StoreProvider>
+              {children}
+            </StoreProvider>
+          </SessionProvider>
+        </ToastProvider>
       </body>
     </html>
   );

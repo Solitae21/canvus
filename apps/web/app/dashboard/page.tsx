@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/toast/toast-provider";
 import {
   useGetBoardsQuery,
   useCreateBoardMutation,
@@ -16,6 +17,7 @@ import { useIsMobile } from "@/lib/use-media-query";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { error: toastError } = useToast();
   const { data: session, status } = useSession();
   const userId = session?.user?.id;
   const isMobile = useIsMobile();
@@ -47,6 +49,14 @@ export default function DashboardPage() {
         ? String((error.data as { error: unknown }).error)
         : "Failed to load boards"
     : null;
+
+  useEffect(() => {
+    if (loadError) {
+      toastError(`Couldn't load your boards — ${loadError}.`, {
+        title: "Something went wrong",
+      });
+    }
+  }, [loadError, toastError]);
 
   return (
     <div

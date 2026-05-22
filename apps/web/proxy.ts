@@ -4,8 +4,12 @@ import { authConfig } from "./auth.config";
 const { auth } = NextAuth(authConfig);
 
 export const proxy = auth((req) => {
-  const isAuthed = !!req.auth;
   const { pathname } = req.nextUrl;
+  // `req.auth` is only truthy for a session that actually verified. Anything
+  // unverifiable (no cookie, or a stale cookie from a rotated/missing secret)
+  // is treated as signed-out, so we never trap the user in a
+  // /sign-in ⇄ /dashboard redirect loop.
+  const isAuthed = !!req.auth?.user;
 
   const isProtected = pathname.startsWith("/dashboard");
   if (isProtected && !isAuthed) {
