@@ -4,11 +4,10 @@
   "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "exports": {
-    "./db": "./src/lib/prisma.ts"
-  },
   "scripts": {
+    "predev": "npm run generate",
     "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+    "prebuild": "npm run generate",
     "generate": "prisma generate && tsc -p tsconfig.prisma-client.json",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
@@ -25,6 +24,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/ws": "^8.5.13",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -39,6 +39,7 @@
     "yjs": "^13.6.30"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.39",
     "@types/pg": "^8.20.0",
     "cross-env": "^7.0.3",

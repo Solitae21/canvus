@@ -1,7 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from "@canvus/api/db";
+import { internalApi } from "@/lib/internal-api";
 
 const developmentSecret = "canvus-local-development-auth-secret";
 
@@ -25,11 +24,18 @@ export const authConfig = {
           typeof credentials?.password === "string" ? credentials.password : "";
         if (!email || password.length === 0) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.passwordHash) return null;
+        const res = await internalApi("/internal/auth/verify-credentials", {
+          method: "POST",
+          body: { email, password },
+        });
+        if (!res.ok) return null;
 
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+        const user = (await res.json()) as {
+          id: string;
+          email: string;
+          name: string | null;
+          image: string | null;
+        };
 
         return {
           id: user.id,

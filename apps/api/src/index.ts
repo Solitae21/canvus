@@ -6,6 +6,8 @@ import { rateLimit } from 'express-rate-limit';
 import { HOST, NODE_ENV, PORT, isAllowedOrigin } from './env.js';
 import { healthRouter } from './routes/health.js';
 import { canvasesRouter } from './routes/canvases.js';
+import { authRouter } from './routes/auth.js';
+import { boardsRouter } from './routes/boards.js';
 import { attachSocketIO } from './ws/index.js';
 
 const app = express();
@@ -57,6 +59,8 @@ app.use(jsonErrorHandler);
 
 app.use(healthRouter);
 app.use(canvasesRouter);
+app.use(authRouter);
+app.use(boardsRouter);
 app.use(errorHandler);
 
 const server = http.createServer(app);

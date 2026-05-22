@@ -1,59 +1,21 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { prisma } from "@canvus/api/db";
+import { internalApi } from "@/lib/internal-api";
 
 export const runtime = "nodejs";
 
-interface RegisterBody {
-  email?: unknown;
-  password?: unknown;
-  name?: unknown;
-}
-
-const MIN_PASSWORD = 8;
-const MAX_PASSWORD = 128;
-
 export async function POST(request: Request) {
-  let body: RegisterBody;
+  let body: unknown;
   try {
-    body = (await request.json()) as RegisterBody;
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const email =
-    typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-  const password = typeof body.password === "string" ? body.password : "";
-  const name =
-    typeof body.name === "string" && body.name.trim().length > 0
-      ? body.name.trim().slice(0, 80)
-      : null;
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json(
-      { error: "Enter a valid email address." },
-      { status: 400 },
-    );
-  }
-  if (password.length < MIN_PASSWORD || password.length > MAX_PASSWORD) {
-    return NextResponse.json(
-      { error: `Password must be ${MIN_PASSWORD}–${MAX_PASSWORD} characters.` },
-      { status: 400 },
-    );
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json(
-      { error: "An account with that email already exists." },
-      { status: 409 },
-    );
-  }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-  await prisma.user.create({
-    data: { email, name, passwordHash },
+  // The API validates and is the sole owner of DB writes; forward its response verbatim.
+  const res = await internalApi("/internal/auth/register", {
+    method: "POST",
+    body,
   });
-
-  return NextResponse.json({ ok: true }, { status: 201 });
+  const data = await res.json().catch(() => ({}));
+  return NextResponse.json(data, { status: res.status });
 }

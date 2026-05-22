@@ -21,6 +21,8 @@ export const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "http://localhost:30
 export const ALLOWED_ORIGINS = parseOrigins(ALLOWED_ORIGIN);
 export const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
 export const ALLOW_GLOBAL_CANVAS_LIST = parseBoolean(process.env.ALLOW_GLOBAL_CANVAS_LIST);
+// Shared secret the web (BFF) sends on internal routes. Empty means internal routes are disabled.
+export const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? "";
 
 export const isAllowedOrigin = (origin: string | undefined): boolean => {
   if (!origin) return true;
