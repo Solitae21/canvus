@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Check } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import { PALETTE } from "@/client/landing-page/palette";
 import { useToast } from "@/components/toast/toast-provider";
 
@@ -61,6 +61,86 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
   letterSpacing: "0.01em",
 };
+
+const focusBorder = (e: React.FocusEvent<HTMLInputElement>) => {
+  e.currentTarget.style.borderColor = PALETTE.primaryStrong;
+  e.currentTarget.style.background = "rgba(86,141,255,0.05)";
+};
+const blurBorder = (e: React.FocusEvent<HTMLInputElement>) => {
+  e.currentTarget.style.borderColor = PALETTE.border;
+  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+};
+
+/** Password field with a show/hide toggle. */
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  autoComplete,
+  placeholder,
+  required,
+  minLength,
+}: {
+  id: string;
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  autoComplete: string;
+  placeholder?: string;
+  required?: boolean;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        id={id}
+        type={visible ? "text" : "password"}
+        autoComplete={autoComplete}
+        required={required}
+        minLength={minLength}
+        value={value}
+        onChange={onChange}
+        onFocus={focusBorder}
+        onBlur={blurBorder}
+        style={{ ...inputStyle, paddingRight: 44 }}
+        placeholder={placeholder}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        // Keep focus on the input so its focus styling doesn't flicker.
+        onMouseDown={(e) => e.preventDefault()}
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          height: 42,
+          width: 42,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          color: PALETTE.textMuted,
+          transition: "color 160ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = PALETTE.text;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = PALETTE.textMuted;
+        }}
+      >
+        {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  );
+}
 
 export function CredentialsForm({
   mode,
@@ -156,15 +236,6 @@ export function CredentialsForm({
     }
   };
 
-  const focusBorder = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = PALETTE.primaryStrong;
-    e.currentTarget.style.background = "rgba(86,141,255,0.05)";
-  };
-  const blurBorder = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = PALETTE.border;
-    e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-  };
-
   return (
     <form
       onSubmit={onSubmit}
@@ -212,17 +283,13 @@ export function CredentialsForm({
         <label htmlFor="cf-password" style={labelStyle}>
           Password
         </label>
-        <input
+        <PasswordInput
           id="cf-password"
-          type="password"
           autoComplete={isSignUp ? "new-password" : "current-password"}
           required
           minLength={isSignUp ? 8 : undefined}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          onFocus={focusBorder}
-          onBlur={blurBorder}
-          style={inputStyle}
           placeholder={isSignUp ? "At least 8 characters" : "••••••••"}
         />
       </div>
@@ -301,16 +368,12 @@ export function CredentialsForm({
           <label htmlFor="cf-confirm-password" style={labelStyle}>
             Confirm password
           </label>
-          <input
+          <PasswordInput
             id="cf-confirm-password"
-            type="password"
             autoComplete="new-password"
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            onFocus={focusBorder}
-            onBlur={blurBorder}
-            style={inputStyle}
             placeholder="Re-enter your password"
           />
           {confirmPassword.length > 0 && !passwordsMatch ? (
