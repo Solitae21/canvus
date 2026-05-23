@@ -747,7 +747,7 @@ export default function HowItWorksView() {
 
   const handleGuestEntry = () => {
     startGuestSession();
-    router.push("/dashboard");
+    router.push("/canvas");
   };
 
   const steps = [

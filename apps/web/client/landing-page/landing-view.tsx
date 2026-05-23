@@ -680,7 +680,7 @@ export default function LandingPageView() {
 
   const handleGuestEntry = () => {
     startGuestSession();
-    router.push("/dashboard");
+    router.push("/canvas");
   };
 
   /* keep a ticking value to subtly animate ambient elements */

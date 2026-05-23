@@ -713,7 +713,7 @@ export default function FeaturesView() {
 
   const handleGuestEntry = () => {
     startGuestSession();
-    router.push("/dashboard");
+    router.push("/canvas");
   };
 
   /* Six pillars — the high-level capability story */
