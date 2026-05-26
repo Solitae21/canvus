@@ -575,6 +575,7 @@ When changing canvas data, update `@canvus/shared` first, then align API validat
 - Keep client-only canvas behavior inside client components and hooks (`"use client"`).
 - Prisma client output is committed under `apps/api/src/generated/prisma`. After schema changes, run `npm run generate -w @canvus/api`.
 
+
 ## Verification
 
 For documentation-only changes, no runtime test is required.
