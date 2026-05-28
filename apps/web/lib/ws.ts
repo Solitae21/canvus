@@ -15,6 +15,7 @@ export type CanvasWsClient = {
 export type CanvasWsOptions = {
   userId: string;
   metadata?: Record<string, unknown>;
+  authToken?: string;
 };
 
 export const connectCanvasWs = (canvasId: string, options: CanvasWsOptions): CanvasWsClient => {
@@ -31,6 +32,7 @@ export const connectCanvasWs = (canvasId: string, options: CanvasWsOptions): Can
   const socket = io(base, {
     path: '/ws',
     query,
+    auth: options.authToken ? { token: options.authToken } : undefined,
     transports: ['polling', 'websocket'],
   });
 

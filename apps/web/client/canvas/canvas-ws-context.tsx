@@ -26,23 +26,31 @@ const Ctx = createContext<CanvasWsValue | null>(null);
 
 export const CanvasWsProvider = ({
   canvasId,
+  roomId,
+  identity,
+  authToken,
   children,
 }: {
   canvasId: string;
+  roomId?: string;
+  identity?: GuestIdentity;
+  authToken?: string;
   children: ReactNode;
 }) => {
-  const [identity] = useState<GuestIdentity>(() => getGuestIdentity());
+  const [fallbackIdentity] = useState<GuestIdentity>(() => identity ?? getGuestIdentity());
+  const currentIdentity = identity ?? fallbackIdentity;
   const wsRef = useRef<ReturnType<typeof connectCanvasWs> | null>(null);
   const subscribersRef = useRef<Set<Subscriber>>(new Set());
 
   useEffect(() => {
-    const client = connectCanvasWs(canvasId, {
-      userId: identity.userId,
-      metadata: { name: identity.name, color: identity.color },
+    const client = connectCanvasWs(roomId ?? canvasId, {
+      userId: currentIdentity.userId,
+      metadata: { name: currentIdentity.name, color: currentIdentity.color },
+      authToken,
     });
     wsRef.current = client;
     const unsub = client.onMessage((envelope) => {
-      if (envelope.clientId === identity.userId) return;
+      if (envelope.clientId === currentIdentity.userId) return;
       subscribersRef.current.forEach((s) => s(envelope));
     });
     return () => {
@@ -50,7 +58,7 @@ export const CanvasWsProvider = ({
       client.close();
       wsRef.current = null;
     };
-  }, [canvasId, identity.color, identity.name, identity.userId]);
+  }, [authToken, canvasId, currentIdentity.color, currentIdentity.name, currentIdentity.userId, roomId]);
 
   const send = useCallback((envelope: WsEnvelope) => {
     wsRef.current?.send(envelope);
@@ -68,9 +76,9 @@ export const CanvasWsProvider = ({
       value={{
         send,
         subscribe,
-        userId: identity.userId,
-        name: identity.name,
-        color: identity.color,
+        userId: currentIdentity.userId,
+        name: currentIdentity.name,
+        color: currentIdentity.color,
       }}
     >
       {children}

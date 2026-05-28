@@ -5,6 +5,8 @@ import type { Server as HttpServer } from 'node:http';
 import type { CursorMovedPayload, PresenterViewportPayload } from '@canvus/shared';
 import { YSocketIO } from 'y-socket.io/dist/server';
 import { ALLOWED_ORIGINS, REDIS_URL, isAllowedOrigin } from '../env.js';
+import { prisma } from '../lib/prisma.js';
+import { verifyBoardSocketToken } from '../lib/socket-auth.js';
 import {
   isSafeColor,
   isValidIdentifier,
@@ -30,6 +32,13 @@ const MESSAGE_LIMIT_PER_SECOND = 80;
 const ROOM_TTL_SECONDS = 24 * 60 * 60;
 const DEFAULT_CURSOR_NAME = 'Guest';
 const DEFAULT_CURSOR_COLOR = '#60a5fa';
+const BOARD_ROOM_PREFIX = 'board:';
+const YJS_NAMESPACE_PREFIX = '/yjs|';
+
+type SocketHandshake = {
+  auth?: unknown;
+  query?: Record<string, string | string[] | undefined>;
+};
 
 const getQueryString = (value: string | string[] | undefined): string | undefined => {
   if (Array.isArray(value)) return value[0];
@@ -38,6 +47,53 @@ const getQueryString = (value: string | string[] | undefined): string | undefine
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const getBoardIdFromRoomId = (roomId: string): string | null => {
+  if (!roomId.startsWith(BOARD_ROOM_PREFIX)) return null;
+  const boardId = roomId.slice(BOARD_ROOM_PREFIX.length);
+  return isValidIdentifier(boardId) ? boardId : null;
+};
+
+const getYjsRoomId = (namespaceName: string): string | null => {
+  if (!namespaceName.startsWith(YJS_NAMESPACE_PREFIX)) return null;
+  const roomId = namespaceName.slice(YJS_NAMESPACE_PREFIX.length);
+  return isValidIdentifier(roomId) ? roomId : null;
+};
+
+const getHandshakeToken = (handshake: SocketHandshake): string | undefined => {
+  if (isRecord(handshake.auth) && typeof handshake.auth.token === 'string') {
+    return handshake.auth.token;
+  }
+  return getQueryString(handshake.query?.authToken);
+};
+
+const authorizeProtectedRoomAccess = async (
+  roomId: string,
+  handshake: SocketHandshake,
+  expectedUserId?: string,
+): Promise<boolean> => {
+  const boardId = getBoardIdFromRoomId(roomId);
+  if (!boardId) return true;
+
+  const payload = verifyBoardSocketToken(getHandshakeToken(handshake));
+  if (!payload || payload.boardId !== boardId || payload.roomId !== roomId) {
+    return false;
+  }
+  if (expectedUserId && payload.userId !== expectedUserId) {
+    return false;
+  }
+
+  try {
+    const board = await prisma.board.findFirst({
+      where: { id: boardId, ownerId: payload.userId },
+      select: { id: true },
+    });
+    return Boolean(board);
+  } catch (error) {
+    console.error('Failed to authorize board socket room', error);
+    return false;
+  }
+};
 
 const parseMembershipMetadata = (value: string | undefined): MembershipMetadata => {
   if (!value || value.length > MAX_METADATA_LENGTH) return {};
@@ -214,12 +270,24 @@ export async function attachSocketIO(server: HttpServer): Promise<void> {
 
   const ysocketio = new YSocketIO(io);
   ysocketio.initialize();
+  ysocketio.nsp?.use(async (socket, next) => {
+    const roomId = getYjsRoomId(socket.nsp.name);
+    if (!roomId || !(await authorizeProtectedRoomAccess(roomId, socket.handshake))) {
+      next(new Error('Unauthorized'));
+      return;
+    }
+    next();
+  });
 
   io.on('connection', async (socket) => {
     const canvasId = getQueryString(socket.handshake.query.canvasId);
     const userId = getQueryString(socket.handshake.query.userId);
 
     if (!isValidIdentifier(canvasId) || !isValidIdentifier(userId)) {
+      socket.disconnect();
+      return;
+    }
+    if (!(await authorizeProtectedRoomAccess(canvasId, socket.handshake, userId))) {
       socket.disconnect();
       return;
     }

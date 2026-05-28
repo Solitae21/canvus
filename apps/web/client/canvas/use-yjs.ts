@@ -14,6 +14,7 @@ type UseYjsOptions = {
   roomName?: string;
   serverUrl?: string;
   autoConnect?: boolean;
+  authToken?: string;
 };
 
 type YjsCanvasValue = {
@@ -40,6 +41,7 @@ const useYjsInternal = (
     roomName = `canvas:${canvasId}`,
     serverUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
     autoConnect = true,
+    authToken,
   }: UseYjsOptions = {},
 ): YjsCanvasValue => {
   // Lazy useState init runs exactly once per component lifetime, unlike
@@ -125,6 +127,7 @@ const useYjsInternal = (
       doc,
       {
         autoConnect,
+        auth: authToken ? { token: authToken } : undefined,
       },
       {
         path: "/ws",
@@ -157,7 +160,7 @@ const useYjsInternal = (
       // lives for the component's lifetime. Destroying it in a dev-StrictMode
       // cleanup would invalidate state across the simulated remount.
     };
-  }, [autoConnect, doc, roomName, serverUrl]);
+  }, [authToken, autoConnect, doc, roomName, serverUrl]);
 
   return {
     doc,

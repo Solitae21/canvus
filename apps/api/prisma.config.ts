@@ -7,12 +7,17 @@ import { defineConfig } from "prisma/config";
 
 config({ path: join(dirname(fileURLToPath(import.meta.url)), ".env") });
 
-const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+const databaseUrl =
+  process.env.DIRECT_URL ??
+  process.env.DATABASE_URL ??
+  "postgresql://postgres:postgres@localhost:5432/canvus?schema=public";
+
+process.env.DATABASE_URL = databaseUrl;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
-  ...(databaseUrl ? { datasource: { url: databaseUrl } } : {}),
+  datasource: { url: databaseUrl },
 });

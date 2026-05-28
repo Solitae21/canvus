@@ -654,7 +654,9 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   }, [canvasId]);
 
   useEffect(() => {
-    void refetchOtherCanvases();
+    queueMicrotask(() => {
+      void refetchOtherCanvases();
+    });
     if (typeof window === "undefined") return;
     const handler = (e: StorageEvent) => {
       if (e.key === null || e.key === "canvus.guest.canvases") {
