@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { internalApi } from "@/lib/internal-api";
+import { getClientIp } from "@/lib/client-ip";
 
 const developmentSecret = "canvus-local-development-auth-secret";
 
@@ -18,7 +19,7 @@ export const authConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = normalizeEmail(credentials?.email);
         const password =
           typeof credentials?.password === "string" ? credentials.password : "";
@@ -27,6 +28,7 @@ export const authConfig = {
         const res = await internalApi("/internal/auth/verify-credentials", {
           method: "POST",
           body: { email, password },
+          clientIp: request instanceof Request ? getClientIp(request) : undefined,
         });
         if (!res.ok) return null;
 

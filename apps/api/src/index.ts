@@ -3,7 +3,7 @@ import express, { type ErrorRequestHandler, type RequestHandler } from 'express'
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
-import { HOST, NODE_ENV, PORT, isAllowedOrigin } from './env.js';
+import { HOST, NODE_ENV, PORT, TRUST_PROXY, isAllowedOrigin } from './env.js';
 import { healthRouter } from './routes/health.js';
 import { canvasesRouter } from './routes/canvases.js';
 import { authRouter } from './routes/auth.js';
@@ -45,6 +45,10 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
 };
 
 app.disable('x-powered-by');
+// Behind a proxy/PaaS, req.ip is the proxy's address unless we declare how many
+// hops to trust. Without this the per-IP rate limiter buckets every client
+// together. See TRUST_PROXY in env.ts.
+app.set('trust proxy', TRUST_PROXY);
 app.use(helmet());
 app.use(originGuard);
 app.use(cors({ origin: (origin, callback) => callback(null, isAllowedOrigin(origin)) }));

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { internalApi } from "@/lib/internal-api";
+import { getClientIp } from "@/lib/client-ip";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
   const res = await internalApi("/internal/auth/register", {
     method: "POST",
     body,
+    clientIp: getClientIp(request),
   });
   const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });

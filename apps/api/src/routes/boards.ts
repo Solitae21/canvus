@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { getUserId, requireInternalKey } from '../lib/internal-auth.js';
 import {
+  isRecord,
   isSafeColor,
   isValidIdentifier,
   normalizeLabel,
@@ -32,9 +33,6 @@ const normalizeName = (value: unknown): string => {
   const trimmed = value.replace(CONTROL_CHARS_RE, '').trim().slice(0, MAX_NAME_LENGTH);
   return trimmed.length > 0 ? trimmed : 'Untitled board';
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const decodeBase64State = (value: string): Buffer | null => {
   if (value.length === 0 || value.length > Math.ceil((MAX_BOARD_STATE_BYTES * 4) / 3)) {
@@ -232,6 +230,17 @@ boardsRouter.patch(
     }
     const { id } = req.params;
 
+    // Check ownership before any expensive work (base64 decode, Yjs
+    // apply/re-encode) so a caller cannot burn CPU on boards they don't own.
+    const owned = await prisma.board.findFirst({
+      where: { id, ownerId: userId },
+      select: { id: true },
+    });
+    if (!owned) {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+
     const body = (req.body ?? {}) as { state?: unknown; shapes?: unknown; connections?: unknown };
     if (
       typeof body.state !== 'string' ||
@@ -259,15 +268,6 @@ boardsRouter.patch(
     const sanitized = sanitizeYjsState(stateBytes);
     if (!sanitized.ok) {
       res.status(400).json({ error: 'invalid_state', detail: sanitized.detail });
-      return;
-    }
-
-    const owned = await prisma.board.findFirst({
-      where: { id, ownerId: userId },
-      select: { id: true },
-    });
-    if (!owned) {
-      res.status(404).json({ error: 'not_found' });
       return;
     }
 

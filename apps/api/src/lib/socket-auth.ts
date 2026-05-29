@@ -1,6 +1,7 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { INTERNAL_API_KEY } from '../env.js';
-import { isValidIdentifier } from '../validation.js';
+import { isRecord, isValidIdentifier } from '../validation.js';
+import { safeEqual } from './safe-equal.js';
 
 type BoardSocketTokenPayload = {
   boardId: string;
@@ -12,18 +13,8 @@ type BoardSocketTokenPayload = {
 const MAX_TOKEN_LENGTH = 4096;
 const MAX_CLOCK_SKEW_SECONDS = 30;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const sign = (encodedPayload: string): string =>
   createHmac('sha256', INTERNAL_API_KEY).update(encodedPayload).digest('base64url');
-
-const safeEqual = (a: string, b: string): boolean => {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
-};
 
 const parsePayload = (value: unknown): BoardSocketTokenPayload | null => {
   if (!isRecord(value)) return null;

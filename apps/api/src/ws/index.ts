@@ -4,10 +4,11 @@ import { Redis } from 'ioredis';
 import type { Server as HttpServer } from 'node:http';
 import type { CursorMovedPayload, PresenterViewportPayload } from '@canvus/shared';
 import { YSocketIO } from 'y-socket.io/dist/server';
-import { ALLOWED_ORIGINS, REDIS_URL, isAllowedOrigin } from '../env.js';
+import { ALLOWED_ORIGINS, ENABLE_GUEST_CANVASES, REDIS_URL, isAllowedOrigin } from '../env.js';
 import { prisma } from '../lib/prisma.js';
 import { verifyBoardSocketToken } from '../lib/socket-auth.js';
 import {
+  isRecord,
   isSafeColor,
   isValidIdentifier,
   normalizePresenceName,
@@ -45,9 +46,6 @@ const getQueryString = (value: string | string[] | undefined): string | undefine
   return value;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const getBoardIdFromRoomId = (roomId: string): string | null => {
   if (!roomId.startsWith(BOARD_ROOM_PREFIX)) return null;
   const boardId = roomId.slice(BOARD_ROOM_PREFIX.length);
@@ -73,7 +71,9 @@ const authorizeProtectedRoomAccess = async (
   expectedUserId?: string,
 ): Promise<boolean> => {
   const boardId = getBoardIdFromRoomId(roomId);
-  if (!boardId) return true;
+  // Non-board rooms are the legacy unauthenticated "guest" canvases; only allow
+  // them when guest mode is enabled. Board rooms always require a signed token.
+  if (!boardId) return ENABLE_GUEST_CANVASES;
 
   const payload = verifyBoardSocketToken(getHandshakeToken(handshake));
   if (!payload || payload.boardId !== boardId || payload.roomId !== roomId) {

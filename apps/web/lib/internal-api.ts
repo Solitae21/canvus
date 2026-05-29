@@ -8,6 +8,8 @@ type InternalFetchOptions = {
   body?: unknown;
   /** Authenticated user id resolved from the NextAuth session. */
   userId?: string;
+  /** End-user IP, forwarded so the API can rate-limit per real client. */
+  clientIp?: string;
 };
 
 /**
@@ -21,6 +23,7 @@ export async function internalApi(
 ): Promise<Response> {
   const headers: Record<string, string> = { "x-internal-key": INTERNAL_KEY };
   if (options.userId) headers["x-user-id"] = options.userId;
+  if (options.clientIp) headers["x-client-ip"] = options.clientIp;
   if (options.body !== undefined) headers["content-type"] = "application/json";
 
   return fetch(`${API_BASE}${path}`, {

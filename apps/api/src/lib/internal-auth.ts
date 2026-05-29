@@ -1,13 +1,7 @@
-import { timingSafeEqual } from 'node:crypto';
 import type { Request, RequestHandler } from 'express';
 import { INTERNAL_API_KEY } from '../env.js';
-
-const safeEqual = (a: string, b: string): boolean => {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
-};
+import { isValidIdentifier } from '../validation.js';
+import { safeEqual } from './safe-equal.js';
 
 /**
  * Guards routes that may only be called by a trusted backend (the web BFF),
@@ -27,8 +21,12 @@ export const requireInternalKey: RequestHandler = (req, res, next) => {
   next();
 };
 
-/** Reads the authenticated user id the BFF resolved from the session. */
+/**
+ * Reads the authenticated user id the BFF resolved from the session. The value
+ * is trusted (the route already passed `requireInternalKey`) but still
+ * format-checked as defence in depth before it reaches the database layer.
+ */
 export const getUserId = (req: Request): string | null => {
   const id = req.header('x-user-id');
-  return typeof id === 'string' && id.length > 0 ? id : null;
+  return isValidIdentifier(id) ? id : null;
 };

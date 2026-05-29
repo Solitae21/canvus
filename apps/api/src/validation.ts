@@ -41,6 +41,9 @@ export const MAX_IMAGE_SRC_LENGTH = 3_000_000;
 const MAX_COORDINATE = 1_000_000;
 const MAX_SIZE = 10_000;
 
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
 export const isValidIdentifier = (value: unknown): value is string =>
   typeof value === 'string' && SAFE_ID_RE.test(value);
 

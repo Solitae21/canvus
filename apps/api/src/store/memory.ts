@@ -1,5 +1,10 @@
 import type { Canvas, CanvasSummary, Shape, Connection } from '@canvus/shared';
 
+// Guest canvases live only in memory and are created without authentication, so
+// the map is capped to stop an anonymous client from exhausting heap. When full,
+// the oldest-created canvas is evicted (the Map preserves insertion order).
+const MAX_CANVASES = 500;
+
 const canvases = new Map<string, Canvas>();
 
 const newId = (): string =>
@@ -29,6 +34,11 @@ export const create = (name = 'Untitled'): Canvas => {
     connections: [],
     updatedAt: now,
   };
+  while (canvases.size >= MAX_CANVASES) {
+    const oldest = canvases.keys().next().value;
+    if (oldest === undefined) break;
+    canvases.delete(oldest);
+  }
   canvases.set(canvas.id, canvas);
   return canvas;
 };

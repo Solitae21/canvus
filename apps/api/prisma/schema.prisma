@@ -13,6 +13,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Reserved for board sharing, which is not yet implemented — all access checks
+// currently use Board.ownerId only. See BoardMember below.
 enum BoardRole {
   OWNER
   EDITOR
@@ -81,6 +83,8 @@ model Board {
   ownerId     String
   owner       User            @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
+  // Unused: live board state is persisted via BoardSnapshot, not these columns.
+  // Retained to avoid a migration; safe to drop once confirmed across deploys.
   shapes      Json            @default("[]")
   connections Json            @default("[]")
 
@@ -94,6 +98,8 @@ model Board {
   @@index([updatedAt])
 }
 
+// Reserved for the (not-yet-implemented) board sharing feature. No code reads
+// memberships today; access is owner-only. Wire this up or drop it in a migration.
 model BoardMember {
   id        String    @id @default(cuid())
   boardId   String

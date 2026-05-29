@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as store from '../store/memory.js';
 import { broadcastToCanvas } from '../ws/index.js';
-import { ALLOW_GLOBAL_CANVAS_LIST } from '../env.js';
+import { ALLOW_GLOBAL_CANVAS_LIST, ENABLE_GUEST_CANVASES } from '../env.js';
 import {
   isValidIdentifier,
   normalizeCanvasName,
@@ -10,6 +10,16 @@ import {
 } from '../validation.js';
 
 export const canvasesRouter: Router = Router();
+
+// The guest canvas store is unauthenticated by design (anyone with the random
+// id can read/write). Operators who only want authenticated boards disable it.
+canvasesRouter.use((_req, res, next) => {
+  if (!ENABLE_GUEST_CANVASES) {
+    res.status(404).json({ error: 'not_found' });
+    return;
+  }
+  next();
+});
 
 canvasesRouter.get('/canvases', (req, res) => {
   const ids = parseIdList(req.query.ids);
