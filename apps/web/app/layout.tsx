@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono, Fraunces } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/redux/client-components/store-provider";
 import { SessionProvider } from "@/components/session-provider";
@@ -17,16 +17,6 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "700"],
 });
 
-// Fraunces — used sparingly for editorial hero moments (italic display).
-// Variable font: omit `weight` so all weights are available via font-weight CSS,
-// and enable the SOFT + opsz axes for editorial character on italics.
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  axes: ["SOFT", "opsz"],
-});
-
 export const metadata: Metadata = {
   title: "CanvUs — Collaborative Canvas",
   description: "Real-time collaborative canvas for teams",
@@ -40,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${fraunces.variable} antialiased`}
+        className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <ToastProvider>
           <SessionProvider>

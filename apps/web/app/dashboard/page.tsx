@@ -134,10 +134,9 @@ export default function DashboardPage() {
             <span
               style={{
                 fontFamily:
-                  "var(--font-fraunces), ui-serif, Georgia, serif",
-                fontStyle: "italic",
-                fontWeight: 500,
-                letterSpacing: "-0.04em",
+                  "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
+                fontWeight: 700,
+                letterSpacing: "-0.035em",
                 background:
                   "linear-gradient(92deg, #dce1fb 0%, #b0c6ff 45%, #e4a572 95%)",
                 WebkitBackgroundClip: "text",
@@ -678,11 +677,11 @@ function EmptyState({
           No boards{" "}
           <span
             style={{
-              fontFamily: "var(--font-fraunces), ui-serif, Georgia, serif",
-              fontStyle: "italic",
-              fontWeight: 500,
+              fontFamily:
+                "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
+              fontWeight: 600,
               color: "#e4a572",
-              letterSpacing: "-0.035em",
+              letterSpacing: "-0.03em",
             }}
           >
             yet.
@@ -751,11 +750,11 @@ function SignInPrompt() {
           Sign in to see{" "}
           <span
             style={{
-              fontFamily: "var(--font-fraunces), ui-serif, Georgia, serif",
-              fontStyle: "italic",
-              fontWeight: 500,
+              fontFamily:
+                "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
+              fontWeight: 600,
               color: PALETTE.primary,
-              letterSpacing: "-0.035em",
+              letterSpacing: "-0.03em",
             }}
           >
             your boards.

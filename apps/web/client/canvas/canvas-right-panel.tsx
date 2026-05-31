@@ -163,13 +163,10 @@ const CanvasRightPanel = () => {
           </span>
         </div>
         <div className="mt-1.5 flex items-baseline gap-2">
-          <h3 className="font-display text-[19px] font-medium text-on-surface tracking-tight capitalize leading-none">
+          <h3 className="text-[19px] font-semibold text-on-surface tracking-tight capitalize leading-none">
             {typeLabel}
           </h3>
-          <span
-            className="font-display-italic text-[12px] text-copper/85 leading-none"
-            style={{ fontFeatureSettings: '"ss01"' }}
-          >
+          <span className="text-[12px] font-medium text-copper/85 leading-none">
             {isConnection ? "edge" : "node"}
           </span>
         </div>
