@@ -117,7 +117,7 @@ export default function DashboardPage() {
             <span>Workspace · Draft Atelier</span>
           </div>
 
-          {/* Hero — editorial serif italic accent on "boards" */}
+          {/* Hero */}
           <h1
             style={{
               fontSize: "clamp(38px, 4.6vw, 56px)",
@@ -130,22 +130,7 @@ export default function DashboardPage() {
                 "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
             }}
           >
-            Your{" "}
-            <span
-              style={{
-                fontFamily:
-                  "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
-                fontWeight: 700,
-                letterSpacing: "-0.035em",
-                background:
-                  "linear-gradient(92deg, #dce1fb 0%, #b0c6ff 45%, #e4a572 95%)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              boards
-            </span>
+            Your boards
           </h1>
 
           {/* Subhead row — copy + drafting count chip */}
@@ -674,18 +659,7 @@ function EmptyState({
             lineHeight: 1.05,
           }}
         >
-          No boards{" "}
-          <span
-            style={{
-              fontFamily:
-                "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
-              fontWeight: 600,
-              color: "#e4a572",
-              letterSpacing: "-0.03em",
-            }}
-          >
-            yet.
-          </span>
+          No boards yet.
         </h2>
         <p
           style={{
@@ -747,18 +721,7 @@ function SignInPrompt() {
             lineHeight: 1.05,
           }}
         >
-          Sign in to see{" "}
-          <span
-            style={{
-              fontFamily:
-                "var(--font-plus-jakarta-sans), ui-sans-serif, system-ui",
-              fontWeight: 600,
-              color: PALETTE.primary,
-              letterSpacing: "-0.03em",
-            }}
-          >
-            your boards.
-          </span>
+          Sign in to see your boards.
         </h2>
         <p
           style={{
