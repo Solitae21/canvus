@@ -13,11 +13,16 @@ export async function POST(request: Request) {
   }
 
   // The API validates and is the sole owner of DB writes; forward its response verbatim.
-  const res = await internalApi("/internal/auth/register", {
-    method: "POST",
-    body,
-    clientIp: getClientIp(request),
-  });
+  let res: Response;
+  try {
+    res = await internalApi("/internal/auth/register", {
+      method: "POST",
+      body,
+      clientIp: getClientIp(request),
+    });
+  } catch {
+    return NextResponse.json({ error: "API unavailable. Please try again." }, { status: 503 });
+  }
   const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });
 }
