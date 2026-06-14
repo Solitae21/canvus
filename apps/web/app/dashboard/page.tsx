@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/toast/toast-provider";
 import {
   useGetBoardsQuery,
@@ -75,6 +75,7 @@ export default function DashboardPage() {
         onCreate={handleCreate}
         creating={creating}
         canCreate={!!userId}
+        isAuthed={!!userId}
         isMobile={isMobile}
       />
 
@@ -207,11 +208,13 @@ function DashboardHeader({
   onCreate,
   creating,
   canCreate,
+  isAuthed,
   isMobile,
 }: {
   onCreate: () => void;
   creating: boolean;
   canCreate: boolean;
+  isAuthed: boolean;
   isMobile: boolean;
 }) {
   return (
@@ -278,6 +281,39 @@ function DashboardHeader({
               <PlusIcon />
               {creating ? "Creating…" : isMobile ? "New" : "New board"}
             </PrimaryButton>
+          )}
+          {isAuthed && (
+            <button
+              type="button"
+              onClick={() => void signOut({ redirectTo: "/" })}
+              title="Sign out"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: isMobile ? "6px 10px" : "6px 12px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: PALETTE.textDim,
+                background: "transparent",
+                border: `1px solid ${PALETTE.borderSoft}`,
+                borderRadius: 10,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "color 160ms ease, border-color 160ms ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = PALETTE.text;
+                e.currentTarget.style.borderColor = PALETTE.border;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = PALETTE.textDim;
+                e.currentTarget.style.borderColor = PALETTE.borderSoft;
+              }}
+            >
+              <SignOutIcon />
+              {!isMobile && "Sign out"}
+            </button>
           )}
         </div>
       </div>
@@ -890,6 +926,25 @@ function SparkleIcon() {
       strokeLinejoin="round"
     >
       <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />
+    </svg>
+  );
+}
+
+function SignOutIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }

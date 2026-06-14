@@ -58,7 +58,11 @@ export const authConfig = {
   // Trust the deployment host (Vercel, custom domains, proxies) so Auth.js can
   // resolve callback URLs without a separately-configured AUTH_URL.
   trustHost: true,
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,   // 7 days — explicit expiry set on both JWT and httpOnly cookie
+    updateAge: 24 * 60 * 60,    // slide forward at most once per active day
+  },
   pages: {
     signIn: "/sign-in",
   },
