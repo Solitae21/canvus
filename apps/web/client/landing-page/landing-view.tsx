@@ -857,7 +857,6 @@ export default function LandingPageView() {
               <Link href="/how-it-works" className="lp-link" style={{ textDecoration: "none" }}>
                 How it works
               </Link>
-              <span className="lp-link">Changelog</span>
             </div>
           )}
 
@@ -935,9 +934,6 @@ export default function LandingPageView() {
             >
               How it works
             </Link>
-            <span className="lp-link" style={{ padding: "12px 10px", fontSize: 15 }}>
-              Changelog
-            </span>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
             <Link
               href="/sign-in"

@@ -970,7 +970,6 @@ export default function HowItWorksView() {
             <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
               <Link href="/features" className="hw-link">Features</Link>
               <Link href="/how-it-works" className="hw-link" style={{ color: PALETTE.text }}>How it works</Link>
-              <span className="hw-link">Changelog</span>
             </div>
           )}
 
@@ -1031,7 +1030,6 @@ export default function HowItWorksView() {
           >
             <Link href="/features" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Features</Link>
             <Link href="/how-it-works" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", color: PALETTE.text, fontSize: 15 }}>How it works</Link>
-            <span className="hw-link" style={{ padding: "12px 10px", fontSize: 15 }}>Changelog</span>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
             <Link href="/sign-in" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
             <button

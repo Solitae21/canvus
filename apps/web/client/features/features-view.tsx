@@ -988,7 +988,6 @@ export default function FeaturesView() {
             <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
               <Link href="/features" className="ft-link" style={{ color: PALETTE.text }}>Features</Link>
               <Link href="/how-it-works" className="ft-link">How it works</Link>
-              <span className="ft-link">Changelog</span>
             </div>
           )}
 
@@ -1049,7 +1048,6 @@ export default function FeaturesView() {
           >
             <Link href="/features" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", color: PALETTE.text, fontSize: 15 }}>Features</Link>
             <Link href="/how-it-works" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>How it works</Link>
-            <span className="ft-link" style={{ padding: "12px 10px", fontSize: 15 }}>Changelog</span>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
             <Link href="/sign-in" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
             <button
