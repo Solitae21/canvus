@@ -1077,10 +1077,6 @@ export default function LandingPageView() {
                 Start a free board
                 <ArrowIcon />
               </Link>
-              <button className="lp-btn-ghost">
-                <PlayIcon />
-                Watch 90-sec demo
-              </button>
             </div>
 
             <div className="lp-fade-3" style={{ marginBottom: 30 }}>
@@ -1409,72 +1405,6 @@ export default function LandingPageView() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
-      <section style={{
-        position: "relative", zIndex: 1,
-        padding: isCompact ? "64px 18px" : "100px 24px",
-        maxWidth: 1180, margin: "0 auto",
-      }}>
-        <div style={{ marginBottom: isCompact ? 32 : 48 }}>
-          <div className="lp-eyebrow lp-reveal">Voices</div>
-          <h2 className="lp-reveal lp-d1" style={{
-            fontSize: "clamp(28px, 3.6vw, 42px)",
-            fontWeight: 800,
-            letterSpacing: "-0.03em",
-            color: PALETTE.text,
-            marginTop: 16,
-            maxWidth: 700,
-          }}>
-            Designers, PMs, and engineers
-            <br />
-            quietly switching from Miro.
-          </h2>
-        </div>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-          gap: 16,
-        }}>
-          {testimonials.map((t, i) => (
-            <div key={i} className={`lp-card lp-reveal-scale lp-d${i + 1}`} style={{ padding: 28 }}>
-              <svg width="22" height="18" viewBox="0 0 24 20"
-                   fill={t.color} style={{ marginBottom: 14, opacity: 0.85 }}>
-                <path d="M3 16c0-4 2-7 5-9l1 2c-2 1-3 3-3 5h3v6H3v-4zm10 0c0-4 2-7 5-9l1 2c-2 1-3 3-3 5h3v6h-6v-4z" />
-              </svg>
-              <p style={{
-                fontSize: 15, color: PALETTE.text,
-                lineHeight: 1.6, marginBottom: 22, fontWeight: 400,
-                letterSpacing: "-0.005em",
-              }}>
-                {t.text}
-              </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: "50%",
-                  background: t.color,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11.5, fontWeight: 700, color: PALETTE.primaryDeep,
-                }}>
-                  {t.avatar}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: PALETTE.text }}>
-                    {t.name}
-                  </div>
-                  <div className="lp-mono" style={{
-                    fontSize: 11, color: PALETTE.textDim,
-                    letterSpacing: "0.04em", marginTop: 1,
-                  }}>
-                    {t.role}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── BIG CTA ──────────────────────────────────────────────────── */}
       <section style={{
         position: "relative", zIndex: 1,
@@ -1535,9 +1465,6 @@ export default function LandingPageView() {
               Open the canvas
               <ArrowIcon />
             </Link>
-            <button className="lp-btn-ghost" style={{ fontSize: 14 }}>
-              Schedule a demo
-            </button>
           </div>
         </div>
       </section>
