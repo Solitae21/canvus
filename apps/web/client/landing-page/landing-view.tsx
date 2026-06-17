@@ -1008,7 +1008,7 @@ export default function LandingPageView() {
                 background: PALETTE.mint, boxShadow: `0 0 8px ${PALETTE.mint}`,
               }} />
               <span className="lp-mono" style={{ letterSpacing: "0.12em" }}>
-                v1.0 · OPEN SOURCE · FREE FOREVER
+                v1.0
               </span>
             </div>
 
