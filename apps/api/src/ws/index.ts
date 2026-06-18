@@ -266,6 +266,12 @@ export async function attachSocketIO(server: HttpServer): Promise<void> {
   const pubClient = new Redis(REDIS_URL);
   const subClient = pubClient.duplicate();
 
+  // Without explicit 'error' handlers ioredis emits an uncaught error event
+  // that crashes the process. Log and continue — realtime collaboration will
+  // degrade but HTTP auth keeps serving.
+  pubClient.on('error', (err) => console.error('[redis] pub client error', err));
+  subClient.on('error', (err) => console.error('[redis] sub client error', err));
+
   io.adapter(createAdapter(pubClient, subClient));
 
   const ysocketio = new YSocketIO(io);

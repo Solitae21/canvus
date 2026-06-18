@@ -10,6 +10,12 @@ import { authRouter } from './routes/auth.js';
 import { boardsRouter } from './routes/boards.js';
 import { attachSocketIO } from './ws/index.js';
 
+// Catch stray async rejections / sync throws so the cause is always visible in
+// the log and the process does not exit silently (which leaves tsx watch alive
+// but nothing bound to PORT, causing ECONNREFUSED on sign-in).
+process.on('unhandledRejection', (reason) => console.error('[api] unhandledRejection', reason));
+process.on('uncaughtException', (err) => console.error('[api] uncaughtException', err));
+
 const app = express();
 
 const originGuard: RequestHandler = (req, res, next) => {
@@ -68,9 +74,16 @@ app.use(boardsRouter);
 app.use(errorHandler);
 
 const server = http.createServer(app);
-await attachSocketIO(server);
 
+// Start listening before setting up Socket.IO / Redis so that HTTP auth routes
+// (sign-in, register) serve even if realtime setup fails.
 server.listen(PORT, HOST, () => {
   console.log(`[${NODE_ENV}] API listening on http://${HOST}:${PORT}`);
   console.log(`[${NODE_ENV}] WebSocket at ws://localhost:${PORT}/ws?canvasId=...`);
+});
+
+// Socket.IO + Redis are best-effort: a failure degrades realtime collaboration
+// but must not take down sign-in.
+attachSocketIO(server).catch((err) => {
+  console.error('[api] Socket.IO setup failed — realtime unavailable:', err);
 });
