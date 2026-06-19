@@ -25,11 +25,20 @@ export const authConfig = {
           typeof credentials?.password === "string" ? credentials.password : "";
         if (!email || password.length === 0) return null;
 
-        const res = await internalApi("/internal/auth/verify-credentials", {
-          method: "POST",
-          body: { email, password },
-          clientIp: request instanceof Request ? getClientIp(request) : undefined,
-        });
+        let res: Response;
+        try {
+          res = await internalApi("/internal/auth/verify-credentials", {
+            method: "POST",
+            body: { email, password },
+            clientIp: request instanceof Request ? getClientIp(request) : undefined,
+          });
+        } catch (err) {
+          // API unreachable (e.g. not running, ECONNREFUSED). Log the cause so it
+          // shows up in the web-server console rather than being silently swallowed
+          // by Auth.js as a generic Configuration error.
+          console.error("[auth] verify-credentials request failed:", err);
+          throw err;
+        }
         if (!res.ok) return null;
 
         const user = (await res.json()) as {
