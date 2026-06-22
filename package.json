@@ -9,6 +9,7 @@
     "dev": "concurrently -n web,api -c blue,green \"npm run dev -w @canvus/web\" \"npm run dev -w @canvus/api\"",
     "dev:web": "npm run dev -w @canvus/web",
     "dev:api": "npm run dev -w @canvus/api",
+    "dev:kill": "npx kill-port 3000 4000",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"

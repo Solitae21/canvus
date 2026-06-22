@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "predev": "npm run generate",
-    "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+    "dev": "cross-env NODE_ENV=development node --watch --import tsx src/index.ts",
     "prebuild": "npm run generate",
     "generate": "prisma generate && tsc -p tsconfig.prisma-client.json",
     "build": "tsc -p tsconfig.json",
