@@ -72,6 +72,7 @@ import {
 import { useCanvasWsContext } from "./canvas-ws-context";
 import { useCanvasExportContext } from "./canvas-export-context";
 import { useYjsCanvas } from "./use-yjs";
+import { useGetBoardQuery, useRenameBoardMutation } from "@/redux/api/boardsApi";
 import { usePresence } from "@/lib/use-presence";
 import { selectRemoteCursors } from "@/redux/slice/presence/presence-slice";
 
@@ -600,7 +601,15 @@ const subscribeIdentity = (cb: () => void): (() => void) => {
 };
 
 /* ── Main canvas header ── */
-const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
+const CanvasHeader = ({
+  canvasId,
+  mode = "guest",
+}: {
+  canvasId: string;
+  /** "board" = authenticated, Postgres-backed board (BFF); "guest" = legacy in-memory canvas. */
+  mode?: "board" | "guest";
+}) => {
+  const isBoard = mode === "board";
   const dispatch = useAppDispatch();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -635,6 +644,11 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   );
 
   const refetchOtherCanvases = useCallback(async () => {
+    // The switcher only lists guest canvases; it has no meaning on a board.
+    if (isBoard) {
+      setOtherCanvases([]);
+      return;
+    }
     const ids = getGuestCanvasIds().filter((id) => id !== canvasId);
     if (ids.length === 0) {
       setOtherCanvases([]);
@@ -651,7 +665,7 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     } catch {
       setOtherCanvases([]);
     }
-  }, [canvasId]);
+  }, [canvasId, isBoard]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -709,11 +723,22 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
   }, []);
 
   useEffect(() => {
+    // Guest canvases are tracked in localStorage so the switcher can list them.
+    // Board ids must never leak into that list.
+    if (isBoard) return;
     addGuestCanvas(canvasId);
-  }, [canvasId]);
+  }, [canvasId, isBoard]);
 
-  // Fetch canvas name on mount
+  // Board name comes from the BFF (Postgres). The query is shared with
+  // BoardSnapshotLoader, so RTK Query dedupes and no extra request is made.
+  const { data: boardData } = useGetBoardQuery(canvasId, { skip: !isBoard });
   useEffect(() => {
+    if (isBoard && boardData?.name) dispatch(setCanvasName(boardData.name));
+  }, [isBoard, boardData?.name, dispatch]);
+
+  // Guest canvas name comes from the in-memory guest store.
+  useEffect(() => {
+    if (isBoard) return;
     let cancelled = false;
     getCanvas(canvasId)
       .then((c) => {
@@ -725,7 +750,7 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     return () => {
       cancelled = true;
     };
-  }, [canvasId, dispatch]);
+  }, [canvasId, dispatch, isBoard]);
 
   // Listen for remote rename broadcasts
   useEffect(() => {
@@ -748,6 +773,8 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     setEditingName(false);
   }, []);
 
+  const [renameBoard] = useRenameBoardMutation();
+
   const commitRename = useCallback(async () => {
     const trimmed = nameDraft.trim();
     setEditingName(false);
@@ -755,12 +782,16 @@ const CanvasHeader = ({ canvasId }: { canvasId: string }) => {
     const previous = canvasName;
     dispatch(setCanvasName(trimmed));
     try {
-      await renameCanvas(canvasId, trimmed);
+      if (isBoard) {
+        await renameBoard({ id: canvasId, name: trimmed }).unwrap();
+      } else {
+        await renameCanvas(canvasId, trimmed);
+      }
     } catch {
       dispatch(setCanvasName(previous ?? "Untitled"));
       dispatch(addToast({ message: "Couldn't rename canvas", type: "error" }));
     }
-  }, [canvasId, canvasName, nameDraft, dispatch]);
+  }, [canvasId, canvasName, nameDraft, dispatch, isBoard, renameBoard]);
 
   // Auto-focus input when entering edit mode
   useEffect(() => {

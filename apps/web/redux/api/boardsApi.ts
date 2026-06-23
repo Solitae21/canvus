@@ -83,6 +83,30 @@ export const boardsApi = createApi({
         { type: "Board", id: "LIST" },
       ],
     }),
+    renameBoard: b.mutation<BoardListItem, { id: string; name: string }>({
+      query: ({ id, name }) => ({ url: `/${id}`, method: "PATCH", body: { name } }),
+      // Optimistically patch the cached board + list so the open board view and
+      // the dashboard reflect the new name immediately; roll back on failure.
+      async onQueryStarted({ id, name }, { dispatch, queryFulfilled }) {
+        const patchBoard = dispatch(
+          boardsApi.util.updateQueryData("getBoard", id, (draft) => {
+            draft.name = name;
+          }),
+        );
+        const patchList = dispatch(
+          boardsApi.util.updateQueryData("listBoards", undefined, (draft) => {
+            const item = draft.find((board) => board.id === id);
+            if (item) item.name = name;
+          }),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchBoard.undo();
+          patchList.undo();
+        }
+      },
+    }),
   }),
 });
 
@@ -91,6 +115,7 @@ export const {
   useGetBoardQuery,
   useCreateBoardMutation,
   useSaveBoardMutation,
+  useRenameBoardMutation,
 } = boardsApi;
 
 export const useGetBoardsQuery = boardsApi.useListBoardsQuery;

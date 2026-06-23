@@ -4,6 +4,7 @@ import type { ChatMessage, Connection, Shape } from '@canvus/shared';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../lib/async-handler.js';
 import { getUserId, requireInternalKey } from '../lib/internal-auth.js';
+import { broadcastToCanvas } from '../ws/index.js';
 import {
   isRecord,
   isSafeColor,
@@ -241,7 +242,42 @@ boardsRouter.patch(
       return;
     }
 
-    const body = (req.body ?? {}) as { state?: unknown; shapes?: unknown; connections?: unknown };
+    const body = (req.body ?? {}) as {
+      name?: unknown;
+      state?: unknown;
+      shapes?: unknown;
+      connections?: unknown;
+    };
+
+    const hasName = body.name !== undefined;
+    const hasSnapshot =
+      body.state !== undefined || body.shapes !== undefined || body.connections !== undefined;
+
+    if (!hasName && !hasSnapshot) {
+      res.status(400).json({ error: 'invalid_body' });
+      return;
+    }
+    if (hasName && typeof body.name !== 'string') {
+      res.status(400).json({ error: 'invalid_body', detail: 'name must be a string' });
+      return;
+    }
+
+    // Name-only update (rename): skip the snapshot work entirely.
+    if (!hasSnapshot) {
+      const board = await prisma.board.update({
+        where: { id },
+        data: { name: normalizeName(body.name) },
+        select: { id: true, name: true, createdAt: true, updatedAt: true },
+      });
+      broadcastToCanvas(`board:${id}`, {
+        type: 'canvas:renamed',
+        payload: { id: board.id, name: board.name, updatedAt: board.updatedAt },
+        clientId: 'server',
+      });
+      res.json(board);
+      return;
+    }
+
     if (
       typeof body.state !== 'string' ||
       !Array.isArray(body.shapes) ||
@@ -284,7 +320,7 @@ boardsRouter.patch(
       }),
       prisma.board.update({
         where: { id },
-        data: {},
+        data: hasName ? { name: normalizeName(body.name) } : {},
         select: { id: true },
       }),
     ]);

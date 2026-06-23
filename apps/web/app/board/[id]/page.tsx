@@ -37,7 +37,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <BoardAutoSaver boardId={id} />
           <div className="flex flex-col w-screen h-screen overflow-hidden bg-surface">
             <div className="relative flex-1 overflow-hidden">
-              <CanvasHeader canvasId={id} />
+              <CanvasHeader canvasId={id} mode="board" />
               <div className="absolute inset-0">
                 <CanvasStage canvasId={id} />
               </div>
