@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { PALETTE } from "@/client/landing-page/palette";
 import { startGuestSession } from "@/lib/guest";
 import { CanvusMark } from "@/client/brand/CanvusMark";
@@ -740,6 +741,8 @@ function MockChrome({ url }: { url: string }) {
 
 export default function HowItWorksView() {
   const router = useRouter();
+  const { status } = useSession();
+  const isAuthed = status === "authenticated";
   const isCompact = useIsCompact();
   const isMobile = useIsMobile();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -975,25 +978,34 @@ export default function HowItWorksView() {
 
           {!isCompact && (
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <Link href="/sign-in" className="hw-link" style={{ padding: "6px 12px" }}>Sign in</Link>
-              <button
-                type="button"
-                onClick={handleGuestEntry}
-                className="hw-link"
-                style={{
-                  padding: "6px 12px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  font: "inherit",
-                }}
-              >
-                Continue as guest
-              </button>
-              <Link href="/sign-up" className="hw-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
-                Open canvas
-                <ArrowIcon />
-              </Link>
+              {isAuthed ? (
+                <Link href="/dashboard" className="hw-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                  Dashboard
+                  <ArrowIcon />
+                </Link>
+              ) : (
+                <>
+                  <Link href="/sign-in" className="hw-link" style={{ padding: "6px 12px" }}>Sign in</Link>
+                  <button
+                    type="button"
+                    onClick={handleGuestEntry}
+                    className="hw-link"
+                    style={{
+                      padding: "6px 12px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      font: "inherit",
+                    }}
+                  >
+                    Continue as guest
+                  </button>
+                  <Link href="/sign-up" className="hw-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                    Open canvas
+                    <ArrowIcon />
+                  </Link>
+                </>
+              )}
             </div>
           )}
 
@@ -1031,32 +1043,46 @@ export default function HowItWorksView() {
             <Link href="/features" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Features</Link>
             <Link href="/how-it-works" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", color: PALETTE.text, fontSize: 15 }}>How it works</Link>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
-            <Link href="/sign-in" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
-            <button
-              type="button"
-              onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
-              className="hw-link"
-              style={{
-                padding: "12px 10px",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                font: "inherit",
-                textAlign: "left",
-                fontSize: 15,
-              }}
-            >
-              Continue as guest
-            </button>
-            <Link
-              href="/sign-up"
-              className="hw-btn-primary"
-              onClick={() => setMobileNavOpen(false)}
-              style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
-            >
-              Open canvas
-              <ArrowIcon />
-            </Link>
+            {isAuthed ? (
+              <Link
+                href="/dashboard"
+                className="hw-btn-primary"
+                onClick={() => setMobileNavOpen(false)}
+                style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
+              >
+                Dashboard
+                <ArrowIcon />
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-in" className="hw-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
+                <button
+                  type="button"
+                  onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
+                  className="hw-link"
+                  style={{
+                    padding: "12px 10px",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    font: "inherit",
+                    textAlign: "left",
+                    fontSize: 15,
+                  }}
+                >
+                  Continue as guest
+                </button>
+                <Link
+                  href="/sign-up"
+                  className="hw-btn-primary"
+                  onClick={() => setMobileNavOpen(false)}
+                  style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
+                >
+                  Open canvas
+                  <ArrowIcon />
+                </Link>
+              </>
+            )}
           </div>
         )}
       </nav>

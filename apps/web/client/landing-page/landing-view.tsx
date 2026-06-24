@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { PALETTE } from "./palette";
 import { startGuestSession } from "@/lib/guest";
 import { CanvusMark } from "@/client/brand/CanvusMark";
@@ -672,6 +673,8 @@ const CanvasPreview = () => {
 
 export default function LandingPageView() {
   const router = useRouter();
+  const { status } = useSession();
+  const isAuthed = status === "authenticated";
   const [activeFeature, setActiveFeature] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isCompact = useIsCompact();
@@ -863,25 +866,34 @@ export default function LandingPageView() {
           {/* Desktop CTAs */}
           {!isCompact && (
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <Link href="/sign-in" className="lp-link" style={{ padding: "6px 12px", textDecoration: "none" }}>Sign in</Link>
-              <button
-                type="button"
-                onClick={handleGuestEntry}
-                className="lp-link"
-                style={{
-                  padding: "6px 12px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  font: "inherit",
-                }}
-              >
-                Continue as guest
-              </button>
-              <Link href="/sign-up" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
-                Open canvas
-                <ArrowIcon />
-              </Link>
+              {isAuthed ? (
+                <Link href="/dashboard" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                  Dashboard
+                  <ArrowIcon />
+                </Link>
+              ) : (
+                <>
+                  <Link href="/sign-in" className="lp-link" style={{ padding: "6px 12px", textDecoration: "none" }}>Sign in</Link>
+                  <button
+                    type="button"
+                    onClick={handleGuestEntry}
+                    className="lp-link"
+                    style={{
+                      padding: "6px 12px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      font: "inherit",
+                    }}
+                  >
+                    Continue as guest
+                  </button>
+                  <Link href="/sign-up" className="lp-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                    Open canvas
+                    <ArrowIcon />
+                  </Link>
+                </>
+              )}
             </div>
           )}
 
@@ -935,45 +947,65 @@ export default function LandingPageView() {
               How it works
             </Link>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
-            <Link
-              href="/sign-in"
-              className="lp-link"
-              onClick={() => setMobileNavOpen(false)}
-              style={{ padding: "12px 10px", textDecoration: "none", fontSize: 15 }}
-            >
-              Sign in
-            </Link>
-            <button
-              type="button"
-              onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
-              className="lp-link"
-              style={{
-                padding: "12px 10px",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                font: "inherit",
-                textAlign: "left",
-                fontSize: 15,
-              }}
-            >
-              Continue as guest
-            </button>
-            <Link
-              href="/sign-up"
-              className="lp-btn-primary"
-              onClick={() => setMobileNavOpen(false)}
-              style={{
-                padding: "12px 18px",
-                fontSize: 14,
-                textDecoration: "none",
-                marginTop: 8,
-                justifyContent: "center",
-              }}
-            >
-              Open canvas
-              <ArrowIcon />
-            </Link>
+            {isAuthed ? (
+              <Link
+                href="/dashboard"
+                className="lp-btn-primary"
+                onClick={() => setMobileNavOpen(false)}
+                style={{
+                  padding: "12px 18px",
+                  fontSize: 14,
+                  textDecoration: "none",
+                  marginTop: 8,
+                  justifyContent: "center",
+                }}
+              >
+                Dashboard
+                <ArrowIcon />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="lp-link"
+                  onClick={() => setMobileNavOpen(false)}
+                  style={{ padding: "12px 10px", textDecoration: "none", fontSize: 15 }}
+                >
+                  Sign in
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
+                  className="lp-link"
+                  style={{
+                    padding: "12px 10px",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    font: "inherit",
+                    textAlign: "left",
+                    fontSize: 15,
+                  }}
+                >
+                  Continue as guest
+                </button>
+                <Link
+                  href="/sign-up"
+                  className="lp-btn-primary"
+                  onClick={() => setMobileNavOpen(false)}
+                  style={{
+                    padding: "12px 18px",
+                    fontSize: 14,
+                    textDecoration: "none",
+                    marginTop: 8,
+                    justifyContent: "center",
+                  }}
+                >
+                  Open canvas
+                  <ArrowIcon />
+                </Link>
+              </>
+            )}
           </div>
         )}
       </nav>

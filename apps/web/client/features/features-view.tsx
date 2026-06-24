@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { PALETTE } from "@/client/landing-page/palette";
 import { startGuestSession } from "@/lib/guest";
 import { CanvusMark } from "@/client/brand/CanvusMark";
@@ -705,6 +706,8 @@ const SpotlightPresent = () => (
 
 export default function FeaturesView() {
   const router = useRouter();
+  const { status } = useSession();
+  const isAuthed = status === "authenticated";
   const [spotlight, setSpotlight] = useState<"collab" | "shapes" | "present">("collab");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isCompact = useIsCompact();
@@ -993,25 +996,34 @@ export default function FeaturesView() {
 
           {!isCompact && (
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <Link href="/sign-in" className="ft-link" style={{ padding: "6px 12px" }}>Sign in</Link>
-              <button
-                type="button"
-                onClick={handleGuestEntry}
-                className="ft-link"
-                style={{
-                  padding: "6px 12px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  font: "inherit",
-                }}
-              >
-                Continue as guest
-              </button>
-              <Link href="/sign-up" className="ft-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
-                Open canvas
-                <ArrowIcon />
-              </Link>
+              {isAuthed ? (
+                <Link href="/dashboard" className="ft-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                  Dashboard
+                  <ArrowIcon />
+                </Link>
+              ) : (
+                <>
+                  <Link href="/sign-in" className="ft-link" style={{ padding: "6px 12px" }}>Sign in</Link>
+                  <button
+                    type="button"
+                    onClick={handleGuestEntry}
+                    className="ft-link"
+                    style={{
+                      padding: "6px 12px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      font: "inherit",
+                    }}
+                  >
+                    Continue as guest
+                  </button>
+                  <Link href="/sign-up" className="ft-btn-primary" style={{ padding: "8px 16px", fontSize: 13, textDecoration: "none" }}>
+                    Open canvas
+                    <ArrowIcon />
+                  </Link>
+                </>
+              )}
             </div>
           )}
 
@@ -1049,32 +1061,46 @@ export default function FeaturesView() {
             <Link href="/features" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", color: PALETTE.text, fontSize: 15 }}>Features</Link>
             <Link href="/how-it-works" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>How it works</Link>
             <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 0" }} />
-            <Link href="/sign-in" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
-            <button
-              type="button"
-              onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
-              className="ft-link"
-              style={{
-                padding: "12px 10px",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                font: "inherit",
-                textAlign: "left",
-                fontSize: 15,
-              }}
-            >
-              Continue as guest
-            </button>
-            <Link
-              href="/sign-up"
-              className="ft-btn-primary"
-              onClick={() => setMobileNavOpen(false)}
-              style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
-            >
-              Open canvas
-              <ArrowIcon />
-            </Link>
+            {isAuthed ? (
+              <Link
+                href="/dashboard"
+                className="ft-btn-primary"
+                onClick={() => setMobileNavOpen(false)}
+                style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
+              >
+                Dashboard
+                <ArrowIcon />
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-in" className="ft-link" onClick={() => setMobileNavOpen(false)} style={{ padding: "12px 10px", fontSize: 15 }}>Sign in</Link>
+                <button
+                  type="button"
+                  onClick={() => { setMobileNavOpen(false); handleGuestEntry(); }}
+                  className="ft-link"
+                  style={{
+                    padding: "12px 10px",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    font: "inherit",
+                    textAlign: "left",
+                    fontSize: 15,
+                  }}
+                >
+                  Continue as guest
+                </button>
+                <Link
+                  href="/sign-up"
+                  className="ft-btn-primary"
+                  onClick={() => setMobileNavOpen(false)}
+                  style={{ padding: "12px 18px", fontSize: 14, textDecoration: "none", marginTop: 8, justifyContent: "center" }}
+                >
+                  Open canvas
+                  <ArrowIcon />
+                </Link>
+              </>
+            )}
           </div>
         )}
       </nav>

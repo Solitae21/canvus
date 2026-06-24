@@ -22,8 +22,14 @@ export const proxy = auth((req) => {
   if (isAuthPage && isAuthed) {
     return Response.redirect(new URL("/dashboard", req.nextUrl));
   }
+
+  // Signed-in users have no use for the marketing landing page — send them
+  // straight to their workspace.
+  if (pathname === "/" && isAuthed) {
+    return Response.redirect(new URL("/dashboard", req.nextUrl));
+  }
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/sign-in", "/sign-up"],
+  matcher: ["/", "/dashboard/:path*", "/sign-in", "/sign-up"],
 };
