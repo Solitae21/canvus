@@ -592,9 +592,9 @@ const MockBuild = () => (
   </div>
 );
 
-const MockPresent = () => (
+const MockExport = () => (
   <div style={mockShellStyle}>
-    <MockChrome url={`${BOARD_PATH} · PRESENT`} />
+    <MockChrome url={`${BOARD_PATH} · EXPORT`} />
     <div style={{
       position: "relative",
       height: 280,
@@ -604,20 +604,19 @@ const MockPresent = () => (
       {/* Dot grid — matches CanvasStage */}
       <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
         <defs>
-          <pattern id="hw-present-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
+          <pattern id="hw-export-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
             <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#hw-present-dots)" />
+        <rect width="100%" height="100%" fill="url(#hw-export-dots)" />
       </svg>
 
-      {/* spotlight ring */}
+      {/* selection frame around the board */}
       <div style={{
         position: "absolute",
-        inset: "10% 18%",
+        inset: "12% 20%",
         borderRadius: 14,
-        border: `1.5px dashed ${PALETTE.primary}55`,
-        boxShadow: `0 0 0 9999px rgba(7,13,31,0.55), 0 0 30px ${PALETTE.primaryStrong}30`,
+        border: `1.5px dashed ${PALETTE.primary}66`,
       }} />
 
       {/* center shape — white-stroked rectangle, matches canvas defaults */}
@@ -634,48 +633,37 @@ const MockPresent = () => (
         Q2 launch plan
       </div>
 
-      {/* presenter banner */}
-      <div style={{
-        position: "absolute", top: 14, left: 14,
-        display: "flex", alignItems: "center", gap: 8,
-        background: "rgba(21,27,45,0.85)",
-        border: `1px solid ${PALETTE.primary}55`,
-        borderRadius: 10, padding: "6px 11px",
-        backdropFilter: "blur(12px)",
-      }}>
-        <div style={{
-          width: 7, height: 7, borderRadius: "50%",
-          background: PALETTE.primaryStrong,
-          boxShadow: `0 0 8px ${PALETTE.primaryStrong}`,
-        }} />
-        <span className="hw-mono" style={{ fontSize: 10, fontWeight: 700, color: PALETTE.primary, letterSpacing: "0.1em" }}>
-          MIA IS PRESENTING
-        </span>
-      </div>
-
-      {/* timer */}
+      {/* export menu */}
       <div style={{
         position: "absolute", top: 14, right: 14,
-        background: "rgba(21,27,45,0.85)",
+        display: "flex", flexDirection: "column", gap: 4,
+        background: "rgba(21,27,45,0.92)",
         border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 10, padding: "6px 11px",
+        borderRadius: 12, padding: "8px 9px",
+        backdropFilter: "blur(12px)",
+        minWidth: 116,
       }}>
-        <span className="hw-mono" style={{ fontSize: 12, fontWeight: 700, color: PALETTE.text, letterSpacing: "0.04em" }}>
-          12:34
-          <span style={{ animation: "hw-blink 1s steps(2) infinite" }}>:</span>
-          <span style={{ color: PALETTE.textDim }}>56</span>
+        <span className="hw-mono" style={{
+          fontSize: 9, fontWeight: 700, color: PALETTE.textDim,
+          letterSpacing: "0.14em", padding: "0 4px 2px",
+        }}>
+          EXPORT AS
         </span>
+        {["PNG", "JPEG", "PDF", "JSON"].map((fmt, i) => (
+          <div key={fmt} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            fontSize: 11.5, fontWeight: 600,
+            color: i === 0 ? PALETTE.text : PALETTE.textDim,
+            background: i === 0 ? "rgba(176,198,255,0.10)" : "transparent",
+            borderRadius: 7, padding: "5px 8px",
+          }}>
+            <span>{fmt}</span>
+            {i === 0 && <CheckSmall color={PALETTE.mint} />}
+          </div>
+        ))}
       </div>
 
-      {/* laser pointer dot */}
-      <div style={{
-        position: "absolute", top: "55%", left: "62%",
-        width: 12, height: 12, borderRadius: "50%",
-        background: PALETTE.warm,
-        boxShadow: `0 0 20px ${PALETTE.warm}, 0 0 40px ${PALETTE.warm}`,
-      }} />
-
-      {/* follower pill */}
+      {/* saved pill */}
       <div style={{
         position: "absolute", bottom: 14, left: "50%",
         transform: "translateX(-50%)",
@@ -687,7 +675,7 @@ const MockPresent = () => (
       }}>
         <CheckSmall color={PALETTE.mint} />
         <span style={{ fontSize: 11.5, fontWeight: 600, color: PALETTE.text }}>
-          4 viewers following your screen
+          board.png · saved
         </span>
       </div>
     </div>
@@ -799,15 +787,15 @@ export default function HowItWorksView() {
     {
       n: "04",
       eyebrow: "Step four",
-      title: "Present and export",
+      title: "Export and share",
       copy:
-        "Switch into Present mode and your viewport becomes the spotlight; followers' canvases track yours in real time. Toggle the laser pointer to direct attention, run the shared timer to keep pace, then export when you're done.",
+        "When the board's ready, take it the way you need it. Export a crisp PNG or JPEG for the deck, a PDF sized to the canvas, or raw JSON to back up and re-import — or just send a read-only link.",
       bullets: [
-        "Presenter mode with shared timer and laser pointer",
-        "Viewers follow your viewport — no screen-sharing required",
         "Export to PNG, JPEG, PDF, or JSON",
+        "JSON round-trips the raw shapes and connections",
+        "Share a read-only link — no account needed to view",
       ],
-      mock: <MockPresent />,
+      mock: <MockExport />,
       color: PALETTE.warm,
     },
   ];
@@ -885,10 +873,6 @@ export default function HowItWorksView() {
     {
       q: "Do guests need an account?",
       a: "No. Click \"Continue as guest\" from sign-in or open a shared board link, and you're in. CanvUs gives you an auto-generated name and a cursor color that persist in your browser.",
-    },
-    {
-      q: "How does Present mode differ from screen-sharing?",
-      a: "Screen-sharing pushes pixels; Present mode pushes viewport state. Each viewer renders the canvas locally at their own resolution, so text stays crisp regardless of bandwidth. The presenter gets a shared timer and laser pointer to keep the room aligned.",
     },
     {
       q: "What happens if I lose my connection?",

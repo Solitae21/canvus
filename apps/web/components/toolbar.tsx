@@ -414,7 +414,6 @@ const QUICK_SHAPES: Tool[] = [
 const Toolbar = () => {
   const dispatch = useAppDispatch();
   const activeTool = useAppSelector((s) => s.canvas.tool);
-  const presentModeActive = useAppSelector((s) => s.ui.presentMode.active);
 
   const renderGroup = (tools: Tool[]) =>
     tools.map((tool) => (
@@ -425,8 +424,6 @@ const Toolbar = () => {
         onClick={() => dispatch(setTool(tool.id as ToolType))}
       />
     ));
-
-  if (presentModeActive) return null;
 
   return (
     <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">

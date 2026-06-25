@@ -351,8 +351,7 @@ Inbound `message` events are rate-limited to **80 per second per socket**. Only 
 
 | `type` | Payload | Notes |
 |---|---|---|
-| `cursor:moved` | `{ x, y, name?, color?, laser? }` | Coordinates within ±1,000,000; name/color sanitized; relayed as `CursorMovedPayload` with `clientId = userId` |
-| `presenter:viewport` | `{ x, y, scale }` | Coordinates within ±1,000,000; scale within `[0.1, 4]` |
+| `cursor:moved` | `{ x, y, name?, color? }` | Coordinates within ±1,000,000; name/color sanitized; relayed as `CursorMovedPayload` with `clientId = userId` |
 
 Sanitized envelopes are relayed to **other** clients in the same room (the sender does not receive their own message back).
 
@@ -371,7 +370,6 @@ All outbound messages share the envelope:
 | `type` | Origin | Payload | Trigger |
 |---|---|---|---|
 | `cursor:moved` | Relay | `CursorMovedPayload` | Inbound cursor message |
-| `presenter:viewport` | Relay | `PresenterViewportPayload` | Inbound presenter viewport |
 | `user:left` | `clientId: "server"` | `{ userId }` | Last socket for a user disconnected from the room |
 | `canvas:replaced` | `clientId: "server"` | Full updated `Canvas` | Successful `PUT /canvases/:id` |
 | `canvas:renamed` | `clientId: "server"` | `{ id, name, updatedAt }` | Successful `PATCH /canvases/:id` |
@@ -510,18 +508,10 @@ interface CursorMovedPayload {
   y: number;
   name: string;
   color: string;
-  laser?: boolean;
 }
 
 interface UserLeftPayload {
   userId: string;
-}
-
-interface PresenterViewportPayload {
-  userId: string;
-  x: number;
-  y: number;
-  scale: number;
 }
 ```
 

@@ -23,12 +23,10 @@ import {
   setPanel,
   setViewport,
   panViewport,
-  selectPresentMode,
 } from "@/redux/slice/ui/ui-slice";
 import { upsertCursor, removeCursor, pruneStale } from "@/redux/slice/presence/presence-slice";
 import type {
   CursorMovedPayload,
-  PresenterViewportPayload,
   UserLeftPayload,
 } from "@canvus/shared";
 
@@ -94,12 +92,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
     return () => yjsConnections.unobserve(handler);
   }, [dispatch, yjsConnections]);
 
-  const presentMode = useAppSelector(selectPresentMode);
-  const presentModeRef = useRef(presentMode);
-  useEffect(() => {
-    presentModeRef.current = presentMode;
-  }, [presentMode]);
-
   const cursorMessageHandler = useCallback((envelope: WsEnvelope) => {
     if (envelope.type === "cursor:moved") {
       const p = envelope.payload as CursorMovedPayload;
@@ -109,26 +101,15 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         y: p.y,
         name: p.name,
         color: p.color,
-        laser: p.laser,
       }));
     } else if (envelope.type === "user:left") {
       const p = envelope.payload as UserLeftPayload;
       dispatch(removeCursor(p.userId));
-    } else if (envelope.type === "presenter:viewport") {
-      const p = envelope.payload as PresenterViewportPayload;
-      const pm = presentModeRef.current;
-      if (pm.active && !pm.isPresenter && pm.followingUserId === p.userId) {
-        dispatch(setViewport({ x: p.x, y: p.y, scale: p.scale }));
-      }
     }
   }, [dispatch]);
 
   const { send: wsSend, userId, name, color } = useCanvasWs(canvasId, cursorMessageHandler);
   const lastCursorBroadcastRef = useRef<number>(0);
-  const wsSendRef = useRef(wsSend);
-  useEffect(() => {
-    wsSendRef.current = wsSend;
-  }, [wsSend]);
 
   useEffect(() => {
     const id = setInterval(() => dispatch(pruneStale(3000)), 2000);
@@ -145,24 +126,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   const tool = useAppSelector((s) => s.canvas.tool);
   const pendingFromId = useAppSelector((s) => s.canvas.pendingFromId);
   const viewport = useAppSelector((s) => s.ui.viewport);
-
-  // Broadcast viewport to followers while presenting (debounced ~50ms)
-  useEffect(() => {
-    if (!presentMode.active || !presentMode.isPresenter) return;
-    const handle = window.setTimeout(() => {
-      wsSendRef.current({
-        type: "presenter:viewport",
-        payload: {
-          userId,
-          x: viewport.x,
-          y: viewport.y,
-          scale: viewport.scale,
-        } satisfies PresenterViewportPayload,
-        clientId: userId,
-      });
-    }, 50);
-    return () => window.clearTimeout(handle);
-  }, [presentMode.active, presentMode.isPresenter, userId, viewport.x, viewport.y, viewport.scale]);
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -321,7 +284,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (presentModeRef.current.followingUserId) return;
       const { x, y, scale } = viewportRef.current;
 
       if (e.ctrlKey || e.metaKey) {
@@ -828,7 +790,6 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
 
   const handleWrapperMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button === 1) {
-      if (presentModeRef.current.followingUserId) return;
       e.preventDefault();
       isMMBPanningRef.current = true;
       setIsMMBPanning(true);
@@ -837,7 +798,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
   };
 
   const handleWrapperMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMMBPanningRef.current && !presentModeRef.current.followingUserId) {
+    if (isMMBPanningRef.current) {
       const dx = e.clientX - mmbLastPosRef.current.x;
       const dy = e.clientY - mmbLastPosRef.current.y;
       mmbLastPosRef.current = { x: e.clientX, y: e.clientY };
@@ -851,11 +812,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
         const vp = viewportRef.current;
         const worldX = (e.clientX - rect.left - vp.x) / vp.scale;
         const worldY = (e.clientY - rect.top - vp.y) / vp.scale;
-        const pm = presentModeRef.current;
         const payload: CursorMovedPayload = { userId, x: worldX, y: worldY, name, color };
-        if (pm.active && pm.isPresenter && pm.laserPointer) {
-          payload.laser = true;
-        }
         wsSend({ type: "cursor:moved", payload, clientId: userId });
       }
     }
@@ -910,7 +867,7 @@ const CanvasStage = ({ canvasId, className }: CanvasStageProps) => {
           y={viewport.y}
           scaleX={viewport.scale}
           scaleY={viewport.scale}
-          draggable={tool === "hand" && !presentMode.followingUserId}
+          draggable={tool === "hand"}
           onClick={handleStageClick}
           onMouseDown={handleStageMouseDown}
           onDragMove={handleStageDragMove}

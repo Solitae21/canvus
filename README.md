@@ -83,7 +83,7 @@ Important areas:
 - `src/routes/auth.ts`: internal auth routes (register, verify credentials) — guarded by `requireInternalKey`
 - `src/routes/boards.ts`: internal board routes (list, create, get with latest snapshot, append snapshot) — guarded by `requireInternalKey`
 - `src/store/memory.ts`: in-memory canvas store backing the `/canvases` routes
-- `src/ws/index.ts`: Socket.IO server, Redis adapter, room membership caching, sanitized `cursor:moved` / `presenter:viewport` relay, `user:left` notices, server broadcasts, Yjs (`y-socket.io`) integration
+- `src/ws/index.ts`: Socket.IO server, Redis adapter, room membership caching, sanitized `cursor:moved` relay, `user:left` notices, server broadcasts, Yjs (`y-socket.io`) integration
 - `prisma/`: Prisma schema, `prisma.config.ts`, and migrations for users, accounts, sessions, boards, board members, and board snapshots
 
 ### `packages/shared`
@@ -95,7 +95,7 @@ Important types include:
 - `Canvas`, `CanvasSummary`
 - `Shape`, `ShapeType`, `PlaceableShapeType`
 - `Connection`, `ConnectionPort`
-- `CursorMovedPayload`, `UserLeftPayload`, `PresenterViewportPayload`, `ChatMessage`
+- `CursorMovedPayload`, `UserLeftPayload`, `ChatMessage`
 
 ## Quick Start
 
@@ -481,8 +481,7 @@ Connection rules:
 
 Only sanitized envelopes are accepted; any other shape is dropped silently.
 
-- `cursor:moved` — payload `{ x, y, name?, color?, laser? }`. Coordinates must be finite and within ±1,000,000. Name and color are normalized; `laser: true` is forwarded when present.
-- `presenter:viewport` — payload `{ x, y, scale }`. Coordinates within ±1,000,000; scale within `[0.1, 4]`.
+- `cursor:moved` — payload `{ x, y, name?, color? }`. Coordinates must be finite and within ±1,000,000. Name and color are normalized.
 
 Sanitized envelopes are relayed to other clients in the same room (the sender does not receive their own message back).
 
@@ -503,7 +502,6 @@ Known event types:
 | `type` | Origin | Payload |
 | --- | --- | --- |
 | `cursor:moved` | Relay | `CursorMovedPayload` |
-| `presenter:viewport` | Relay | `PresenterViewportPayload` |
 | `user:left` | Server (`clientId: "server"`) | `UserLeftPayload` — emitted when the last socket for a user disconnects from a room |
 | `canvas:replaced` | Server (`clientId: "server"`) | The full updated `Canvas`, after a successful `PUT /canvases/:id` |
 | `canvas:renamed` | Server (`clientId: "server"`) | `{ id, name, updatedAt }`, after a successful `PATCH /canvases/:id` |
@@ -550,14 +548,6 @@ interface CursorMovedPayload {
   y: number;
   name: string;
   color: string;
-  laser?: boolean;
-}
-
-interface PresenterViewportPayload {
-  userId: string;
-  x: number;
-  y: number;
-  scale: number;
 }
 ```
 

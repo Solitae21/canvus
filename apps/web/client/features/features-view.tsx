@@ -585,130 +585,13 @@ const SpotlightShapes = () => {
   );
 };
 
-/* Spotlight: present mode */
-const SpotlightPresent = () => (
-  <div style={mockShellStyle}>
-    <MockChrome url={`${BOARD_PATH} · PRESENT`} />
-    <div style={{
-      position: "relative", height: 320,
-      background: CANVAS_SURFACE,
-      overflow: "hidden",
-    }}>
-      {/* Dot grid — matches CanvasStage */}
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-        <defs>
-          <pattern id="ft-present-dots" width="24" height="24" patternUnits="userSpaceOnUse" x="12" y="12">
-            <circle cx="0" cy="0" r="0.9" fill="rgba(255,255,255,0.06)" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#ft-present-dots)" />
-      </svg>
-
-      <div style={{
-        position: "absolute",
-        inset: "10% 16%",
-        borderRadius: 14,
-        border: `1.5px dashed ${PALETTE.primary}55`,
-        boxShadow: `0 0 0 9999px rgba(7,13,31,0.55), 0 0 30px ${PALETTE.primaryStrong}30`,
-      }} />
-
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)",
-        padding: "20px 32px",
-        background: "transparent",
-        border: `2px solid ${CANVAS_STROKE}`,
-        color: CANVAS_STROKE,
-        fontWeight: 500, fontSize: 18, letterSpacing: "-0.01em",
-        boxShadow: `0 0 60px ${PALETTE.primaryStrong}40`,
-        textAlign: "center",
-      }}>
-        Q2 roadmap · 3 themes
-        <div className="ft-mono" style={{
-          fontSize: 10, marginTop: 6, color: PALETTE.primary,
-          letterSpacing: "0.1em", fontWeight: 600,
-        }}>
-          SLIDE 2 OF 7
-        </div>
-      </div>
-
-      {/* presenter banner */}
-      <div style={{
-        position: "absolute", top: 14, left: 14,
-        display: "flex", alignItems: "center", gap: 8,
-        background: "rgba(21,27,45,0.85)",
-        border: `1px solid ${PALETTE.primary}55`,
-        borderRadius: 10, padding: "6px 11px",
-        backdropFilter: "blur(12px)",
-      }}>
-        <div style={{
-          width: 7, height: 7, borderRadius: "50%",
-          background: PALETTE.primaryStrong,
-          boxShadow: `0 0 8px ${PALETTE.primaryStrong}`,
-        }} />
-        <span className="ft-mono" style={{
-          fontSize: 10, fontWeight: 700, color: PALETTE.primary,
-          letterSpacing: "0.1em",
-        }}>
-          ANA IS PRESENTING
-        </span>
-      </div>
-
-      {/* timer */}
-      <div style={{
-        position: "absolute", top: 14, right: 14,
-        background: "rgba(21,27,45,0.85)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 10, padding: "6px 11px",
-      }}>
-        <span className="ft-mono" style={{
-          fontSize: 12, fontWeight: 700, color: PALETTE.text,
-          letterSpacing: "0.04em",
-        }}>
-          08:42<span style={{ color: PALETTE.textDim }}>:18</span>
-        </span>
-      </div>
-
-      {/* laser */}
-      <div style={{
-        position: "absolute", top: "60%", left: "62%",
-        width: 14, height: 14, borderRadius: "50%",
-        background: PALETTE.warm,
-        boxShadow: `0 0 22px ${PALETTE.warm}, 0 0 45px ${PALETTE.warm}`,
-      }} />
-
-      {/* follower pill */}
-      <div style={{
-        position: "absolute", bottom: 14, left: "50%",
-        transform: "translateX(-50%)",
-        display: "flex", alignItems: "center", gap: 7,
-        background: "rgba(21,27,45,0.85)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 100, padding: "6px 14px",
-        backdropFilter: "blur(12px)",
-      }}>
-        <span style={{
-          width: 6, height: 6, borderRadius: "50%",
-          background: PALETTE.mint,
-          boxShadow: `0 0 6px ${PALETTE.mint}`,
-        }} />
-        <span style={{
-          fontSize: 11.5, fontWeight: 600, color: PALETTE.text,
-        }}>
-          6 viewers following your screen
-        </span>
-      </div>
-    </div>
-  </div>
-);
-
 /* ──────────────────────────────────────────────────────────────────────── */
 
 export default function FeaturesView() {
   const router = useRouter();
   const { status } = useSession();
   const isAuthed = status === "authenticated";
-  const [spotlight, setSpotlight] = useState<"collab" | "shapes" | "present">("collab");
+  const [spotlight, setSpotlight] = useState<"collab" | "shapes">("collab");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isCompact = useIsCompact();
   const isMobile = useIsMobile();
@@ -744,18 +627,6 @@ export default function FeaturesView() {
         "Orthogonal connectors with port routing",
       ],
       color: PALETTE.primaryStrong,
-    },
-    {
-      icon: <PathIcon d="M3 5h18v11H3z M8 21h8 M12 16v5" />,
-      label: "Present",
-      title: "Present mode",
-      desc: "One key drops the call into focus. Viewers follow your viewport, see your laser pointer, and watch a shared timer — no screen-sharing required.",
-      bullets: [
-        "Press P to enter, Esc to leave",
-        "Laser pointer + shared timer",
-        "Viewers can peek then re-sync instantly",
-      ],
-      color: PALETTE.tertiary,
     },
     {
       icon: <PathIcon d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
@@ -797,7 +668,7 @@ export default function FeaturesView() {
 
   /* Spotlight tab content */
   const spotlightContent: Record<
-    "collab" | "shapes" | "present",
+    "collab" | "shapes",
     {
       eyebrow: string;
       title: string;
@@ -835,20 +706,6 @@ export default function FeaturesView() {
       color: PALETTE.primaryStrong,
       mock: <SpotlightShapes />,
     },
-    present: {
-      eyebrow: "Present spotlight",
-      title: "Run a meeting. Not a screen-share.",
-      copy:
-        "Hit P. Your viewport becomes the spotlight; everyone else's canvas follows yours. Use the laser pointer to direct attention, the shared timer to keep pace, and let stragglers re-sync with one click.",
-      bullets: [
-        "Press P to present, Esc to leave",
-        "Laser pointer with motion trail",
-        "Shared session timer everyone sees",
-        "Viewers can peek away — one click to re-sync",
-      ],
-      color: PALETTE.tertiary,
-      mock: <SpotlightPresent />,
-    },
   };
 
   const detail = spotlightContent[spotlight];
@@ -876,16 +733,6 @@ export default function FeaturesView() {
       color: PALETTE.primaryStrong,
     },
     {
-      group: "Presenting",
-      items: [
-        { t: "Present mode (P)", d: "Drop into focus. Viewer screens follow your viewport in real time." },
-        { t: "Laser pointer", d: "Glowing dot with a short motion trail. Direct attention without dragging shapes." },
-        { t: "Shared timer", d: "A single session timer everyone sees. Keep standups, retros, demos honest." },
-        { t: "Follower / freelook", d: "Viewers can peek away to read context, then re-sync with one click." },
-      ],
-      color: PALETTE.tertiary,
-    },
-    {
       group: "Output",
       items: [
         { t: "PNG · SVG · PDF export", d: "Whole board or selection only. SVG keeps shapes editable downstream." },
@@ -902,7 +749,6 @@ export default function FeaturesView() {
     { feature: "Sub-50ms sync (CRDT)",                us: true,           them: "~150–300ms" },
     { feature: "Local-first / offline editing",       us: true,           them: false },
     { feature: "Anchored comments on shapes",         us: true,           them: "Page-level" },
-    { feature: "Present mode (viewport follow)",      us: true,           them: "Screen-share only" },
     { feature: "Free guest access (no account)",      us: true,           them: "Account required" },
     { feature: "Free tier",                           us: "3 boards · unlimited guests", them: "Limited / paywalled" },
     { feature: "Export to SVG (editable)",            us: true,           them: "Pro plan" },
@@ -1149,7 +995,7 @@ export default function FeaturesView() {
             maxWidth: 620, margin: "0 auto 32px",
             fontWeight: 400,
           }}>
-            Real-time co-editing, a flowchart toolkit, present mode, anchored comments,
+            Real-time co-editing, a flowchart toolkit, anchored comments,
             export, and workspaces. Built for teams that meet, decide, and ship — fast.
           </p>
 
@@ -1311,7 +1157,6 @@ export default function FeaturesView() {
             {[
               { id: "collab",  label: "Real-time co-editing" },
               { id: "shapes",  label: "Shape toolkit" },
-              { id: "present", label: "Present mode" },
             ].map((tab) => (
               <button
                 key={tab.id}

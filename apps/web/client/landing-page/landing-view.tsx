@@ -701,12 +701,6 @@ export default function LandingPageView() {
       color: PALETTE.primary,
     },
     {
-      icon: <PathIcon d="M3 5h18v11H3z M8 21h8 M12 16v5" />,
-      title: "Present mode",
-      desc: "One key drops you into focus. Audience viewports follow yours in real time — no screens to share, no awkward windows.",
-      color: PALETTE.primaryStrong,
-    },
-    {
       icon: <PathIcon d="M3 5h18v14H3z M3 10h18 M9 5v14" />,
       title: "Flowchart toolkit",
       desc: "Process boxes, decision diamonds, swimlanes, sticky notes, freehand ink, and snap-to-grid — built for systems thinkers.",
@@ -736,7 +730,7 @@ export default function LandingPageView() {
     {
       name: "Sarah K.",
       role: "Product Lead",
-      text: "We replaced Miro for sprint planning. CanvUs is snappier, and Present Mode actually works during standups.",
+      text: "We replaced Miro for sprint planning. CanvUs is snappier, and the canvas actually keeps up during standups.",
       avatar: "SK",
       color: PALETTE.primary,
     },
@@ -1397,7 +1391,7 @@ export default function LandingPageView() {
             {[
               { n: "01", t: "Open a board",     d: "Sign in with email or jump in as a guest. Name your board and start on a blank canvas — no setup, no project config.", c: PALETTE.primary },
               { n: "02", t: "Share the link",   d: "Hit Share, copy the link, send it. Anyone who opens it joins live with their own name and cursor color.", c: PALETTE.primaryStrong },
-              { n: "03", t: "Build & present", d: "Drag from 18 shapes, draw orthogonal connections, drop sticky notes. Switch to Present mode and viewers follow your viewport.", c: PALETTE.tertiary },
+              { n: "03", t: "Build together", d: "Drag from 18 shapes, draw orthogonal connections, drop sticky notes. Everyone edits live with shared cursors and comments.", c: PALETTE.tertiary },
             ].map((s, si) => (
               <div key={s.n} className={`lp-reveal lp-d${si + 1}`} style={{
                 display: "flex", flexDirection: "column", alignItems: "center",

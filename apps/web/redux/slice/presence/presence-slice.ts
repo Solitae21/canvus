@@ -6,7 +6,6 @@ interface CursorEntry {
   y: number;
   name: string;
   color: string;
-  laser?: boolean;
   lastSeen: number;
 }
 
@@ -20,9 +19,9 @@ const presenceSlice = createSlice({
   name: 'presence',
   initialState,
   reducers: {
-    upsertCursor(state, action: PayloadAction<{ userId: string; x: number; y: number; name: string; color: string; laser?: boolean }>) {
-      const { userId, x, y, name, color, laser } = action.payload;
-      state.cursors[userId] = { x, y, name, color, laser, lastSeen: Date.now() };
+    upsertCursor(state, action: PayloadAction<{ userId: string; x: number; y: number; name: string; color: string }>) {
+      const { userId, x, y, name, color } = action.payload;
+      state.cursors[userId] = { x, y, name, color, lastSeen: Date.now() };
     },
     removeCursor(state, action: PayloadAction<string>) {
       delete state.cursors[action.payload];

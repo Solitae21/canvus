@@ -57,18 +57,10 @@ export interface CursorMovedPayload {
   y: number;
   name: string;
   color: string;
-  laser?: boolean;
 }
 
 export interface UserLeftPayload {
   userId: string;
-}
-
-export interface PresenterViewportPayload {
-  userId: string;
-  x: number;
-  y: number;
-  scale: number;
 }
 
 export interface ChatMessage {
