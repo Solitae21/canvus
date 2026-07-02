@@ -4,6 +4,7 @@ import "./globals.css";
 import StoreProvider from "@/redux/client-components/store-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { ToastProvider } from "@/components/toast/toast-provider";
+import { ReduxToastBridge } from "@/redux/client-components/redux-toast-bridge";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
         <ToastProvider>
           <SessionProvider>
             <StoreProvider>
+              <ReduxToastBridge />
               {children}
             </StoreProvider>
           </SessionProvider>
